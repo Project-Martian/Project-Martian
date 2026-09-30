@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Project Martian</title>
+<link rel="icon" href="assets/martian-mark.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@200;300;400&display=swap">
+<link rel="stylesheet" href="css/refinements.css">
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<script src="js/theme-init.js"></script>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="mark" viewBox="0 0 100 100"><g fill="#E66E30"><path d="M27.32 4.65 C30.55 -1.55 70.19 -1.55 73.42 4.65 C70.19 7.37 30.55 7.37 27.32 4.65Z"/><path d="M13.20 17.29 C18.40 9.11 82.34 9.11 87.55 17.29 C82.34 21.00 18.40 21.00 13.20 17.29Z"/><path d="M5.39 30.30 C11.66 22.61 88.71 22.61 94.98 30.30 C88.71 36.00 11.66 36.00 5.39 30.30Z"/><path d="M2.04 43.87 C8.76 37.42 91.24 37.42 97.96 43.87 C91.24 50.81 8.76 50.81 2.04 43.87Z"/><path d="M2.42 56.88 C9.10 52.91 91.27 52.91 97.96 56.88 C91.27 65.80 9.10 65.80 2.42 56.88Z"/><path d="M6.51 70.07 C12.59 67.84 87.41 67.84 93.49 70.07 C87.41 80.73 12.59 80.73 6.51 70.07Z"/><path d="M16.17 83.83 C20.88 81.60 78.75 81.60 83.46 83.83 C78.75 93.00 20.88 93.00 16.17 83.83Z"/><path d="M31.41 95.72 C34.01 93.99 65.99 93.99 68.59 95.72 C65.99 101.43 34.01 101.43 31.41 95.72Z"/></g></symbol></defs></svg>
+
+<header class="top">
+  <div class="wrap bar">
+    <a class="brand" href="#ask" data-go="ask" aria-label="Project Martian home"><svg><use href="#mark"/></svg><b>Project <span>Martian</span></b></a>
+    <nav class="tabs" role="tablist" aria-label="Sections" id="tabs"></nav>
+    <div class="sp"></div>
+    <div class="mode" role="group" aria-label="Theme"><button id="m-light" data-m="light" aria-pressed="false">Light</button><button id="m-dark" data-m="dark" aria-pressed="true">Dark</button></div>
+    <a class="gh repo" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+  </div>
+  <nav class="tabs-m" id="tabs-m" aria-label="Sections"></nav>
+</header>
+
+<main>
+  <!-- ASK -->
+  <section class="view wrap" id="v-ask" data-view="ask">
+    <div class="ask" id="askbox">
+      <span class="eyebrow">The open record of AI agents going rogue</span>
+      <h1>Ask which agents<br><span class="dim">have gone rogue<span class="dotp">.</span></span></h1>
+      <div class="globe">
+        <svg class="planet" viewBox="0 0 400 400" aria-hidden="true">
+          <circle cx="200" cy="200" r="190" fill="none" stroke="var(--line-2)" stroke-dasharray="2 7"/>
+          <circle cx="200" cy="200" r="150" fill="none" stroke="var(--line)"/>
+          <use href="#mark" x="85" y="85" width="230" height="230"/>
+          <g class="orbit-dot"><circle cx="200" cy="10" r="5" fill="var(--accent)"/><circle cx="200" cy="10" r="11" fill="var(--accent)" opacity=".18"/></g>
+        </svg>
+        <form class="askbar" id="askform" autocomplete="off">
+          <svg class="s" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="m20 20-4-4" stroke="currentColor" stroke-width="1.8"/></svg>
+          <input id="q" type="text" placeholder="Which agents went rogue this year?" aria-label="Ask a question">
+          <button class="send" id="send" type="submit" aria-label="Ask"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2"/></svg></button>
+        </form>
+      </div>
+      <div class="chips" id="chips"></div>
+      <div class="convo" id="convo" aria-live="polite"></div>
+      <p class="note" id="asknote">Claude searches the record for you. It only answers questions about AI agent security and safety.</p>
+      <div class="strip" id="strip"></div>
+    </div>
+  </section>
+
+  <!-- TIMELINE -->
+  <section class="view wrap" id="v-timeline" data-view="timeline" hidden>
+    <div class="vhead">
+      <div><span class="eyebrow">From pattern recognition to autonomous action</span><h2>The timeline<span class="dotp">.</span></h2></div>
+      <div class="strip" id="tlcounts" style="margin:0;justify-content:flex-end"></div>
+    </div>
+    <div class="corow" id="tlco" role="group" aria-label="Filter by company"></div>
+    <div class="tl-tools">
+      <div class="seg" id="tlseg" role="group" aria-label="Scope"></div>
+      <label class="search"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="m20 20-4-4" stroke="currentColor" stroke-width="1.8"/></svg><input id="tlq" type="search" placeholder="Search incidents, companies, causes" aria-label="Search the timeline"></label>
+    </div>
+    <p class="tl-cap"><span>Every incident answers three things: <b style="color:var(--accent-ink);font-weight:600">what happened</b>, <b style="color:var(--accent-ink);font-weight:600">how</b>, and <b style="color:var(--accent-ink);font-weight:600">what we can conclude</b>.</span><span class="how-note">Ask Joe/Jill for the visual walkthrough.</span></p>
+    <div class="tl"><aside class="yidx"><nav id="yidx" aria-label="Years"></nav></aside><div id="tlist"></div></div>
+  </section>
+
+  <!-- SIGNALS -->
+  <section class="view wrap" id="v-signals" data-view="signals" hidden>
+    <div class="vhead">
+      <div><span class="eyebrow">X · Reddit · In the wild</span><h2>Radar<span class="dotp">.</span></h2></div>
+      <p class="side">What may be happening now. Chatter stays unverified until enough evidence brings it into the record.</p>
+    </div>
+    <div class="sig">
+      <div class="card" style="overflow:hidden">
+        <div class="feedhead"><div class="seg" id="sigseg" role="group" aria-label="Source"></div><span class="sample">X and Reddit are sample posts</span></div>
+        <div id="feed"></div>
+      </div>
+      <div class="side-stack">
+        <div class="card detail" id="sigdetail"></div>
+        <div class="card" style="overflow:hidden"><div class="feedhead"><b style="font-weight:500">Emerging clusters</b><span class="sample">Sample</span></div><div id="clusters"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRENDS -->
+  <section class="view wrap" id="v-trends" data-view="trends" hidden>
+    <div class="trends">
+      <aside class="side-stack" style="top:130px">
+        <div class="qcard">
+          <div class="qtop"><h3>Agents going rogue</h3><p id="qupd">From the record</p></div>
+          <div class="qorb"><svg viewBox="0 0 246 184" aria-hidden="true">
+            <g transform="translate(123 92)">
+              <circle r="70" fill="none" stroke="var(--line-2)" stroke-width="1"/>
+              <circle r="49" fill="none" stroke="var(--line)" stroke-width="1"/>
+              <circle r="28" fill="none" stroke="var(--line)" stroke-width="1"/>
+              <path d="M-70 0H70M0-70V70" stroke="var(--line)" stroke-width=".7" opacity=".7"/>
+              <path d="M-47 -26L-19 -9M47 -31L18 -12M53 30L22 12M-40 46L-16 18" stroke="var(--accent)" stroke-width=".8" opacity=".6"/>
+              <circle cx="-47" cy="-26" r="3" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.2"/>
+              <circle cx="47" cy="-31" r="2.5" fill="var(--accent)"/>
+              <circle cx="53" cy="30" r="3" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.2"/>
+              <circle cx="-40" cy="46" r="2.5" fill="var(--accent)"/>
+              <circle cx="-8" cy="-44" r="2" fill="var(--muted)"/>
+              <circle cx="31" cy="48" r="2" fill="var(--muted)"/>
+              <circle r="12" fill="var(--panel-2)" stroke="var(--line-2)"/>
+              <circle r="3.5" fill="var(--accent)"/>
+            </g>
+          </svg></div>
+          <div class="qlab"><span>Past</span><span>Future</span></div>
+          <div class="ki">
+            <div class="hd"><b style="font-weight:500">Key indicators</b><span class="badge" id="kistage">Emerging</span></div>
+            <div id="kirows"></div>
+          </div>
+        </div>
+      </aside>
+      <div>
+        <div class="ttabs" role="tablist" id="ttabs"></div>
+        <div class="card tpanel" id="tpanel"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MISSION / ABOUT -->
+  <section class="view wrap" id="v-mission" data-view="mission" hidden>
+    <div class="about-simple">
+      <div class="about-kicker">
+        <span class="eyebrow">About Project Martian</span>
+        <h2>An open record of autonomous-agent failures<span class="dotp">.</span></h2>
+        <p>We track what agents do in the wild, separate signal from noise, and explain incidents so anyone can understand what actually happened.</p>
+      </div>
+      <div class="pillars">
+        <div class="pillar"><b>Radar</b><h3>What may be happening</h3><p>Early signals. Clearly marked as unverified.</p></div>
+        <div class="pillar"><b>Record</b><h3>What happened</h3><p>Sourced incidents and an open history.</p></div>
+        <div class="pillar"><b>Ask</b><h3>Interrogate the record</h3><p>Plain-language answers grounded in evidence.</p></div>
+        <div class="pillar"><b>Patterns</b><h3>What changes over time</h3><p>Trends and recurring failure modes.</p></div>
+        <div class="pillar"><b>Contribute</b><h3>Make it better</h3><p>Report, verify, reproduce, or build on the data.</p></div>
+      </div>
+      <div class="about-bottom">
+        <p>Built for engineers, security teams, researchers, leaders, and anyone trying to understand what “rogue agent” actually means.</p>
+        <a class="inline-cta" href="#docs" data-go="docs">How the record works →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTRIBUTE -->
+  <section class="view wrap" id="v-contribute" data-view="contribute" hidden>
+    <div class="contrib-simple">
+      <div class="contrib-intro">
+        <div><span class="eyebrow">Contribute</span><h2>Help improve the record<span class="dotp">.</span></h2></div>
+        <p>You do not need to be a security researcher. Bring evidence; we will help structure it.</p>
+      </div>
+      <div class="contribute-steps">
+        <div class="cstep"><span class="n">01</span><h3>Find something</h3><p>An incident, disclosure, paper, screenshot, or credible report.</p><a class="repo-path" data-path="/issues/new?template=incident.yml" href="#" target="_blank" rel="noopener">Report an incident ↗</a></div>
+        <div class="cstep"><span class="n">02</span><h3>Add evidence</h3><p>Tell us what happened, link the source, and flag what is still uncertain.</p><a class="repo-path" data-path="/issues?q=is%3Aopen+label%3Averify" href="#" target="_blank" rel="noopener">Verify a record ↗</a></div>
+        <div class="cstep"><span class="n">03</span><h3>Get credit</h3><p>Accepted work is attributed publicly and can count toward the contributor board and certificate.</p><a href="#docs" data-go="docs">Contribution guide →</a></div>
+      </div>
+      <div class="contrib-reward"><p><b>Also useful:</b> attack reproductions, corrections, source images, datasets, and tools built on the record.</p><a class="inline-cta" href="#docs" data-go="docs">Open docs →</a></div>
+    </div>
+  </section>
+
+  <!-- DOCS -->
+  <section class="view wrap" id="v-docs" data-view="docs" hidden>
+    <div class="docs-shell">
+      <div class="docs-head"><span class="eyebrow">Docs</span><h2>How Project Martian works<span class="dotp">.</span></h2><p>The detailed stuff lives here so the rest of the site stays simple.</p></div>
+      <div class="docs-grid">
+        <div class="doc-card"><span>01 · RECORD</span><h3>How an incident gets added</h3><p>Source → evidence check → plain-language summary → uncertainty label → historical record.</p><a class="repo-path" data-path="/blob/main/CONTRIBUTING.md" href="#" target="_blank" rel="noopener">Methodology ↗</a></div>
+        <div class="doc-card"><span>02 · CONTRIBUTE</span><h3>Contribution guide</h3><p>Report cases, verify records, add attacks, corrections, or source material.</p><a class="repo-path" data-path="/blob/main/CONTRIBUTING.md" href="#" target="_blank" rel="noopener">CONTRIBUTING.md ↗</a></div>
+        <div class="doc-card"><span>03 · DATA</span><h3>Dataset & schema</h3><p>Structured incident fields, source links, dates, failure types, impact, and limits.</p><a class="repo-path" data-path="/tree/main/data" href="#" target="_blank" rel="noopener">Browse data ↗</a></div>
+        <div class="doc-card"><span>04 · PRINCIPLES</span><h3>Manifesto</h3><p>Evidence over hype. Open by default. Contributors are credited. Safety is built in public.</p><a class="repo-path" data-path="/blob/main/MANIFESTO.md" href="#" target="_blank" rel="noopener">Manifesto.md ↗</a></div>
+      </div>
+      <div class="docs-roadmap">
+        <span class="eyebrow">Roadmap</span>
+        <div class="track" role="tablist" aria-label="Mission phases" id="track"></div>
+        <div class="stage" id="stage"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+
+<div id="joe" hidden role="dialog" aria-modal="true" aria-labelledby="joe-title">
+  <div class="jbox">
+    <button class="jclose" id="joe-close" type="button" aria-label="Close">×</button>
+    <p class="jwho" id="joe-who"></p>
+    <h3 id="joe-title"></h3>
+    <p class="jmeta" id="joe-meta"></p>
+    <div id="joe-flow"></div>
+    <div class="jctl">
+      <button id="joe-play" class="jbtn main" type="button" aria-label="Play"></button>
+      <button id="joe-prev" class="jbtn" type="button" aria-label="Previous">‹</button>
+      <button id="joe-next" class="jbtn" type="button" aria-label="Next">›</button>
+      <span id="joe-count"></span>
+      <p id="joe-now" aria-live="polite"></p>
+    </div>
+    <div class="jfacts" id="joe-facts"></div>
+    <div class="jlesson" id="joe-lesson"></div>
+    <div class="jsrcs"><span>Sources</span><div id="joe-srcs"></div></div>
+    <div class="jfoot"><button type="button" id="joe-record">See it on the timeline</button></div>
+  </div>
+</div>
+<footer>
+  <div class="wrap foot">
+    <a class="brand" href="#ask" data-go="ask"><svg><use href="#mark"/></svg><b>Project <span>Martian</span></b></a>
+    <span>Open source. Built in public.</span>
+    <div class="fl"><a class="repo" href="#" target="_blank" rel="noopener">GitHub ↗</a><a class="repo-path" data-path="/blob/main/MANIFESTO.md" href="#" target="_blank" rel="noopener">Manifesto.md ↗</a><a class="repo-path" data-path="/blob/main/LICENSE" href="#" target="_blank" rel="noopener">License ↗</a></div>
+  </div>
+</footer>
+<script src="js/records.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
