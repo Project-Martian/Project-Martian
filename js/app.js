@@ -9,6 +9,9 @@ const archive = await response.json();
 const REPO = archive.repo;
 const REC = archive.records.map((r,i)=>Object.assign({}, r, {id: r.id || ("rec-"+i)}));
 const BYID = Object.fromEntries(REC.map(r=>[r.id,r]));
+const TIMELINE = archive.timeline;
+if (TIMELINE?.version !== "timeline-v1") throw new Error("Timeline data is unavailable.");
+const TLBYID = Object.fromEntries(TIMELINE.records.map(r=>[r.id,r]));
 const AGENTS = REC.filter(r=>r.scope==="agents");
 const isReal = r => /real-world|third-party|reported/i.test(r.set);
 const isLab = r => !isReal(r);
@@ -28,14 +31,15 @@ function go(v, opts){
   if(v==="trends") renderTrendPanel();
   if(v==="timeline") loadLogos();
   if(!(opts&&opts.keepScroll)) window.scrollTo({top:0});
-  try{ history.replaceState(null,"","#"+v); }catch(e){ location.hash = v; }
+  try{ history.replaceState(null,"",opts?.record ? "#timeline/"+encodeURIComponent(opts.record) : "#"+v); }catch(e){ location.hash = v; }
 }
 document.addEventListener("click",e=>{
   const g = e.target.closest("[data-go]");
   if(g){ e.preventDefault(); go(g.dataset.go); }
 });
+const recordURL = r => location.origin+location.pathname+"#timeline/"+encodeURIComponent(r.id);
 const shareText = r => `${r.org}: ${r.t}`;
-const shareBody = r => `${shareText(r)}\n\nSource: ${r.u}\n\nVia Project Martian`;
+const shareBody = r => `${shareText(r)}\n\nRecord: ${recordURL(r)}\nSource: ${r.u}\n\nVia Project Martian`;
 document.addEventListener("click",e=>{
   const b=e.target.closest('[data-share="copy"]'); if(!b) return;
   e.preventDefault(); const r=BYID[b.dataset.id]; if(!r) return;
@@ -62,11 +66,68 @@ if($("#copybtn")) $("#copybtn").addEventListener("click",()=>{
   if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(()=>{btn.textContent="Copied";setTimeout(()=>btn.textContent="Copy",1500);}).catch(sel); } else sel();
 });
 
+/* ---------- incident contributions ---------- */
+const contributionForm=$("#incident-form"), contributionStatus=$("#cf-status");
+$("#cf-related").innerHTML += REC.map(r=>`<option value="${r.id}">${esc(r.t)}</option>`).join("");
+function invalidateContribution(){
+  $("#cf-preview").hidden=true;$("#cf-submit").removeAttribute("href");
+  contributionStatus.textContent="Draft only. Prepare the issue, then review and submit it on GitHub.";
+}
+contributionForm.addEventListener("input",invalidateContribution);
+contributionForm.addEventListener("change",e=>{
+  if(e.target.id==="cf-kind"&&e.target.value==="incident")$("#cf-related").value="";
+  if(e.target.id==="cf-related"&&e.target.value)$("#cf-kind").value="correction";
+  $("#cf-related").required=$("#cf-kind").value==="correction";
+  invalidateContribution();
+});
+$("#contribution-status-form").addEventListener("submit",async e=>{
+  e.preventDefault();const number=$("#contribution-issue").value, result=$("#contribution-result");
+  const button=e.currentTarget.querySelector("button");button.disabled=true;result.textContent="Checking publication…";
+  try{
+    const response=await fetch("/api/contributions/"+encodeURIComponent(number),{cache:"no-store"});
+    if(!response.ok)throw new Error("unavailable");
+    const data=await response.json();
+    result.innerHTML=data.published?`Published in version ${esc(data.receipt.publication_id)}. <a href="${esc(location.pathname)}?publication=${encodeURIComponent(data.receipt.publication_id)}#timeline/${encodeURIComponent(data.receipt.incident_id)}">View incident →</a><a href="${esc(data.url)}" target="_blank" rel="noopener">GitHub issue #${data.issue} ↗</a>`:`No publication receipt for #${data.issue}. This does not confirm that the issue exists or has been approved. <a href="${esc(data.url)}" target="_blank" rel="noopener">Check its GitHub review ↗</a>`;
+  }catch{result.textContent="Publication status is unavailable. Try again later.";}finally{button.disabled=false;}
+});
+function publicSource(value){
+  try{const u=new URL(value);return ["https:","http:"].includes(u.protocol)&&!u.username&&!u.password;}catch{return false;}
+}
+$("#cf-source").addEventListener("input",()=>$("#cf-source").setCustomValidity(""));
+contributionForm.addEventListener("submit",e=>{
+  e.preventDefault();invalidateContribution();
+  const fields=Object.fromEntries(new FormData(contributionForm));
+  for(const key of Object.keys(fields))fields[key]=String(fields[key]).trim();
+  if(!publicSource(fields.source)){$("#cf-source").setCustomValidity("Use a public HTTP or HTTPS source URL without embedded credentials.");$("#cf-source").reportValidity();return;}
+  if([fields.title,fields.product,fields.summary,fields.uncertainty].some(v=>!v)){contributionStatus.textContent="Please fill in the title, product, summary and uncertainty.";return;}
+  if(fields.sources && fields.sources.split(/\n/).filter(Boolean).some(u=>!publicSource(u))){contributionStatus.textContent="Additional sources must be HTTP or HTTPS URLs, one per line, without embedded credentials.";return;}
+  const related=fields.related?BYID[fields.related]:null;
+  if(fields.kind==="correction"&&!related){contributionStatus.textContent="Select the record you want to correct.";return;}
+  const title=(fields.kind==="correction"?"[Correction] ":"[Incident] ")+fields.title;
+  const dates=`Occurrence: ${fields.occurred||"unknown"}\nSource publication: ${fields.reported||"unknown"}`;
+  const summary=`Contribution: ${fields.kind}\nAffected product / organization: ${fields.product}\nRelated record: ${related?related.id+" — "+recordURL(related):"new incident"}\n\nWhat happened\n${fields.summary}\n\nImpact and uncertainty\n${fields.uncertainty}\n\nAdditional public sources\n${fields.sources||"None supplied"}`;
+  const url=new URL(REPO+"/issues/new");
+  url.search=new URLSearchParams({template:"incident.yml",title,source:fields.source,date:dates,summary}).toString();
+  if(url.href.length>7500){contributionStatus.textContent="This report is too long for a GitHub prefilled link. Shorten the text or additional source URLs, then prepare it again.";return;}
+  $("#cf-preview-text").textContent=`${title}\n\nPublic source\n${fields.source}\n\n${dates}\n\n${summary}`;
+  $("#cf-submit").href=url.href;$("#cf-preview").hidden=false;
+  contributionStatus.textContent="Prepared, not sent. Review the report below, then submit it on GitHub.";
+  $("#cf-preview").scrollIntoView({behavior:"smooth",block:"start"});
+});
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-correction]");if(!b)return;
+  const r=BYID[b.dataset.correction];if(!r)return;
+  $("#cf-kind").value="correction";$("#cf-related").value=r.id;$("#cf-related").required=true;
+  if(!$("#cf-title").value)$("#cf-title").value=r.t.slice(0,140);
+  invalidateContribution();go("contribute");
+  contributionStatus.textContent="Correction linked to “"+r.t+"”. Any text already in your draft is preserved; review it before submitting.";
+  $("#cf-source").focus();
+});
+
 /* ---------- stats ---------- */
 const latest = AGENTS.filter(r=>r.d).sort((a,b)=>b.d.localeCompare(a.d))[0];
 const y26 = AGENTS.filter(r=>r.d.startsWith("2026")).length, y25 = AGENTS.filter(r=>r.d.startsWith("2025")).length;
 $("#strip").innerHTML = `<div><b class="mono">${REC.length}</b>Records</div><div><b class="mono">${AGENTS.length}</b>Agent incidents</div><div><b class="mono">${y26}</b>In 2026</div><div><b>${esc(latest.when.replace(/^Reported /,""))}</b>Latest</div>`;
-$("#tlcounts").innerHTML = `<div><b class="mono">${REC.length}</b>Records</div><div><b class="mono">${new Set(REC.map(r=>r.d.slice(0,4)).filter(Boolean)).size}</b>Years</div><div><b class="mono">${REC.reduce((a,r)=>a+(parseInt(r.src)||0),0)}</b>Sources</div>`;
 
 /* ================= ASK ================= */
 const QUESTIONS = [
@@ -241,21 +302,29 @@ async function loadLogos(){
     if(LOGO[c.k]) $$(`.clogo[data-c="${c.k}"]`).forEach(el=>el.innerHTML=LOGO[c.k]);
   }));
 }
-let tlCo="all";
-function renderCoRow(){
-  const cnt={}; REC.forEach(r=>{ const cs=coOf(r); if(!cs.length) cnt.other=(cnt.other||0)+1; cs.forEach(c=>cnt[c.k]=(cnt[c.k]||0)+1); });
-  const chip=(k,name,logo)=>`<button type="button" class="co ${k===tlCo?"on":""}" data-co="${k}" aria-pressed="${k===tlCo}">${logo}<span>${esc(name)}</span><i>${k==="all"?REC.length:(cnt[k]||0)}</i></button>`;
-  const top=COMPANIES.filter(c=>c.top), rest=COMPANIES.filter(c=>!c.top&&cnt[c.k]);
-  $("#tlco").innerHTML = chip("all","Everyone","") + top.map(c=>chip(c.k,c.n,logoTile(c.k,c.n))).join("") + '<span class="co-sep"></span>' + rest.map(c=>chip(c.k,c.n,logoTile(c.k,c.n))).join("") + chip("other","Others",'<span class="clogo plain">+</span>');
-}
-$("#tlco").addEventListener("click",e=>{ const b=e.target.closest("[data-co]"); if(!b) return; tlCo=b.dataset.co; renderCoRow(); renderTimeline(); });
-const coMatch = r => tlCo==="all" ? true : tlCo==="other" ? coOf(r).length===0 : coOf(r).some(c=>c.k===tlCo);
-
+let tlCo="all", tlScope="all", tlQ="", tlBasis="archive";
 const SCOPES = [["all","All records"],["agents","AI agents"],["other-ai","Other AI"],["automation","Automation"]];
-let tlScope="all", tlQ="";
-$("#tlseg").innerHTML = SCOPES.map(([k,l])=>`<button type="button" data-k="${k}" aria-pressed="${k==="all"}">${l}</button>`).join("");
-$("#tlseg").addEventListener("click",e=>{const b=e.target.closest("button"); if(!b) return; tlScope=b.dataset.k; $$("#tlseg button").forEach(x=>x.setAttribute("aria-pressed",x===b)); renderTimeline();});
-$("#tlq").addEventListener("input",e=>{tlQ=e.target.value.toLowerCase(); renderTimeline();});
+const tlCandidates = () => REC.filter(r => (tlScope === "all" || r.scope === tlScope) && (!tlQ || TLBYID[r.id].search_text.includes(tlQ)));
+function renderCoRow(){
+  const rows=tlCandidates(), counts=new Map();
+  rows.forEach(r=>TLBYID[r.id].makers.forEach(m=>counts.set(m,(counts.get(m)||0)+1)));
+  const chip=(key,name,count)=>`<button type="button" class="co ${key===tlCo?"on":""}" data-co="${esc(key)}" aria-pressed="${key===tlCo}"><span>${esc(name)}</span><i>${count}</i></button>`;
+  $("#tlco").innerHTML=chip("all","All makers",rows.length)+TIMELINE.makers.map(m=>chip(m,m,counts.get(m)||0)).join("")+chip("unmapped","Unmapped",rows.filter(r=>!TLBYID[r.id].makers.length).length);
+}
+$("#tlco").addEventListener("click",e=>{const b=e.target.closest("[data-co]");if(b){tlCo=b.dataset.co;renderTimeline();}});
+const coMatch = r => tlCo==="all" || (tlCo==="unmapped" ? !TLBYID[r.id].makers.length : TLBYID[r.id].makers.includes(tlCo));
+$("#tlseg").innerHTML=SCOPES.map(([k,l])=>`<button type="button" data-k="${k}" aria-pressed="${k==="all"}">${l}</button>`).join("");
+$("#tlseg").addEventListener("click",e=>{const b=e.target.closest("button");if(b){tlScope=b.dataset.k;$$("#tlseg button").forEach(x=>x.setAttribute("aria-pressed",x===b));renderTimeline();}});
+$("#tlq").addEventListener("input",e=>{tlQ=e.target.value.trim().toLowerCase();renderTimeline();});
+$("#tlbasis").addEventListener("change",e=>{tlBasis=e.target.value;renderTimeline();});
+function tlDateLabel(r){
+  const d=TLBYID[r.id].dates[tlBasis];
+  if(tlBasis==="archive") return d.label;
+  if(!d.start)return tlBasis==="disclosure"?"Disclosure unresolved":"Occurrence unknown";
+  const fmt=value=>new Date(value+"T00:00:00Z").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric",timeZone:"UTC"});
+  if(d.precision==="month")return new Date(d.start+"T00:00:00Z").toLocaleDateString("en-GB",{month:"short",year:"numeric",timeZone:"UTC"})+" · month only";
+  return fmt(d.start)+(d.end!==d.start?" – "+fmt(d.end):"");
+}
 const WHO = {};
 function whoFor(id){ if(!WHO[id]) WHO[id] = Math.random()<.5?"Joe":"Jill"; return WHO[id]; }
 const sourceHost = u => { try{ return new URL(u).hostname.replace(/^www\./,""); }catch(e){ return "source"; } };
@@ -267,11 +336,11 @@ function sourcePreview(r){
 function questionCards(r){
   const what = r.t;
   const how = shortSentence(r.cause || r.sum || 'Still being investigated.');
-  const conclusion = shortSentence(r.impact || r.limits || r.lesson || r.rca || 'Evidence is still limited.');
+  const conclusion = r.impact;
   return `<div class="qa-grid">
     <div class="qa"><span>What happened?</span><p>${esc(what)}</p></div>
     <div class="qa"><span>How did it happen?</span><p>${esc(how)}</p></div>
-    <div class="qa"><span>What can we conclude?</span><p>${esc(conclusion)}</p></div>
+    <div class="qa"><span>What can we conclude?</span><p>${esc(conclusion)}</p>${r.limits?`<p class="tl-limits"><b>Limits:</b> ${esc(r.limits)}</p>`:""}</div>
   </div>`;
 }
 function shareIcons(){
@@ -284,38 +353,48 @@ function shareIcons(){
 }
 function shareBox(r){
   const I=shareIcons();
-  const x=`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText(r))}&url=${encodeURIComponent(r.u)}`;
-  const li=`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(r.u)}`;
+  const x=`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText(r))}&url=${encodeURIComponent(recordURL(r))}`;
+  const li=`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(recordURL(r))}`;
   const em=`mailto:?subject=${encodeURIComponent(shareText(r))}&body=${encodeURIComponent(shareBody(r))}`;
   return `<div class="sharebox"><b>Post this incident</b><div class="share-row">
     <a class="share-btn" href="${esc(x)}" target="_blank" rel="noopener" aria-label="Post on X">${I.x}</a>
     <a class="share-btn" href="${esc(li)}" target="_blank" rel="noopener" aria-label="Share on LinkedIn">${I.linkedin}</a>
     <a class="share-btn" href="${esc(em)}" aria-label="Share by email">${I.email}</a>
-    <button class="share-btn" type="button" data-share="copy" data-id="${r.id}" aria-label="Copy summary and source">${I.copy}</button>
+    <button class="share-btn" type="button" data-share="copy" data-id="${r.id}" aria-label="Copy incident link and sources">${I.copy}</button>
   </div></div>`;
 }
 function mappingEvidence(r){
   if(!r.map) return "";
   const m=r.map;
-  return `<p class="rca"><b>Microtrends mapping${archive.settings.microtrends_review_mode==="draft"?" · draft":""}</b><br>${m.links.map(link=>`<a href="${esc(link.source)}" target="_blank" rel="noopener">${esc(link.company)} → ${esc(link.model)}${link.version?` (${esc(link.version)})`:""}</a>${link.quote?` · “${esc(link.quote)}”`:" · model not named"}`).join("<br>")}<br><a href="${esc(m.sources.attack)}" target="_blank" rel="noopener">${esc(m.attack)}</a>${m.attack_2?` → ${esc(m.attack_2)} (secondary)`:""}<br>Ran by ${esc(m.ran_by)} · Hit: ${esc(m.hit)}${m.harness?` · Harness: ${esc(m.harness)}`:""}<br>${esc(m.notes)}</p>`;
+  return `<p class="rca"><b>Microtrends mapping · ${esc(TLBYID[r.id].mapping_review)}</b><br>${m.links.map(link=>`<a href="${esc(link.source)}" target="_blank" rel="noopener">${esc(link.company)} → ${esc(link.model)}${link.version?` (${esc(link.version)})`:""}</a>${link.quote?` · “${esc(link.quote)}”`:" · model not named"}`).join("<br>")}<br><a href="${esc(m.sources.attack)}" target="_blank" rel="noopener">${esc(m.attack)}</a>${m.attack_2?` → ${esc(m.attack_2)} (secondary)`:""}<br>Ran by ${esc(m.ran_by)} · Hit: ${esc(m.hit)}${m.harness?` · Harness: ${esc(m.harness)}`:""}<br>${esc(m.notes)}</p>`;
 }
 function contextEvidence(r){
   if(!r.context)return "";
   const c=r.context, first=c.sources.filter(s=>c.disclosure.source_urls.includes(s.url));
   const period=c.occurrence.start?(c.occurrence.precision==="month"?c.occurrence.start.slice(0,7):c.occurrence.start+(c.occurrence.end!==c.occurrence.start?" – "+c.occurrence.end:"")):"Unknown";
-  return `<div class="nc-timeline-evidence"><b>Disclosure & operating context · ${esc(archive.settings.context_review_mode)}</b><p><b>Occurrence:</b> ${esc(period)} · ${esc(c.occurrence.precision)} precision<br>${esc(c.occurrence.note)}</p><p><b>Operating context:</b> ${esc(c.operating_context.kind)}<br>${esc(c.operating_context.note)}</p><p><b>Earliest checked disclosure:</b> ${first.length?first.map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.publisher)} · ${esc(s.published_on)}</a>`).join(" / "):"Unresolved"}<br>${esc(c.disclosure.note)}</p><p>${esc(c.unit_note)}</p>${c.developments.map(d=>`<p><b>${esc(d.date||"Undated")} · ${esc(d.kind)}</b><br>${esc(d.text)}<br>${esc(d.limits)} ${d.source_urls.map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener">Source ↗</a>`).join(" · ")}</p>`).join("")}</div>`;
+  return `<div class="nc-timeline-evidence"><b>Disclosure & operating context · ${esc(TLBYID[r.id].context_review)}</b><p><b>Occurrence:</b> ${esc(period)} · ${esc(c.occurrence.precision)} precision<br>${esc(c.occurrence.note)}</p><p><b>Operating context:</b> ${esc(c.operating_context.kind)}<br>${esc(c.operating_context.note)}</p><p><b>Earliest checked disclosure:</b> ${first.length?first.map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.publisher)} · ${esc(s.published_on)}</a>`).join(" / "):"Unresolved"}<br>${esc(c.disclosure.note)}</p><p>${esc(c.unit_note)}</p>${c.developments.map(d=>`<p><b>${esc(d.date||"Undated")} · ${esc(d.kind)}</b><br>${esc(d.text)}<br>${esc(d.limits)} ${d.source_urls.map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener">Source ↗</a>`).join(" · ")}</p>`).join("")}</div>`;
+}
+const landingLabel = value => ({sandbox:"Sandbox",company:"Company systems",world:"External systems",unknown:"Landing unknown"})[value];
+function sourceEvidence(r){
+  return `<div class="tl-sources"><h5>Sources · ${TLBYID[r.id].sources.length}</h5>${TLBYID[r.id].sources.map(s=>`<div><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)} ↗</a><small>${esc(s.label)}${s.date_label?` · Archive source label: ${esc(s.date_label)}`:""}</small>${s.audit?`<small>${esc(s.audit.kind)} · ${esc(s.audit.role)} · Published: ${esc(s.audit.published_on||"unknown")} · Updated: ${esc(s.audit.updated_on||"not established")}</small><p>${esc(s.audit.date_note)} · ${esc(s.audit.check)} · Checked ${esc(s.audit.checked_at.slice(0,10))}</p>`:'<small>Source chronology has not been assessed.</small>'}</div>`).join("")}</div>`;
+}
+function impactEvidence(r){
+  const a=TLBYID[r.id].impact, raw=r.impact_assessment;
+  if(!a)return '<p class="rca">Impact has not been assessed.</p>';
+  return `<p class="rca"><b>Impact assessment · ${esc(a.review_status)}</b><br>${a.score}/100 · ${esc(a.band)} · ${esc(a.evidence)} · ${esc(landingLabel(a.landed))}<br>${["damage","reach","reversal","landed"].map(k=>`${esc(k)}: ${esc(raw[k])}${a.estimated.includes(k)?" (estimated)":""} — ${esc(raw.why[k])}`).join("<br>")}</p>`;
 }
 function entryHTML(r){
-  const who = whoFor(r.id);
+  const who = whoFor(r.id), meta=TLBYID[r.id];
   return `<article class="ent" id="r-${r.id}">
-    <div><time>${esc(r.when||'Undated')}</time><span class="org">${coOf(r).map(c=>logoTile(c.k,c.n)).join("")}${esc(r.org)}</span></div>
+    <div><time>${esc(tlDateLabel(r))}</time><small class="tl-date-kind">${esc(tlBasis)}${tlBasis!=="archive"?` · ${esc(meta.context_review||"unassessed")}`:""}</small><span class="org">${coOf(r).map(c=>logoTile(c.k,c.n)).join("")}${esc(r.org)}</span></div>
     <div class="ent-main">
       <div>
         <span class="kind"><b>${esc(r.kind)}</b><i></i>${esc(r.set)}</span>
-        <h4>${esc(r.t)}</h4>
+        <h4><a href="#timeline/${encodeURIComponent(r.id)}" data-rec="${r.id}">${esc(r.t)}</a></h4>
         <div class="ent-meta"><span>${esc(r.tag)}</span><a href="${esc(r.u)}" target="_blank" rel="noopener">${esc(r.src)} ↗</a></div>
+        <div class="tl-assessment">${meta.impact?`<span>Impact ${meta.impact.score}/100 · ${esc(meta.impact.band)} · ${esc(meta.impact.review_status)}</span><span>${esc(meta.impact.evidence)} · ${esc(landingLabel(meta.impact.landed))}</span>`:'<span>Impact unassessed</span>'}</div>
         <div class="ent-grid">${sourcePreview(r)}</div>
-        <details class="thr"><summary><i>+</i>Evidence & timeline</summary><p class="sum">${esc(r.sum)}</p>${r.th&&r.th.length?`<ol>${r.th.map(t=>`<li><span>${esc(t[0])}</span><b>${esc(t[1])}</b>${esc(t[2])}</li>`).join("")}</ol>`:""}<p class="rca">${esc(r.rca)}</p>${mappingEvidence(r)}${contextEvidence(r)}</details>
+        <details class="thr"><summary><i>+</i>Evidence & timeline</summary><p class="sum">${esc(r.sum)}</p>${r.th&&r.th.length?`<ol>${r.th.map(t=>`<li><span>${esc(t[0])}</span><b>${esc(t[1])}</b>${esc(t[2])}</li>`).join("")}</ol>`:""}<p class="rca">${esc(r.rca)}</p>${meta.contributions.map(c=>`<p class="rca"><a href="${esc(REPO)}/issues/${c.issue_number}" target="_blank" rel="noopener">Contribution #${c.issue_number} ↗</a> · ${esc(c.operation)} · publication ${esc(c.publication_id)}</p>`).join("")}${impactEvidence(r)}${mappingEvidence(r)}${contextEvidence(r)}${sourceEvidence(r)}</details><button class="tl-correction" type="button" data-correction="${r.id}">Suggest a correction →</button>
       </div>
       <aside class="ent-summary">
         <div class="at-glance"><div class="at-glance-h"><b>At a glance</b><span>PLAIN LANGUAGE</span></div>${questionCards(r)}</div>
@@ -327,23 +406,32 @@ function entryHTML(r){
     </div></article>`;
 }
 function renderTimeline(){
-  const rows = REC.filter(r=>(tlScope==="all"||r.scope===tlScope) && coMatch(r) && (!tlQ || (r.t+" "+r.sum+" "+r.org+" "+r.tag+" "+r.set).toLowerCase().includes(tlQ)));
-  const groups = {};
-  rows.forEach(r=>{const y=r.d?r.d.slice(0,4):"Undated"; (groups[y]=groups[y]||[]).push(r);});
-  const years = Object.keys(groups).sort((a,b)=>a==="Undated"?1:b==="Undated"?-1:b.localeCompare(a));
-  $("#yidx").innerHTML = years.map((y,i)=>`<a href="#" data-y="${y}" class="${i===0?"on":""}">${y}<span>${groups[y].length}</span></a>`).join("");
-  $("#tlist").innerHTML = years.length ? years.map(y=>`<div class="yr" id="y-${y}"><h3>${y}</h3><span class="sl">/</span><span class="c">${groups[y].length} record${groups[y].length>1?"s":""}</span><hr></div>`+groups[y].sort((a,b)=>b.d.localeCompare(a.d)).map(entryHTML).join("")).join("") : `<div class="empty">No records match. Try another word, or report what you found on GitHub.</div>`;
+  renderCoRow();
+  const rows=tlCandidates().filter(coMatch), groups={};
+  rows.forEach(r=>{const d=TLBYID[r.id].dates[tlBasis];const y=d.start?d.start.slice(0,4):"Unknown";(groups[y]=groups[y]||[]).push(r);});
+  const years=Object.keys(groups).sort((a,b)=>a==="Unknown"?1:b==="Unknown"?-1:b.localeCompare(a));
+  const sourceCount=new Set(rows.flatMap(r=>TLBYID[r.id].sources.map(s=>s.url))).size;
+  $("#tlcounts").innerHTML=`<div><b class="mono">${rows.length}</b>Matching records</div><div><b class="mono">${years.filter(y=>y!=="Unknown").length}</b>Dated years</div><div><b class="mono">${sourceCount}</b>Unique source URLs</div>`;
+  const notes={archive:"Archive order preserves the original sorting dates; these can mix event and report dates.",occurrence:"Occurrence dates retain source precision. Ranges are grouped by their start year.",disclosure:"Earliest checked disclosure is not necessarily the first public report."};
+  $("#tlstatus").textContent=`Publication ${archive.publication.id} · ${rows.length} of ${REC.length} records · ${groups.Unknown?.length||0} with unknown dates. ${notes[tlBasis]} Sources and draft assessments remain visible in each record.`;
+  $("#yidx").innerHTML=years.map((y,i)=>`<a href="#y-${y}" data-y="${y}" class="${i===0?"on":""}">${y}<span>${groups[y].length}</span></a>`).join("");
+  $("#tlist").innerHTML=years.length?years.map(y=>`<div class="yr" id="y-${y}"><h3>${y}</h3><span class="sl">/</span><span class="c">${groups[y].length} record${groups[y].length===1?"":"s"}</span><hr></div>`+groups[y].sort((a,b)=>(TLBYID[b.id].dates[tlBasis].start||"").localeCompare(TLBYID[a.id].dates[tlBasis].start||"")||a.id.localeCompare(b.id)).map(entryHTML).join("")).join(""):'<div class="empty">No records match these filters. Clear the search or select another maker or scope.</div>';
 }
 $("#yidx").addEventListener("click",e=>{const a=e.target.closest("a"); if(!a) return; e.preventDefault(); $$("#yidx a").forEach(x=>x.classList.toggle("on",x===a)); const t=document.getElementById("y-"+a.dataset.y); t&&t.scrollIntoView({behavior:"smooth"});});
 function openRecord(id){
-  tlScope="all"; tlCo="all"; renderCoRow(); tlQ=""; $("#tlq").value=""; $$("#tlseg button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.k==="all"));
-  renderTimeline(); go("timeline",{keepScroll:true});
+  if(!BYID[id]){go("timeline");$("#tlstatus").textContent="This incident is not in the current publication.";return;}
+  tlScope="all"; tlCo="all"; tlQ=""; $("#tlq").value=""; $$("#tlseg button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.k==="all"));
+  renderTimeline(); go("timeline",{keepScroll:true,record:id});
   const el=document.getElementById("r-"+id); if(!el) return;
   const d=el.querySelector("details"); if(d) d.open=true;
   el.classList.add("flash"); setTimeout(()=>el.classList.remove("flash"),2500);
   setTimeout(()=>el.scrollIntoView({behavior:"smooth",block:"start"}),30);
 }
-renderCoRow(); renderTimeline();
+renderTimeline();
+$("#tlist").addEventListener("click",e=>{
+  const link=e.target.closest("[data-rec]");
+  if(link){e.preventDefault();openRecord(link.dataset.rec);}
+});
 
 /* ================= SIGNALS ================= */
 // X and Reddit posts are illustrative samples with invented handles. "In the wild" rows are real records.
@@ -833,38 +921,21 @@ const plain = t => (PLAIN.find(([re])=>re.test(t))||[0,t])[1];
 const firstSentence = t => { const m = String(t).match(/^.*?[.!?](\s|$)/); return (m?m[0]:t).trim(); };
 function wrap(text, max){ const w=String(text).split(/\s+/), out=[]; let line=""; w.forEach(x=>{ if((line+" "+x).trim().length>max){ if(line) out.push(line); line=x; } else line=(line+" "+x).trim(); }); if(line) out.push(line); return out; }
 
-const MONS={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
-function pdate(t){ const m=String(t).match(/(\d{1,2})?[^A-Za-z0-9]*?(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+(\d{4})/); if(m) return Date.UTC(+m[3],MONS[m[2].toLowerCase()],m[1]?+m[1]:15); return null; }
 const shortDate = t => String(t).replace(/·.*$/,"").replace(/ onward/,"+").trim();
 let J = null, joeTimer=null, joeReturn=null;
 function joeLayout(r){
-  const real=isReal(r), W=940, H=230, base=128;
-  const th=(r.th||[]).map(t=>({date:t[0], title:t[1], text:t[2]}));
-  const wallX = real?210:W-250;
-  const [x0,x1] = real?[wallX+80,W-80]:[250,wallX-70];
-  let xs;
-  const ds=th.map(e=>pdate(e.date));
-  if(th.length===1) xs=[(x0+x1)/2];
-  else if(ds.every(d=>d!==null) && ds[ds.length-1]>ds[0]){
-    xs=ds.map(d=>x0+(d-ds[0])/(ds[ds.length-1]-ds[0])*(x1-x0));
-    for(let i=1;i<xs.length;i++) if(xs[i]-xs[i-1]<150){ xs=null; break; }
-  }
-  if(!xs) xs=th.map((_,i)=>x0+i*(x1-x0)/Math.max(1,th.length-1));
-  const steps=[{x:62, date:"", title:"The task begins", text:`${r.kind} · ${r.org} · ${r.set.toLowerCase()}.`}].concat(th.map((e,i)=>Object.assign(e,{x:xs[i]})));
-  return {real,W,H,base,wallX,steps};
+  const W=940, H=230, base=100;
+  const th=(r.th||[]).map(t=>({date:t[0],title:t[1],text:t[2]}));
+  const steps=[{date:"",title:"Record context",text:`${r.kind} · ${r.org} · ${r.set}.`}].concat(th).map((step,i,all)=>({...step,x:85+i*770/Math.max(1,all.length-1)}));
+  return {W,H,base,steps};
 }
+
 function joeSVG(r,L){
   const acc=css("--accent"), ink=css("--ink"), ink2=css("--ink-2"), muted=css("--muted"), line=css("--line-2"), bad=css("--bad"), bg=css("--panel");
-  const {real,W,H,base,wallX,steps}=L;
-  let g=`<defs>
-    <linearGradient id="jw" x1="0" x2="1"><stop offset="0" stop-color="${bad}" stop-opacity="0"/><stop offset="1" stop-color="${bad}" stop-opacity=".12"/></linearGradient>
-    <linearGradient id="jwall" x1="0" x2="1"><stop offset="0" stop-color="${real?bad:ink2}" stop-opacity="0"/><stop offset=".5" stop-color="${real?bad:ink2}" stop-opacity="${real?.35:.18}"/><stop offset="1" stop-color="${real?bad:ink2}" stop-opacity="0"/></linearGradient></defs>`;
-  if(real) g+=`<rect x="${wallX}" y="8" width="${W-wallX}" height="${H-16}" rx="18" fill="url(#jw)"/>`;
-  g+=`<rect x="${wallX-9}" y="14" width="18" height="${H-28}" fill="url(#jwall)"/>`;
-  g+=`<text x="${wallX-18}" y="30" text-anchor="end" font-size="12.5" fill="${muted}">In the lab</text><text x="${wallX+18}" y="30" font-size="12.5" fill="${real?bad:muted}" ${real?'':'opacity=".6"'}>Out in the world</text>`;
+  const {W,H,base,steps}=L;
+  let g=`<text x="40" y="24" font-size="12" fill="${muted}">Source-reported sequence · spacing does not represent elapsed time</text>`;
   g+=`<line x1="40" x2="${W-40}" y1="${base}" y2="${base}" stroke="${line}" stroke-width="1.5" stroke-dasharray="1 6" stroke-linecap="round"/>`;
   g+=`<line id="jprog" x1="${steps[0].x}" x2="${steps[0].x}" y1="${base}" y2="${base}" stroke="${acc}" stroke-width="2.5" stroke-linecap="round" style="transition:x2 .7s ease"/>`;
-  if(!real) g+=`<text x="${(wallX+W)/2+10}" y="${base+5}" text-anchor="middle" font-size="13" fill="${muted}" opacity=".7">never got this far</text>`;
   steps.forEach((s,i)=>{
     const lines=wrap(s.title, 22).slice(0,3);
     g+=`<g class="jev" data-i="${i}" style="cursor:pointer">
@@ -897,17 +968,17 @@ function playJoe(){ stopJoe(); const n=J.L.steps.length; if(J.i>=n-1) J.i=0;
   joeTimer=setInterval(()=>{ if(J.i>=n-1){ stopJoe(); setJoeStep(J.i); return; } setJoeStep(J.i+1); if(J.i>=n-1){ stopJoe(); setJoeStep(J.i);} }, 1900); setJoeStep(J.i); }
 function openJoe(id, who){
   const r=BYID[id]; J={r, i:0, L:joeLayout(r)}; joeReturn=document.activeElement;
-  const real=isReal(r), unknown=/not /i.test(r.loss||"");
+  const impact=TLBYID[r.id].impact, unknown=/not /i.test(r.loss||"");
   $("#joe-who").textContent = `${who||"Joe"}, the short version`;
   $("#joe-title").textContent = r.t;
-  $("#joe-meta").innerHTML = `${esc(r.when)}<i></i>${esc(r.org)}<i></i><b class="${real?"hot":"cool"}">${real?"Reached the real world":"Stayed in the lab"}</b>`;
+  $("#joe-meta").innerHTML = `${esc(r.when)}<i></i>${esc(r.org)}<i></i><b>${impact?esc(landingLabel(impact.landed))+" · "+esc(impact.review_status):"Impact unassessed"}</b>`;
   $("#joe-flow").innerHTML = joeSVG(r, J.L);
   $("#joe-facts").innerHTML = `
     <div><span>What broke</span><b>${esc(plain(r.tag))}</b><p>${esc(firstSentence(r.cause||r.sum))}</p></div>
-    <div><span>What it hit</span><b>${esc(r.impact||r.tag)}</b><p>${esc(firstSentence(r.limits||""))}</p></div>
+    <div><span>What it hit</span><b>${esc(r.impact||r.tag)}</b><p>${esc(r.limits)}</p></div>
     <div><span>Cost</span><b class="${unknown?"dim":""}">${esc(r.loss||"Not disclosed")}</b><p>${unknown?"Unknown isn't the same as zero.":"As reported in the sources."}</p></div>`;
   $("#joe-lesson").innerHTML = r.lesson?`<span>Takeaway</span><q>${esc(r.lesson)}</q>`:"";
-  $("#joe-srcs").innerHTML = (r.srcs&&r.srcs.length?r.srcs:[[r.org,"Original source",r.u,r.when]]).map(s=>`<a href="${esc(s[2])}" target="_blank" rel="noopener"><span>${esc(s[0].split(" · ")[0])}${s[3]?` · ${esc(s[3])}`:""}</span>${esc(s[1])} ↗</a>`).join("");
+  $("#joe-srcs").innerHTML=TLBYID[r.id].sources.map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener"><span>${esc(s.label)}</span>${esc(s.title)} ↗</a>`).join("");
   $("#joe").hidden=false; document.body.style.overflow="hidden";
   setJoeStep(0); $("#joe-close").focus();
   if(!window.matchMedia("(prefers-reduced-motion: reduce)").matches) setTimeout(()=>{ if(!$("#joe").hidden) playJoe(); }, 500);
@@ -928,7 +999,7 @@ $("#joe-record").addEventListener("click",()=>{ const id=J.r.id; closeJoe(); ope
 
 /* ================= MISSION ================= */
 const PHASES=[{id:"ignition",n:"01",name:"Ignition",live:true},{id:"liftoff",n:"02",name:"Liftoff"},{id:"orbit",n:"03",name:"Orbit"},{id:"escape",n:"04",name:"Escape velocity"},{id:"interplanetary",n:"05",name:"Interplanetary"}];
-const IGN=[{name:"The record",d:"Verified agent incidents, sourced.",s:"live",l:"Live"},{name:"Ask",d:"Questions answered from the record.",s:"live",l:"Live"},{name:"Attack library",d:"Open catalogue of attacks on agents.",s:"",l:"Opening"},{name:"Signals",d:"Chatter from X and Reddit, labeled.",s:"",l:"Building"},{name:"Dispatch",d:"One email. Every Monday.",s:"",l:"Building"}];
+const IGN=[{name:"The record",d:"Sourced incidents, with evidence and limits.",s:"live",l:"Live"},{name:"Ask",d:"Questions answered from the record.",s:"live",l:"Live"},{name:"Attack library",d:"Open catalogue of attacks on agents.",s:"",l:"Opening"},{name:"Signals",d:"Chatter from X and Reddit, labeled.",s:"",l:"Building"},{name:"Dispatch",d:"One email. Every Monday.",s:"",l:"Building"}];
 const LOCK='<svg class="lock" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.6"/></svg>';
 let ph="ignition";
 function renderPhases(){
@@ -942,7 +1013,15 @@ renderPhases();
 
 /* ---------- boot ---------- */
 setMode(document.body.getAttribute("data-mode")||"dark");
-go((location.hash||"").replace("#","")||"ask",{});
+function routeHash(){
+  const hash=location.hash.slice(1);
+  if(hash.startsWith("timeline/")){
+    let id;try{id=decodeURIComponent(hash.slice(9));}catch{go("timeline");return;}
+    openRecord(id);
+  }else go(hash||"ask",{});
+}
+window.addEventListener("hashchange",routeHash);
+routeHash();
 })().catch(()=>{
   const message=document.createElement("p");
   message.className="note";

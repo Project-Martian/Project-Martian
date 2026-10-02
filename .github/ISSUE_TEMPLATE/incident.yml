@@ -1,24 +1,31 @@
-name: Report an incident
-description: Add a sourced AI agent safety or security incident.
+name: Report an incident or correction
+description: One sourced public incident, or a correction to one existing record.
 title: "[Incident] "
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for contributing to Project Martian. This is a public review thread, not a published incident.
+        Search existing issues and the Timeline first. Include public evidence only; remove credentials, private data and personal details.
+        Maintainers verify sources and approve the structured record before completing the issue for publication.
   - type: input
     id: source
     attributes:
       label: Public source URL
+      description: A disclosure, original investigation, documented study or credible report.
     validations:
       required: true
-  - type: input
+  - type: textarea
     id: date
     attributes:
-      label: Event or report date
-      description: Specify which date the source establishes.
+      label: Event and report dates
+      description: Keep occurrence and source publication dates separate. Use unknown where the evidence does not establish a date.
     validations:
       required: true
   - type: textarea
     id: summary
     attributes:
       label: What happened and what remains uncertain
-      description: Include the affected product and evidence limits. Do not include credentials or customer data.
+      description: Include contribution type, product, observed effects, evidence limits, additional URLs, and the existing incident ID for corrections. Describe controlled demonstrations as such.
     validations:
       required: true

@@ -86,6 +86,22 @@ Microtrends publications additionally validate catalog membership, maker/model/v
 
 Narrative and Comparison publications additionally validate context coverage for every agent record, occurrence precision, checked source chronology, development citations and context reviews. Use the [context preparation and review workflow](narrative-comparison.md#prepare-review-and-publish). Any draft impact, mapping or context review mode requires `--allow-draft`; their approvals remain independent. Building the application does not apply the checked-in audit to PostgreSQL.
 
+## Contribution worker
+
+Follow [maintainer review and publication](../CONTRIBUTING.md#maintainer-review-and-publication) to prepare, verify and approve an issue. Run migration `002_contribution_publications.sql` before starting the updated API or worker. Existing records and publication hashes do not change during migration.
+
+The worker requires a separate GitHub token file, limited to Issues-read and Metadata-read on `Project-Martian/Project-Martian`. It performs only GitHub reads and never uses the browser's credentials or `gh` login automatically. Use the owner role only for the explicit publisher command:
+
+```sh
+# This command can publish eligible, completed issues; run only against the intended database.
+PGUSER=project_martian_owner PGPASSWORD_FILE="$MARTIAN_DB_SECRETS/owner-password" \
+  MARTIAN_GITHUB_TOKEN_FILE=/path/outside/repository/github-token \
+  node dist/backend/contribution-manage.js sync --issue 12
+# Omit --issue to scan all completed issues. This is the configured CronJob command.
+```
+
+`propose`, `check` and `format` use local public JSON files and need no database owner credential or GitHub token. `sync` verifies current GitHub review permissions, then atomically publishes and records the issue receipt. There is no automatic fact checking. Malformed, unapproved, stale or unsupported proposals fail closed; failed issue processing exits nonzero while independently eligible issues may succeed. Normal later scheduled scans repeat checks for issues without receipts. Owner/passwords and the GitHub token are never mounted in the web pod. The [Helm guide](../../martian-helm-charts/docs/project-martian.md#github-contribution-publication) owns deployment and operational prerequisites; this change does not enable production polling.
+
 ## Verification
 
 ```sh

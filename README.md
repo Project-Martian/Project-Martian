@@ -4,7 +4,7 @@ An independent public incident publication with Trends, Microtrends, Rogue Index
 
 A Node.js application serves the existing HTML/CSS/JavaScript desktop UI and same-origin APIs. Its dedicated PostgreSQL database owns published records, source links, timelines, company/model relationships, Radar data and display settings. The frontend reads the API. Initial JSON files are import seeds, not live data stores.
 
-Production uses one application pod and one PostgreSQL pod in its own `project-martian` EKS namespace, with persistent storage and off-cluster backups. It has no Martian Security API, database, authentication or customer-data dependency. The cluster and ingress controller are shared infrastructure.
+Production uses one application pod and one PostgreSQL pod in its own `project-martian` EKS namespace, with persistent storage and off-cluster backups. It owns its runtime, database and credentials independently; it does not use another product's API or customer data. The cluster and ingress controller are shared infrastructure.
 
 See [architecture and data ownership](docs/architecture.md), [local setup and publishing](docs/usage.md), [Rogue Index scoring and review](docs/rogue-index.md), [Microtrends mapping and review](docs/microtrends.md), [Narrative and Comparison](docs/narrative-comparison.md), [Ask and guardrails](docs/ask.md), [contributing](CONTRIBUTING.md) and [publication principles](MANIFESTO.md). The separate [Helm deployment guide](../martian-helm-charts/docs/project-martian.md) owns cloud prerequisites, releases and restore operations.
 
@@ -15,3 +15,5 @@ Automatic database failover, cluster NetworkPolicy enforcement and backup alert 
 Rogue Index v1 implements incident impact scoring and a fixed-reference monthly index with the existing desktop chart. Microtrends derives maker/model/attack paths from source-linked record mappings, controlled catalogs and review history. The initial 44 assessments and 44 mappings are unreviewed drafts. An explicitly authorized draft release keeps that status visible; deployment approval does not count as human evidence review. See the Helm deployment guide for the verified live release.
 
 Narrative and Comparison implement audited disclosure sources, three account-development stories, and monthly or cumulative record counts by landing. Source chronology and operating context cover the 23 agent records; human review is pending. See the Helm deployment guide for the verified release and owner-only publication procedure.
+
+Timeline reads structured dates, model-maker mappings, source citations and review status from the published database snapshot. Contribute prepares a GitHub issue for human review. An optional publisher transfers completed, hash-approved issues into immutable database revisions with one receipt per issue; it requires separate configuration and deployment before it runs automatically. See [the contributor and maintainer guide](CONTRIBUTING.md).
