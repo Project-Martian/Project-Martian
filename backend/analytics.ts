@@ -1,6 +1,8 @@
 import type { Incident, Publication } from './types.js';
+import { microtrendsMetadata } from './microtrends.js';
+import { impactIndex } from './impact.js';
 
-// Migration of the existing browser calculations. This is NOT the proposed impact rubric.
+// Setting-based helpers remain for Narrative and Comparison.
 export const isReal = (r: Incident) => /real-world|third-party|reported/i.test(r.set);
 export function sourceType(url: string) {
   const host=(url.match(/^https?:\/\/([^/]+)/)||[,''])[1];
@@ -22,9 +24,11 @@ export function analytics(data: Publication) {
   }
   if(months.length<12) throw new Error('Legacy chart requires at least twelve months');
   const mkey=(y:number,m:number)=>`${y}-${String(m+1).padStart(2,'0')}`;
-  const raw=months.map(([y,m])=>dated.filter(r=>r.d.startsWith(mkey(y,m))).reduce((sum,r)=>sum+(/real-world/i.test(r.set)?3:isReal(r)?2:1),0));
-  const roll=raw.map((_,i)=>raw.slice(Math.max(0,i-2),i+1).reduce((a,b)=>a+b,0));
-  const mx=Math.max(...roll),idx=roll.map(v=>mx?Math.round(v/mx*100):0);
+  // Explicit legacy version support keeps existing publications reproducible.
+  const impact=data.settings.methodology_version==='impact-v1'?impactIndex(data,months):null;
+  const raw=impact?impact.series.map(row=>row.monthly_points):months.map(([y,m])=>dated.filter(r=>r.d.startsWith(mkey(y,m))).reduce((sum,r)=>sum+(/real-world/i.test(r.set)?3:isReal(r)?2:1),0));
+  const roll=impact?impact.series.map(row=>row.points):raw.map((_,i)=>raw.slice(Math.max(0,i-2),i+1).reduce((a,b)=>a+b,0));
+  const mx=Math.max(...roll),idx=impact?impact.series.map(row=>row.index):roll.map(v=>mx?Math.round(v/mx*100):0);
   const lastV=idx.at(-1)!,m6=idx.slice(-6).reduce((a,b)=>a+b,0)/6,p6=idx.slice(-12,-6).reduce((a,b)=>a+b,0)/6;
   const slope=Math.max(-3,Math.min(6,(m6-p6)/6));
   const fut=Array.from({length:6},(_,i)=>{const c=Math.max(0,Math.min(100,Math.round(lastV+(i+1)*slope)));
@@ -36,7 +40,7 @@ export function analytics(data: Publication) {
   const cumLab=months.map(([y,m])=>dated.filter(r=>r.d<=mkey(y,m)+'-31'&&!isReal(r)).length);
   const ir=months.map(([y,m])=>dated.filter(r=>r.d.startsWith(mkey(y,m))&&isReal(r)).length);
   const rr=ir.map((_,i)=>ir.slice(Math.max(0,i-2),i+1).reduce((a,b)=>a+b,0));
-  const realOnly=rr.map(v=>v/(Math.max(...rr)||1)*100*.8);
+  const realOnly=impact?impact.series.map(row=>row.real_world_index):rr.map(v=>v/(Math.max(...rr)||1)*100*.8);
   const count:Record<string,number>={};dated.forEach(r=>{const t=sourceType(r.u);count[t]=(count[t]||0)+1;});
   const narrative=Object.entries(count).sort((a,b)=>b[1]-a[1]);
   const h1=raw.slice(-6).reduce((a,b)=>a+b,0),h0=raw.slice(-12,-6).reduce((a,b)=>a+b,0);
@@ -45,9 +49,9 @@ export function analytics(data: Publication) {
   const rca:Record<string,number>={Full:0,Partial:0,None:0};
   agents.forEach(r=>{if(/causal/i.test(r.rca))rca.Full++;else if(/partial/i.test(r.rca))rca.Partial++;else rca.None++;});
   const y26=agents.filter(r=>r.d.startsWith('2026')).length,y25=agents.filter(r=>r.d.startsWith('2025')).length;
-  return {methodology_version:data.settings.methodology_version,months,raw,roll,idx,fut,futMonths,cumReal,cumLab,realOnly,
+  return {methodology_version:data.settings.methodology_version,impact,months,raw,roll,idx,fut,futMonths,cumReal,cumLab,realOnly,
     lastV,narrative,sourceTypes:Object.fromEntries(data.records.map(r=>[r.id,sourceType(r.u)])),
-    microtrends_as_of:data.settings.microtrends_as_of,
+    microtrends_as_of:data.settings.microtrends_as_of, microtrends:microtrendsMetadata(data),
     indicators:{growth:y26>y25?'Growing':y26<y25?'Declining':'Steady',speed:h1>h0*2?'Surging':h1>h0?'Rising':'Steady',
       volatility:cv<.6?'Low':cv<1.2?'Medium':'High',setting:agents.filter(isReal).length>training?'Real':'Training',
       disclosure:Object.entries(rca).sort((a,b)=>b[1]-a[1])[0][0],forecast:fut[5].c>lastV?'Growing':fut[5].c<lastV?'Declining':'Steady',

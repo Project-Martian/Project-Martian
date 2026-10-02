@@ -1,0 +1,86 @@
+[
+  {
+    "name": "Prompt injection",
+    "family": "Attacked from outside"
+  },
+  {
+    "name": "Tool or MCP poisoning",
+    "family": "Attacked from outside"
+  },
+  {
+    "name": "Jailbreak",
+    "family": "Attacked from outside"
+  },
+  {
+    "name": "Supply chain",
+    "family": "Attacked from outside"
+  },
+  {
+    "name": "Weaponized by attackers",
+    "family": "Attacked from outside"
+  },
+  {
+    "name": "Sandbox escape",
+    "family": "Went rogue"
+  },
+  {
+    "name": "Credential misuse",
+    "family": "Went rogue"
+  },
+  {
+    "name": "Unauthorized access",
+    "family": "Went rogue"
+  },
+  {
+    "name": "Unapproved actions",
+    "family": "Went rogue"
+  },
+  {
+    "name": "Destructive action",
+    "family": "Went rogue"
+  },
+  {
+    "name": "Data leakage",
+    "family": "Went rogue"
+  },
+  {
+    "name": "Deception",
+    "family": "Went rogue"
+  },
+  {
+    "name": "Agent collusion",
+    "family": "Went rogue"
+  },
+  {
+    "name": "Discrimination",
+    "family": "AI failure"
+  },
+  {
+    "name": "Harmful output",
+    "family": "AI failure"
+  },
+  {
+    "name": "Unsafe physical action",
+    "family": "AI failure"
+  },
+  {
+    "name": "Misidentification",
+    "family": "AI failure"
+  },
+  {
+    "name": "Privacy violation",
+    "family": "AI failure"
+  },
+  {
+    "name": "Forecasting failure",
+    "family": "AI failure"
+  },
+  {
+    "name": "Impersonation",
+    "family": "AI failure"
+  },
+  {
+    "name": "Evasion attack",
+    "family": "AI failure"
+  }
+]

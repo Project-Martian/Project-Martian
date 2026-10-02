@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { createHash } from 'node:crypto';
 import type { PoolClient } from 'pg';
 import type { Publication } from './types.js';
+import { mappingSchema, validateMappings } from './microtrends.js';
+import { impactSchema, validateAssessments } from './impact.js';
 
 const text = z.string();
 const isoDate = z.string().refine(value => value === '' || (/^\d{4}-\d{2}-\d{2}$/.test(value)
@@ -13,12 +15,17 @@ const recordSchema = z.object({
   when: text, set: text, kind: text, sum: text, tag: text, src: text, rca: text, u: sourceUrl,
   cause: text, clabel: text, lesson: text, loss: text, impact: text, limits: text,
   th: z.array(z.tuple([text,text,text])), srcs: z.array(z.tuple([text,text,sourceUrl,text])),
+  impact_assessment: impactSchema.optional(),
+  map: mappingSchema.optional(),
 }).catchall(z.unknown());
 const month = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
 const inputSchema = z.strictObject({
   repo: sourceUrl,
   settings: z.strictObject({chart_start: month,chart_end: month,microtrends_as_of: isoDate,
-    methodology_version: z.literal('legacy-setting-v1')}),
+    methodology_version: z.enum(['legacy-setting-v1','impact-v1']),
+    impact_review_mode: z.enum(['draft','reviewed']).optional(),
+    microtrends_version: z.literal('maker-model-attack-v1').optional(),
+    microtrends_review_mode: z.enum(['draft','reviewed']).optional()}),
   records: z.array(recordSchema).min(1).max(10000),
   microtrends: z.record(text,z.strictObject({p:z.array(z.tuple([text.min(1),text.min(1)])).min(1),act:text,exp:text,cat:text})),
   radar: z.strictObject({
@@ -42,6 +49,16 @@ export function validatePublication(value: unknown): Publication {
   const [endYear,endMonth]=result.settings.chart_end.split('-').map(Number);
   const months=(endYear-startYear)*12+endMonth-startMonth+1;
   if(months<12 || months>600) throw new Error('Chart calendar must contain 12–600 months');
+  if (result.settings.methodology_version === 'impact-v1'
+    && result.settings.impact_review_mode === undefined) {
+    throw new Error('Impact methodology requires explicit review mode');
+  }
+  if (result.settings.methodology_version === 'legacy-setting-v1'
+    && result.settings.impact_review_mode !== undefined) {
+    throw new Error('Impact settings require impact-v1');
+  }
+  validateAssessments(result as Publication);
+  validateMappings(result as Publication);
   return result as Publication;
 }
 

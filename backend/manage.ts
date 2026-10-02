@@ -4,7 +4,7 @@ import { parseArgs } from 'node:util';
 import { createPool, readSnapshot } from './database.js';
 import { publish, validatePublication, publicationHash } from './publication.js';
 
-const {positionals,values}=parseArgs({allowPositionals:true,options:{actor:{type:'string'},reason:{type:'string'}}});
+const {positionals,values}=parseArgs({allowPositionals:true,options:{actor:{type:'string'},reason:{type:'string'},'allow-draft':{type:'boolean'}}});
 const [command,file]=positionals;
 const pool=await createPool();
 try {
@@ -37,6 +37,9 @@ try {
       ? validatePublication({...JSON.parse(await readFile(new URL('../../data/publication-seed.json',import.meta.url),'utf8')),
           records:JSON.parse(await readFile(new URL('../../data/records.json',import.meta.url),'utf8'))})
       : validatePublication(JSON.parse(await readFile(file || '', 'utf8')));
+    if((data.settings.impact_review_mode==='draft'||data.settings.microtrends_review_mode==='draft')&&!values['allow-draft']) {
+      throw new Error('Draft publication requires --allow-draft; use only for an explicitly labelled review preview');
+    }
     const actor=values.actor || (command==='import' ? 'legacy-archive-import' : '');
     const reason=values.reason || (command==='import' ? 'Preserve existing published records, chart methodology and labelled Radar samples' : '');
     const client=await pool.connect();
