@@ -767,6 +767,7 @@ footer{border-top:1px solid var(--line);padding-block:26px 40px}
       <div class="convo" id="convo" aria-live="polite"></div>
       <p class="note" id="asknote">Connecting to Ask. Answers use the incident record and reject unrelated questions.</p>
       <div class="strip" id="strip"></div>
+      <p class="note" id="publication-note"></p>
     </div>
   </section>
 
@@ -891,7 +892,7 @@ footer{border-top:1px solid var(--line);padding-block:26px 40px}
         </form>
         <aside class="contrib-guide" aria-label="Contribution guide">
           <span class="eyebrow">The contribution guide</span><h3>Evidence first.<br>People review it.</h3>
-          <ol><li><b>Check the archive</b><p>Search Timeline first. Add new evidence to an existing record instead of reporting the same event twice.</p><a href="#timeline" data-go="timeline">Browse the timeline →</a></li><li><b>Write one sourced report</b><p>Separate what happened from what the source claims. Keep occurrence and disclosure dates distinct. Unknown is a useful answer.</p></li><li><b>Follow your GitHub issue</b><p>Your issue is the review thread. The team checks the sources, resolves duplicates and prepares the structured incident.</p></li><li><b>Approval before publication</b><p>Once verified, the team approves the final record and marks the issue Done. The publication worker adds that record to the database and keeps the issue linked.</p></li></ol>
+          <ol><li><b>Check the archive</b><p>Search Timeline first. Add new evidence to an existing record instead of reporting the same event twice.</p><a href="#timeline" data-go="timeline">Browse the timeline →</a></li><li><b>Write one sourced report</b><p>Separate what happened from what the source claims. Keep occurrence and disclosure dates distinct. Unknown is a useful answer.</p></li><li><b>Follow your GitHub issue</b><p>Your issue is the review thread. The team checks the sources, resolves duplicates and prepares the structured incident.</p></li><li><b>Approval before publication</b><p>After evidence review, the team approves the final record and marks the issue Done. The publication worker adds that record to the database and keeps the issue linked.</p></li></ol>
           <form id="contribution-status-form" class="contrib-status-form"><label>Already submitted? Enter your issue number<input id="contribution-issue" type="number" min="1" max="999999999" step="1" required placeholder="e.g. 12"></label><button class="inline-cta" type="submit">Check publication</button><p id="contribution-result" role="status"></p></form>
           <p class="contrib-example"><b>Useful reports include</b><br>Public incidents, documented research demonstrations, corrections and source follow-ups. Describe evidence and effects; do not include attack instructions for live systems.</p>
           <a class="repo-path" data-path="/blob/main/CONTRIBUTING.md" href="#" target="_blank" rel="noopener">Full contributor & review guide ↗</a>
@@ -908,7 +909,7 @@ footer{border-top:1px solid var(--line);padding-block:26px 40px}
       <div class="docs-grid">
         <div class="doc-card"><span>01 · RECORD</span><h3>How an incident gets added</h3><p>Source → evidence check → plain-language summary → uncertainty label → historical record.</p><a class="repo-path" data-path="/blob/main/CONTRIBUTING.md" href="#" target="_blank" rel="noopener">Methodology ↗</a></div>
         <div class="doc-card"><span>02 · CONTRIBUTE</span><h3>Contribution guide</h3><p>Report cases, check sources, and suggest corrections or follow-ups.</p><a class="repo-path" data-path="/blob/main/CONTRIBUTING.md" href="#" target="_blank" rel="noopener">CONTRIBUTING.md ↗</a></div>
-        <div class="doc-card"><span>03 · DATA</span><h3>Dataset & schema</h3><p>Structured incident fields, source links, dates, failure types, impact, and limits.</p><a href="/api/incidents" target="_blank" rel="noopener">Published records API ↗</a></div>
+        <div class="doc-card"><span>03 · DATA</span><h3>Dataset & schema</h3><p>Structured incident fields, source links, dates, failure types, impact, and limits.</p><a href="/api/incidents" target="_blank" rel="noopener">Published records API ↗</a><br><a href="/data/records.json" download="project-martian-records.json">Download records JSON ↓</a></div>
         <div class="doc-card"><span>04 · PRINCIPLES</span><h3>Manifesto</h3><p>Evidence over hype. Open by default. Contributors are credited. Safety is built in public.</p><a class="repo-path" data-path="/blob/main/MANIFESTO.md" href="#" target="_blank" rel="noopener">Manifesto.md ↗</a></div>
       </div>
       <div class="docs-roadmap">
@@ -945,7 +946,7 @@ footer{border-top:1px solid var(--line);padding-block:26px 40px}
   <div class="wrap foot">
     <a class="brand" href="#ask" data-go="ask"><svg><use href="#mark"/></svg><b>Project <span>Martian</span></b></a>
     <span>Open source. Built in public.</span>
-    <div class="fl"><a class="repo" href="#" target="_blank" rel="noopener">GitHub ↗</a><a class="repo-path" data-path="/blob/main/MANIFESTO.md" href="#" target="_blank" rel="noopener">Manifesto.md ↗</a><a class="repo-path" data-path="/blob/main/LICENSE" href="#" target="_blank" rel="noopener">License ↗</a></div>
+    <div class="fl"><a class="repo" href="#" target="_blank" rel="noopener">GitHub ↗</a><a class="repo-path" data-path="/blob/main/MANIFESTO.md" href="#" target="_blank" rel="noopener">Manifesto.md ↗</a></div>
   </div>
 </footer>
 <script>
@@ -1078,7 +1079,9 @@ document.addEventListener("click",e=>{
 /* ---------- stats ---------- */
 const latest = AGENTS.filter(r=>r.d).sort((a,b)=>b.d.localeCompare(a.d))[0];
 const y26 = AGENTS.filter(r=>r.d.startsWith("2026")).length, y25 = AGENTS.filter(r=>r.d.startsWith("2025")).length;
-$("#strip").innerHTML = `<div><b class="mono">${REC.length}</b>Records</div><div><b class="mono">${AGENTS.length}</b>Agent incidents</div><div><b class="mono">${y26}</b>In 2026</div><div><b>${esc(latest.when.replace(/^Reported /,""))}</b>Latest</div>`;
+$("#strip").innerHTML = `<div><b class="mono">${REC.length}</b>Records</div><div><b class="mono">${AGENTS.length}</b>Agent incidents</div><div><b class="mono">${y26}</b>In 2026</div><div><b>${esc(latest.when.replace(/^Reported /,""))}</b>Latest dated agent record</div>`;
+const publishedAt = new Date(archive.publication.published_at).toLocaleString("en-GB", {day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"UTC"});
+$("#publication-note").textContent = `Publication ${archive.publication.id} · Published ${publishedAt} UTC. Incident dates and evidence review dates are separate.`;
 
 /* ================= ASK ================= */
 const QUESTIONS = [
@@ -1393,7 +1396,7 @@ let sigSrc="all", sigSel=0;
 const SRCS=[["all","All"],["x","X"],["r","Reddit"],["w","In the wild"]];
 $("#sigseg").innerHTML = SRCS.map(([k,l])=>`<button type="button" data-k="${k}" aria-pressed="${k==="all"}">${l}</button>`).join("");
 function feedItems(){ const all=[...SAMPLE_POSTS,...wild]; return sigSrc==="all"?all:all.filter(p=>p.s===sigSrc); }
-const STL={unv:"Unverified",lnk:"Linked",con:"Confirmed",noise:"Filtered as noise"};
+const STL={unv:"Unverified",lnk:"Linked",con:"In the record",noise:"Filtered as noise"};
 function renderFeed(){
   const items=feedItems(); if(sigSel>=items.length) sigSel=0;
   $("#feed").innerHTML = items.map((p,i)=>`<div class="post ${i===sigSel?"sel":""}" data-i="${i}" tabindex="0">
@@ -1442,7 +1445,7 @@ function band(xs,lo,hi){ const top=xs.map((x,i)=>[x,hi[i]]), bot=xs.map((x,i)=>[
 const TT = [["micro","Microtrends"],["impact","Rogue Index"],["narrative","Narrative"],["compare","Comparison"]];
 $("#ttabs").innerHTML = TT.map(([k,l])=>`<button class="ttab" role="tab" data-k="${k}" aria-selected="${k===ttab}">${l}</button>`).join("");
 $("#ttabs").addEventListener("click",e=>{const b=e.target.closest(".ttab"); if(!b) return; ttab=b.dataset.k; $$("#ttabs .ttab").forEach(x=>x.setAttribute("aria-selected",x===b)); renderTrendPanel();});
-$("#qupd").textContent = "Last updated " + (latest ? latest.when.replace(/^Reported /,"") : "");
+$("#qupd").textContent = "Latest dated agent record " + (latest ? latest.when.replace(/^Reported /,"") : "");
 
 // Indicators use the same published revision as the chart and records.
 (function(){
