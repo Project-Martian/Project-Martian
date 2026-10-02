@@ -45,8 +45,8 @@ function canonical(value: unknown): string {
 export function assessmentHash(record: Incident) {
   if (!record.impact_assessment) throw new Error('Missing impact assessment: ' + record.id);
   const {reviews: _reviews, ...assessment} = record.impact_assessment;
-  // Mapping review and impact review are independent; both still bind to the incident evidence.
-  const {map: _map, ...evidence} = record;
+  // Annotation reviews are independent; each still binds to the original incident evidence.
+  const {map: _map, context: _context, ...evidence} = record;
   return createHash('sha256').update(canonical({...evidence, impact_assessment: assessment})).digest('hex');
 }
 

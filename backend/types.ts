@@ -1,5 +1,6 @@
 import type { IncidentMapping } from './microtrends.js';
 import type { ImpactAssessment } from './impact.js';
+import type { IncidentContext } from './context.js';
 
 export interface Incident {
   id: string; d: string; scope: 'agents' | 'other-ai' | 'automation';
@@ -10,6 +11,7 @@ export interface Incident {
   srcs: [string, string, string, string][];
   impact_assessment?: ImpactAssessment;
   map?: IncidentMapping;
+  context?: IncidentContext;
   [key: string]: unknown;
 }
 export interface Microtrend { p: [string, string][]; act: string; exp: string; cat: string }
@@ -23,7 +25,8 @@ export interface Publication {
   settings: { chart_start: string; chart_end: string; microtrends_as_of: string;
     methodology_version: 'legacy-setting-v1' | 'impact-v1';
     impact_review_mode?: 'draft' | 'reviewed';
-    microtrends_version?: 'maker-model-attack-v1'; microtrends_review_mode?: 'draft' | 'reviewed' };
+    microtrends_version?: 'maker-model-attack-v1'; microtrends_review_mode?: 'draft' | 'reviewed';
+    context_version?: 'disclosure-comparison-v1'; context_review_mode?: 'draft' | 'reviewed'; context_as_of?: string };
   records: Incident[];
   microtrends: Record<string, Microtrend>;
   radar: { signals: Signal[]; clusters: Cluster[] };

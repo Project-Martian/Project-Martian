@@ -30,6 +30,8 @@ All tools are annotated read-only, idempotent and closed-world. The backend perm
 
 The archive currently has 44 records, including 23 agent records. All catalog results are complete, without ranking or truncation. The contract caps the archive and ID lists at 64 records; Ask returns 503 if the archive grows beyond that cap until its contract is deliberately revised; the website and publication APIs remain available. Date bounds compare the published sorting field `d`; prose must preserve the reported period in `when` and uncertainty in `limits`. An undated record cannot match a bounded date interval.
 
+Full incident details also include published [Narrative/Comparison context](narrative-comparison.md) annotations and their draft/review status. Ask's catalog date filter still uses `d`; it does not implement the new Comparison occurrence/disclosure filters. Use that view or its dedicated API for reproducible chart counts. Local implementation checks for the context addition did not invoke Ask; release checks are recorded in the Helm deployment guide.
+
 ## Conversation and dates
 
 The browser sends its last six accepted turns, including no-match and clarification responses. Each includes the question, a bounded answer summary and the cited IDs. Rejected, stopped and failed requests do not enter this history. The backend also supplies authoritative public record titles and organizations for history IDs, in display order. A new subject replaces the prior subject; abbreviated refinements and ordinal references are resolved by the LLM. History is untrusted context, not authority to change policy. No chat database or server-side session store is added; reloading starts a new conversation.

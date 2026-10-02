@@ -34,7 +34,7 @@ The public API adds:
 - `GET /api/microtrends`: existing `map`, `as_of` and publication identity, plus version, review mode, family mapping, grouping threshold and coverage. The same metadata is in `/api/archive` and `/api/trends` under `analytics.microtrends` and `microtrends`, respectively.
 - `GET /api/incidents/:id/mapping-history`: changed published mapping values, publication date, operator and reason. Original legacy mappings are retained as `legacy_mapping`; later record mappings are in `mapping`. Unknown IDs return 404.
 
-Publications without the new Microtrends settings explicitly retain `legacy-mapping-v1`. This preserves the original import and deployed publication until an operator publishes the new mappings. The original seed files remain untouched. Mapping and impact review hashes are independent; changes to incident evidence still invalidate both reviews.
+Publications without the new Microtrends settings explicitly retain `legacy-mapping-v1`. This preserves historical publications. The original seed files remain untouched. Mapping, impact and [Narrative/Comparison context](narrative-comparison.md) review hashes are independent; changes to original incident evidence still invalidate all affected reviews.
 
 ## Prepare, review and publish
 
@@ -61,7 +61,7 @@ node dist/backend/microtrends-manage.js review /path/to/proposed.json \
 
 `build` emits a complete validated publication. Never redirect output over its input. Reviews bind to the mapping, incident evidence and used catalog definitions. A dispute blocks reviewed mode; changing a mapping invalidates previous approvals. Do not invent reviewer identities or approvals. Metadata is public after publication, so use public handles and notes.
 
-After all mappings are approved, set `settings.microtrends_review_mode` to `reviewed`, then publish using the owner-only operator command in the usage guide. Explicitly authorized draft releases and local previews require `--allow-draft` and display “Draft mappings · human review pending.” Impact's review mode remains separate: a publication containing either kind of draft still requires that explicit flag. An application build, Git commit or merge does not update PostgreSQL or deploy EKS.
+After all mappings are approved, set `settings.microtrends_review_mode` to `reviewed`, then publish using the owner-only operator command in the usage guide. Explicitly authorized draft releases and local previews require `--allow-draft` and display “Draft mappings · human review pending.” Impact and context review modes remain separate: a publication containing any kind of draft still requires that explicit flag. An application build, Git commit or merge does not update PostgreSQL or deploy EKS.
 
 ## First-pass coverage and limits
 

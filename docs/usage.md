@@ -84,6 +84,8 @@ The CLI validates identifiers, dates, source URLs, references and display-calend
 
 Microtrends publications additionally validate catalog membership, maker/model/version pairs, named-model quotations, cited source URLs, scope/attack-family compatibility and exact generated-map consistency. Reviewed mode requires current declared approval for every mapping; drafts require the same `--allow-draft` flag. Use the [mapping preparation, build and review workflow](microtrends.md#prepare-review-and-publish) after editing record maps.
 
+Narrative and Comparison publications additionally validate context coverage for every agent record, occurrence precision, checked source chronology, development citations and context reviews. Use the [context preparation and review workflow](narrative-comparison.md#prepare-review-and-publish). Any draft impact, mapping or context review mode requires `--allow-draft`; their approvals remain independent. Building the application does not apply the checked-in audit to PostgreSQL.
+
 ## Verification
 
 ```sh

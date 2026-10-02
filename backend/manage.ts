@@ -37,7 +37,7 @@ try {
       ? validatePublication({...JSON.parse(await readFile(new URL('../../data/publication-seed.json',import.meta.url),'utf8')),
           records:JSON.parse(await readFile(new URL('../../data/records.json',import.meta.url),'utf8'))})
       : validatePublication(JSON.parse(await readFile(file || '', 'utf8')));
-    if((data.settings.impact_review_mode==='draft'||data.settings.microtrends_review_mode==='draft')&&!values['allow-draft']) {
+    if((data.settings.impact_review_mode==='draft'||data.settings.microtrends_review_mode==='draft'||data.settings.context_review_mode==='draft')&&!values['allow-draft']) {
       throw new Error('Draft publication requires --allow-draft; use only for an explicitly labelled review preview');
     }
     const actor=values.actor || (command==='import' ? 'legacy-archive-import' : '');

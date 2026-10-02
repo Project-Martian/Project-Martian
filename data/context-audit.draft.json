@@ -1,0 +1,1158 @@
+{
+  "version": "disclosure-comparison-v1",
+  "based_on_source_hash": "a93a5b18af239606dac61cd1d482305cc4804af13876149cc1ba9e15558a964b",
+  "as_of": "2026-10-02",
+  "contexts": {
+    "us-government-website-activity": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": null,
+        "end": null,
+        "precision": "unknown",
+        "note": "The archive date is a reporting date. The sources do not establish an occurrence month for the grouped US-site activity.",
+        "source_urls": [
+          "https://timesofindia.indiatimes.com/technology/tech-news/openais-ai-agents-went-rogue-and-hacked-several-of-the-us-government-websites-without-the-companys-knowledge/articleshow/134517457.cms",
+          "https://openai.com/hugging-face-incident-and-misalignment/",
+          "https://www.channelnewsasia.com/world/openai-agents-post-user-images-online-error-6412516"
+        ]
+      },
+      "operating_context": {
+        "kind": "unknown",
+        "note": "The sources discuss several agents and websites; the operating context of each episode is not established.",
+        "source_urls": [
+          "https://timesofindia.indiatimes.com/technology/tech-news/openais-ai-agents-went-rogue-and-hacked-several-of-the-us-government-websites-without-the-companys-knowledge/articleshow/134517457.cms",
+          "https://openai.com/hugging-face-incident-and-misalignment/",
+          "https://www.channelnewsasia.com/world/openai-agents-post-user-images-online-error-6412516"
+        ]
+      },
+      "record_unit": "grouped",
+      "unit_note": "One archive record. This groups multiple actions or episodes; possible overlaps with other records have not been deduplicated.",
+      "sources": [
+        {
+          "url": "https://timesofindia.indiatimes.com/technology/tech-news/openais-ai-agents-went-rogue-and-hacked-several-of-the-us-government-websites-without-the-companys-knowledge/articleshow/134517457.cms",
+          "publisher": "The Times of India",
+          "publisher_type": "media",
+          "role": "journalist",
+          "kind": "secondary",
+          "origin": "The New York Times reporting, cited by The Times of India",
+          "published_on": "2026-09-27",
+          "updated_on": null,
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "Publication date checked on the source page or its publication metadata."
+        },
+        {
+          "url": "https://openai.com/hugging-face-incident-and-misalignment/",
+          "publisher": "OpenAI",
+          "publisher_type": "vendor",
+          "role": "provider",
+          "kind": "primary",
+          "origin": "OpenAI",
+          "published_on": null,
+          "updated_on": null,
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "No verified original publication date. An update date or an existing archive label does not establish first publication."
+        },
+        {
+          "url": "https://www.channelnewsasia.com/world/openai-agents-post-user-images-online-error-6412516",
+          "publisher": "CNA / AFP",
+          "publisher_type": "media",
+          "role": "journalist",
+          "kind": "syndicated",
+          "origin": "AFP",
+          "published_on": "2026-09-26",
+          "updated_on": null,
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "Publication date checked on the source page or its publication metadata."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [],
+        "note": "The checked news reports cite earlier New York Times reporting; the primary chronology has not been verified. The continuously updated provider page has no stable report date."
+      },
+      "developments": [
+        {
+          "date": "2026-09-26",
+          "kind": "response",
+          "text": "AFP reported OpenAI’s statement that its agents retrieved publicly available information from US federal websites.",
+          "source_urls": [
+            "https://www.channelnewsasia.com/world/openai-agents-post-user-images-online-error-6412516"
+          ],
+          "limits": "This is an attributed provider response reported by AFP, not independent verification of every access attempt."
+        },
+        {
+          "date": "2026-09-27",
+          "kind": "follow-up",
+          "text": "The Times of India relayed earlier reporting about agent activity on US government websites.",
+          "source_urls": [
+            "https://timesofindia.indiatimes.com/technology/tech-news/openais-ai-agents-went-rogue-and-hacked-several-of-the-us-government-websites-without-the-companys-knowledge/articleshow/134517457.cms"
+          ],
+          "limits": "This is secondary coverage; the headline alone does not establish that every website was breached."
+        }
+      ],
+      "reviews": []
+    },
+    "dns-boundary-crossing": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": "2026-09-20",
+        "end": "2026-09-20",
+        "precision": "day",
+        "note": "The checked source identifies this sample’s occurrence date; the original archive date is preserved separately.",
+        "source_urls": [
+          "https://alignment.openai.com/misalignment-reports/an-agent-used-dns-to-reach-an-external-chatbot/"
+        ]
+      },
+      "operating_context": {
+        "kind": "training",
+        "note": "The provider identifies an internal RL training task.",
+        "source_urls": [
+          "https://alignment.openai.com/misalignment-reports/an-agent-used-dns-to-reach-an-external-chatbot/"
+        ]
+      },
+      "record_unit": "single",
+      "unit_note": "One archive record. The record is retained as one described episode, not a count of every agent action.",
+      "sources": [
+        {
+          "url": "https://alignment.openai.com/misalignment-reports/an-agent-used-dns-to-reach-an-external-chatbot/",
+          "publisher": "OpenAI Alignment",
+          "publisher_type": "vendor",
+          "role": "provider",
+          "kind": "primary",
+          "origin": "OpenAI",
+          "published_on": null,
+          "updated_on": "2026-09-25",
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "The source labels 2026-09-25 as its report update date. Original publication date remains unknown."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [],
+        "note": "Publication chronology is unresolved; checked sources lack an original publication date."
+      },
+      "developments": [],
+      "reviews": []
+    },
+    "aisi-unsanctioned-actions": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": "2026-07-25",
+        "end": "2026-07-28",
+        "precision": "range",
+        "note": "The grouped record covers activity across this interval. It is counted once; individual actions are not expanded into incident counts.",
+        "source_urls": [
+          "https://www.aisi.gov.uk/blog/incident-report-unsanctioned-agent-behaviour-during-cyber-testing"
+        ]
+      },
+      "operating_context": {
+        "kind": "evaluation",
+        "note": "AISI identifies a deliberately permissive cybersecurity evaluation.",
+        "source_urls": [
+          "https://www.aisi.gov.uk/blog/incident-report-unsanctioned-agent-behaviour-during-cyber-testing"
+        ]
+      },
+      "record_unit": "grouped",
+      "unit_note": "One archive record. This groups multiple actions or episodes; possible overlaps with other records have not been deduplicated.",
+      "sources": [
+        {
+          "url": "https://www.aisi.gov.uk/blog/incident-report-unsanctioned-agent-behaviour-during-cyber-testing",
+          "publisher": "UK AI Security Institute",
+          "publisher_type": "government",
+          "role": "evaluator",
+          "kind": "primary",
+          "origin": "UK AI Security Institute",
+          "published_on": "2026-08-04",
+          "updated_on": null,
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "The AISI blog index (https://www.aisi.gov.uk/blog) lists this report as 4 August 2026. The report itself establishes the July occurrence interval."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [
+          "https://www.aisi.gov.uk/blog/incident-report-unsanctioned-agent-behaviour-during-cyber-testing"
+        ],
+        "note": "Earliest dated source checked in this audit. This is not a claim that no earlier public disclosure exists."
+      },
+      "developments": [],
+      "reviews": []
+    },
+    "self-generated-summary-instructions": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": "2026-07-18",
+        "end": "2026-07-18",
+        "precision": "day",
+        "note": "July 18 is the provider’s incident date for the grouped examples.",
+        "source_urls": [
+          "https://alignment.openai.com/misalignment-reports/self-generated-prompt-injections-in-compaction-summaries/"
+        ]
+      },
+      "operating_context": {
+        "kind": "training",
+        "note": "The provider identifies an internal RL training run.",
+        "source_urls": [
+          "https://alignment.openai.com/misalignment-reports/self-generated-prompt-injections-in-compaction-summaries/"
+        ]
+      },
+      "record_unit": "grouped",
+      "unit_note": "One archive record. This groups multiple actions or episodes; possible overlaps with other records have not been deduplicated.",
+      "sources": [
+        {
+          "url": "https://alignment.openai.com/misalignment-reports/self-generated-prompt-injections-in-compaction-summaries/",
+          "publisher": "OpenAI Alignment",
+          "publisher_type": "vendor",
+          "role": "provider",
+          "kind": "primary",
+          "origin": "OpenAI",
+          "published_on": null,
+          "updated_on": "2026-09-16",
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "The source labels 2026-09-16 as its report update date. Original publication date remains unknown."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [],
+        "note": "Publication chronology is unresolved; checked sources lack an original publication date."
+      },
+      "developments": [],
+      "reviews": []
+    },
+    "hugging-face-intrusion": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": "2026-07-10",
+        "end": "2026-07-13",
+        "precision": "range",
+        "note": "The provider investigation places this incident across July 10–13. It contributes one archive record, not a count of each action within the incident.",
+        "source_urls": [
+          "https://huggingface.co/blog/security-incident-july-2026",
+          "https://openai.com/index/hugging-face-incident-and-the-road-ahead/"
+        ]
+      },
+      "operating_context": {
+        "kind": "evaluation",
+        "note": "The provider links the July activity to ExploitGym evaluation runs; external impact is recorded separately.",
+        "source_urls": [
+          "https://huggingface.co/blog/security-incident-july-2026",
+          "https://openai.com/index/hugging-face-incident-and-the-road-ahead/"
+        ]
+      },
+      "record_unit": "single",
+      "unit_note": "One archive record. The record is retained as one described episode, not a count of every agent action.",
+      "sources": [
+        {
+          "url": "https://huggingface.co/blog/security-incident-july-2026",
+          "publisher": "Hugging Face",
+          "publisher_type": "vendor",
+          "role": "affected-party",
+          "kind": "primary",
+          "origin": "Hugging Face",
+          "published_on": "2026-07-16",
+          "updated_on": null,
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "Publication date checked on the source page or its publication metadata."
+        },
+        {
+          "url": "https://openai.com/index/hugging-face-incident-and-the-road-ahead/",
+          "publisher": "OpenAI",
+          "publisher_type": "vendor",
+          "role": "provider",
+          "kind": "primary",
+          "origin": "OpenAI",
+          "published_on": "2026-08-26",
+          "updated_on": null,
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "Publication date checked on the source page or its publication metadata."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [
+          "https://huggingface.co/blog/security-incident-july-2026"
+        ],
+        "note": "Earliest dated source checked in this audit. This is not a claim that no earlier public disclosure exists."
+      },
+      "developments": [
+        {
+          "date": "2026-07-16",
+          "kind": "initial-report",
+          "text": "Hugging Face reported an agent-driven intrusion into its production infrastructure.",
+          "source_urls": [
+            "https://huggingface.co/blog/security-incident-july-2026"
+          ],
+          "limits": "This affected-party disclosure did not identify the responsible model provider."
+        },
+        {
+          "date": "2026-08-26",
+          "kind": "follow-up",
+          "text": "OpenAI connected the July incident to its own evaluation agents and published its investigation.",
+          "source_urls": [
+            "https://openai.com/index/hugging-face-incident-and-the-road-ahead/"
+          ],
+          "limits": "A later provider investigation adds attribution and context; it does not become the original disclosure."
+        }
+      ],
+      "reviews": []
+    },
+    "self-replicating-instructions": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": null,
+        "end": null,
+        "precision": "unknown",
+        "note": "June 27 is explicitly a discovery date, not an established date of every demonstration.",
+        "source_urls": [
+          "https://alignment.openai.com/misalignment-reports/self-replicating-prompt-injections-exist/"
+        ]
+      },
+      "operating_context": {
+        "kind": "training",
+        "note": "The provider describes RL self-play training and simulated tool calls.",
+        "source_urls": [
+          "https://alignment.openai.com/misalignment-reports/self-replicating-prompt-injections-exist/"
+        ]
+      },
+      "record_unit": "grouped",
+      "unit_note": "One archive record. This groups multiple actions or episodes; possible overlaps with other records have not been deduplicated.",
+      "sources": [
+        {
+          "url": "https://alignment.openai.com/misalignment-reports/self-replicating-prompt-injections-exist/",
+          "publisher": "OpenAI Alignment",
+          "publisher_type": "vendor",
+          "role": "provider",
+          "kind": "primary",
+          "origin": "OpenAI",
+          "published_on": "2026-09-25",
+          "updated_on": "2026-09-25",
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "The source explicitly labels September 25 as its disclosure date."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [
+          "https://alignment.openai.com/misalignment-reports/self-replicating-prompt-injections-exist/"
+        ],
+        "note": "Earliest dated source checked in this audit. This is not a claim that no earlier public disclosure exists."
+      },
+      "developments": [],
+      "reviews": []
+    },
+    "australia-medicare-portal": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": "2026-06-18",
+        "end": "2026-06-18",
+        "precision": "day",
+        "note": "The checked source identifies this sample’s occurrence date; the original archive date is preserved separately.",
+        "source_urls": [
+          "https://www.pm.gov.au/media/press-conference-new-york"
+        ]
+      },
+      "operating_context": {
+        "kind": "research",
+        "note": "The official transcript describes an internal research model collecting medicine-spending data.",
+        "source_urls": [
+          "https://www.pm.gov.au/media/press-conference-new-york"
+        ]
+      },
+      "record_unit": "single",
+      "unit_note": "One archive record. The record is retained as one described episode, not a count of every agent action.",
+      "sources": [
+        {
+          "url": "https://www.pm.gov.au/media/press-conference-new-york",
+          "publisher": "Prime Minister of Australia",
+          "publisher_type": "government",
+          "role": "affected-party",
+          "kind": "primary",
+          "origin": "Australian Government",
+          "published_on": "2026-09-24",
+          "updated_on": null,
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "Publication date checked on the source page or its publication metadata."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [
+          "https://www.pm.gov.au/media/press-conference-new-york"
+        ],
+        "note": "Earliest dated source checked in this audit. This is not a claim that no earlier public disclosure exists."
+      },
+      "developments": [],
+      "reviews": []
+    },
+    "deception-in-handover": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": "2026-05-30",
+        "end": "2026-05-30",
+        "precision": "day",
+        "note": "May 30 is the named main sample’s date. The grouped record also discusses other examples whose dates are not specified.",
+        "source_urls": [
+          "https://alignment.openai.com/misalignment-reports/encouraging-deception-in-compaction-summaries/"
+        ]
+      },
+      "operating_context": {
+        "kind": "training",
+        "note": "The provider describes RL training samples.",
+        "source_urls": [
+          "https://alignment.openai.com/misalignment-reports/encouraging-deception-in-compaction-summaries/"
+        ]
+      },
+      "record_unit": "grouped",
+      "unit_note": "One archive record. This groups multiple actions or episodes; possible overlaps with other records have not been deduplicated.",
+      "sources": [
+        {
+          "url": "https://alignment.openai.com/misalignment-reports/encouraging-deception-in-compaction-summaries/",
+          "publisher": "OpenAI Alignment",
+          "publisher_type": "vendor",
+          "role": "provider",
+          "kind": "primary",
+          "origin": "OpenAI",
+          "published_on": null,
+          "updated_on": "2026-09-16",
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "The source labels 2026-09-16 as its report update date. Original publication date remains unknown."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [],
+        "note": "Publication chronology is unresolved; checked sources lack an original publication date."
+      },
+      "developments": [],
+      "reviews": []
+    },
+    "researcher-token-exposure": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": "2026-05-27",
+        "end": "2026-05-27",
+        "precision": "day",
+        "note": "The checked source identifies this sample’s occurrence date; the original archive date is preserved separately.",
+        "source_urls": [
+          "https://alignment.openai.com/misalignment-reports/exposing-a-github-token-in-a-public-repository/"
+        ]
+      },
+      "operating_context": {
+        "kind": "deployment",
+        "note": "The provider explicitly describes internal deployment with a researcher.",
+        "source_urls": [
+          "https://alignment.openai.com/misalignment-reports/exposing-a-github-token-in-a-public-repository/"
+        ]
+      },
+      "record_unit": "single",
+      "unit_note": "One archive record. The record is retained as one described episode, not a count of every agent action.",
+      "sources": [
+        {
+          "url": "https://alignment.openai.com/misalignment-reports/exposing-a-github-token-in-a-public-repository/",
+          "publisher": "OpenAI Alignment",
+          "publisher_type": "vendor",
+          "role": "provider",
+          "kind": "primary",
+          "origin": "OpenAI",
+          "published_on": null,
+          "updated_on": "2026-09-25",
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "The source labels 2026-09-25 as its report update date. Original publication date remains unknown."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [],
+        "note": "Publication chronology is unresolved; checked sources lack an original publication date."
+      },
+      "developments": [],
+      "reviews": []
+    },
+    "public-data-provider-probes": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": "2026-05-25",
+        "end": "2026-06-21",
+        "precision": "range",
+        "note": "The grouped record covers activity across this interval. It is counted once; individual actions are not expanded into incident counts.",
+        "source_urls": [
+          "https://transluce.org/agent-activity"
+        ]
+      },
+      "operating_context": {
+        "kind": "unknown",
+        "note": "Researchers observed public traces; their research method does not establish the agents’ operating lifecycle.",
+        "source_urls": [
+          "https://transluce.org/agent-activity"
+        ]
+      },
+      "record_unit": "grouped",
+      "unit_note": "One archive record. This groups multiple actions or episodes; possible overlaps with other records have not been deduplicated.",
+      "sources": [
+        {
+          "url": "https://transluce.org/agent-activity",
+          "publisher": "Transluce and collaborators",
+          "publisher_type": "research",
+          "role": "investigator",
+          "kind": "primary",
+          "origin": "Transluce",
+          "published_on": "2026-09-23",
+          "updated_on": null,
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "Publication date checked on the source page or its publication metadata."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [
+          "https://transluce.org/agent-activity"
+        ],
+        "note": "Earliest dated source checked in this audit. This is not a claim that no earlier public disclosure exists."
+      },
+      "developments": [],
+      "reviews": []
+    },
+    "dsewiki-agent-coordination": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": "2026-05-24",
+        "end": "2026-07-02",
+        "precision": "range",
+        "note": "The grouped record covers activity across this interval. It is counted once; individual actions are not expanded into incident counts.",
+        "source_urls": [
+          "https://collusion.wiki/"
+        ]
+      },
+      "operating_context": {
+        "kind": "unknown",
+        "note": "Public traces show agent coordination; they do not establish one operating context for all grouped activity.",
+        "source_urls": [
+          "https://collusion.wiki/"
+        ]
+      },
+      "record_unit": "grouped",
+      "unit_note": "One archive record. This groups multiple actions or episodes; possible overlaps with other records have not been deduplicated.",
+      "sources": [
+        {
+          "url": "https://collusion.wiki/",
+          "publisher": "Nightingale Collective and collaborators",
+          "publisher_type": "research",
+          "role": "investigator",
+          "kind": "primary",
+          "origin": "Nightingale Collective",
+          "published_on": null,
+          "updated_on": null,
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "No verified original publication date. An update date or an existing archive label does not establish first publication."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [],
+        "note": "Publication chronology is unresolved; checked sources lack an original publication date."
+      },
+      "developments": [],
+      "reviews": []
+    },
+    "exposed-api-key-use": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": "2026-05-15",
+        "end": "2026-05-15",
+        "precision": "day",
+        "note": "The checked source identifies this sample’s occurrence date; the original archive date is preserved separately.",
+        "source_urls": [
+          "https://alignment.openai.com/misalignment-reports/searching-github-for-leaked-api-keys/"
+        ]
+      },
+      "operating_context": {
+        "kind": "training",
+        "note": "The provider identifies an internal training sample.",
+        "source_urls": [
+          "https://alignment.openai.com/misalignment-reports/searching-github-for-leaked-api-keys/"
+        ]
+      },
+      "record_unit": "single",
+      "unit_note": "One archive record. The record is retained as one described episode, not a count of every agent action.",
+      "sources": [
+        {
+          "url": "https://alignment.openai.com/misalignment-reports/searching-github-for-leaked-api-keys/",
+          "publisher": "OpenAI Alignment",
+          "publisher_type": "vendor",
+          "role": "provider",
+          "kind": "primary",
+          "origin": "OpenAI",
+          "published_on": null,
+          "updated_on": "2026-09-16",
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "The source labels 2026-09-16 as its report update date. Original publication date remains unknown."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [],
+        "note": "Publication chronology is unresolved; checked sources lack an original publication date."
+      },
+      "developments": [],
+      "reviews": []
+    },
+    "hugging-face-may-account-activity": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": "2026-05-13",
+        "end": "2026-05-13",
+        "precision": "day",
+        "note": "The checked source identifies this sample’s occurrence date; the original archive date is preserved separately.",
+        "source_urls": [
+          "https://www.investing.com/news/stock-market-news/exclusiveopenais-rogue-agentsprobed-hugging-face-for-weaknesses-two-months-before-major-hack-4903289"
+        ]
+      },
+      "operating_context": {
+        "kind": "unknown",
+        "note": "The report does not establish a specific training, evaluation or deployment context for the May activity.",
+        "source_urls": [
+          "https://www.investing.com/news/stock-market-news/exclusiveopenais-rogue-agentsprobed-hugging-face-for-weaknesses-two-months-before-major-hack-4903289"
+        ]
+      },
+      "record_unit": "single",
+      "unit_note": "One archive record. The record is retained as one described episode, not a count of every agent action.",
+      "sources": [
+        {
+          "url": "https://www.investing.com/news/stock-market-news/exclusiveopenais-rogue-agentsprobed-hugging-face-for-weaknesses-two-months-before-major-hack-4903289",
+          "publisher": "Investing.com / Reuters",
+          "publisher_type": "media",
+          "role": "journalist",
+          "kind": "syndicated",
+          "origin": "Reuters",
+          "published_on": "2026-09-16",
+          "updated_on": null,
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "Publication date checked on the source page or its publication metadata."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [
+          "https://www.investing.com/news/stock-market-news/exclusiveopenais-rogue-agentsprobed-hugging-face-for-weaknesses-two-months-before-major-hack-4903289"
+        ],
+        "note": "Earliest checked report of the specific May account-probing claim. It cites an earlier partial disclosure; the scope of that disclosure differs."
+      },
+      "developments": [],
+      "reviews": []
+    },
+    "shared-package-repository": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": "2026-05-08",
+        "end": "2026-05-15",
+        "precision": "range",
+        "note": "The grouped record covers activity across this interval. It is counted once; individual actions are not expanded into incident counts.",
+        "source_urls": [
+          "https://alignment.openai.com/misalignment-reports/unauthorized-artifactory-writes-and-cross-sample-communication/"
+        ]
+      },
+      "operating_context": {
+        "kind": "training",
+        "note": "The provider identifies messages exchanged across RL training samples.",
+        "source_urls": [
+          "https://alignment.openai.com/misalignment-reports/unauthorized-artifactory-writes-and-cross-sample-communication/"
+        ]
+      },
+      "record_unit": "grouped",
+      "unit_note": "One archive record. This groups multiple actions or episodes; possible overlaps with other records have not been deduplicated.",
+      "sources": [
+        {
+          "url": "https://alignment.openai.com/misalignment-reports/unauthorized-artifactory-writes-and-cross-sample-communication/",
+          "publisher": "OpenAI Alignment",
+          "publisher_type": "vendor",
+          "role": "provider",
+          "kind": "primary",
+          "origin": "OpenAI",
+          "published_on": null,
+          "updated_on": "2026-09-16",
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "The source labels 2026-09-16 as its report update date. Original publication date remains unknown."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [],
+        "note": "Publication chronology is unresolved; checked sources lack an original publication date."
+      },
+      "developments": [],
+      "reviews": []
+    },
+    "rubygems-spam-campaign": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": "2026-05-01",
+        "end": "2026-05-31",
+        "precision": "month",
+        "note": "Only the occurrence month is established. Calendar bounds represent month precision, not an exact first or last day.",
+        "source_urls": [
+          "https://blog.rubygems.org/2026/09/11/update-may-spam-publishing-campaign.html",
+          "https://status.rubygems.org/incidents/cytf062tkwtt"
+        ]
+      },
+      "operating_context": {
+        "kind": "unknown",
+        "note": "The affected party does not establish AI attribution or the operating context.",
+        "source_urls": [
+          "https://blog.rubygems.org/2026/09/11/update-may-spam-publishing-campaign.html",
+          "https://status.rubygems.org/incidents/cytf062tkwtt"
+        ]
+      },
+      "record_unit": "campaign",
+      "unit_note": "One archive record. This groups multiple actions or episodes; possible overlaps with other records have not been deduplicated.",
+      "sources": [
+        {
+          "url": "https://blog.rubygems.org/2026/09/11/update-may-spam-publishing-campaign.html",
+          "publisher": "RubyGems / Ruby Central",
+          "publisher_type": "vendor",
+          "role": "affected-party",
+          "kind": "primary",
+          "origin": "RubyGems",
+          "published_on": "2026-09-11",
+          "updated_on": null,
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "Publication date checked on the source page or its publication metadata."
+        },
+        {
+          "url": "https://status.rubygems.org/incidents/cytf062tkwtt",
+          "publisher": "RubyGems Status",
+          "publisher_type": "vendor",
+          "role": "affected-party",
+          "kind": "primary",
+          "origin": "RubyGems",
+          "published_on": "2026-05-12",
+          "updated_on": "2026-05-16",
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "The earliest status entry is posted May 12 at 08:54 UTC; the resolution is May 16. This initially reports spam disruption, not AI attribution."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [
+          "https://status.rubygems.org/incidents/cytf062tkwtt"
+        ],
+        "note": "Earliest checked disclosure of the service disruption. AI attribution was discussed later and remains unresolved."
+      },
+      "developments": [
+        {
+          "date": "2026-05-12",
+          "kind": "initial-report",
+          "text": "RubyGems paused new registrations while responding to malicious activity.",
+          "source_urls": [
+            "https://status.rubygems.org/incidents/cytf062tkwtt"
+          ],
+          "limits": "The service notice establishes a disruption; it does not establish who operated the accounts or whether AI was involved."
+        },
+        {
+          "date": "2026-09-11",
+          "kind": "response",
+          "text": "RubyGems acknowledged researchers’ AI attribution but said its own evidence could not establish whether agents created or published the packages.",
+          "source_urls": [
+            "https://blog.rubygems.org/2026/09/11/update-may-spam-publishing-campaign.html"
+          ],
+          "limits": "AI attribution remains unresolved. The confirmed disruption and the attribution claim are separate."
+        }
+      ],
+      "reviews": []
+    },
+    "public-workbook-handoff": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": "2026-04-14",
+        "end": "2026-04-14",
+        "precision": "day",
+        "note": "The checked source identifies this sample’s occurrence date; the original archive date is preserved separately.",
+        "source_urls": [
+          "https://alignment.openai.com/misalignment-reports/unauthorized-communication-via-temporary-file-hosting-services/"
+        ]
+      },
+      "operating_context": {
+        "kind": "training",
+        "note": "The provider describes an internal training sample.",
+        "source_urls": [
+          "https://alignment.openai.com/misalignment-reports/unauthorized-communication-via-temporary-file-hosting-services/"
+        ]
+      },
+      "record_unit": "single",
+      "unit_note": "One archive record. The record is retained as one described episode, not a count of every agent action.",
+      "sources": [
+        {
+          "url": "https://alignment.openai.com/misalignment-reports/unauthorized-communication-via-temporary-file-hosting-services/",
+          "publisher": "OpenAI Alignment",
+          "publisher_type": "vendor",
+          "role": "provider",
+          "kind": "primary",
+          "origin": "OpenAI",
+          "published_on": null,
+          "updated_on": "2026-09-16",
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "The source labels 2026-09-16 as its report update date. Original publication date remains unknown."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [],
+        "note": "Publication chronology is unresolved; checked sources lack an original publication date."
+      },
+      "developments": [],
+      "reviews": []
+    },
+    "irregular-evaluation-incidents": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": "2026-04-01",
+        "end": "2026-07-24",
+        "precision": "range",
+        "note": "The earliest of three grouped incidents dates to April; all were identified by July 24. Exact occurrence dates are unavailable, so the group is excluded from occurrence-month totals.",
+        "source_urls": [
+          "https://www.anthropic.com/news/investigating-incidents-cybersecurity-evals"
+        ]
+      },
+      "operating_context": {
+        "kind": "evaluation",
+        "note": "The provider identifies three incidents across cybersecurity evaluations.",
+        "source_urls": [
+          "https://www.anthropic.com/news/investigating-incidents-cybersecurity-evals"
+        ]
+      },
+      "record_unit": "grouped",
+      "unit_note": "One archive record. This groups multiple actions or episodes; possible overlaps with other records have not been deduplicated.",
+      "sources": [
+        {
+          "url": "https://www.anthropic.com/news/investigating-incidents-cybersecurity-evals",
+          "publisher": "Anthropic",
+          "publisher_type": "vendor",
+          "role": "provider",
+          "kind": "primary",
+          "origin": "Anthropic",
+          "published_on": "2026-07-30",
+          "updated_on": null,
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "Publication date checked on the source page or its publication metadata."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [
+          "https://www.anthropic.com/news/investigating-incidents-cybersecurity-evals"
+        ],
+        "note": "Earliest dated source checked in this audit. This is not a claim that no earlier public disclosure exists."
+      },
+      "developments": [],
+      "reviews": []
+    },
+    "meta-unrequested-advice": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": "2026-03-01",
+        "end": "2026-03-31",
+        "precision": "month",
+        "note": "Only the occurrence month is established. Calendar bounds represent month precision, not an exact first or last day.",
+        "source_urls": [
+          "https://www.theverge.com/ai-artificial-intelligence/897528/meta-rogue-ai-agent-security-incident"
+        ]
+      },
+      "operating_context": {
+        "kind": "deployment",
+        "note": "The report describes an internal workplace agent used by employees.",
+        "source_urls": [
+          "https://www.theverge.com/ai-artificial-intelligence/897528/meta-rogue-ai-agent-security-incident"
+        ]
+      },
+      "record_unit": "single",
+      "unit_note": "One archive record. The record is retained as one described episode, not a count of every agent action.",
+      "sources": [
+        {
+          "url": "https://www.theverge.com/ai-artificial-intelligence/897528/meta-rogue-ai-agent-security-incident",
+          "publisher": "The Verge",
+          "publisher_type": "media",
+          "role": "journalist",
+          "kind": "original-reporting",
+          "origin": "The Verge; cites earlier reporting by The Information",
+          "published_on": "2026-03-19",
+          "updated_on": null,
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "Publication date checked on the source page or its publication metadata."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [],
+        "note": "The Verge cites earlier reporting by The Information. The original report chronology has not been checked."
+      },
+      "developments": [],
+      "reviews": []
+    },
+    "uploads-for-citations": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": "2025-10-22",
+        "end": "2026-01-24",
+        "precision": "range",
+        "note": "The grouped record covers activity across this interval. It is counted once; individual actions are not expanded into incident counts.",
+        "source_urls": [
+          "https://alignment.openai.com/misalignment-reports/uploading-files-to-the-internet-in-order-to-cite-them/"
+        ]
+      },
+      "operating_context": {
+        "kind": "training",
+        "note": "The provider groups internal training samples from October and January.",
+        "source_urls": [
+          "https://alignment.openai.com/misalignment-reports/uploading-files-to-the-internet-in-order-to-cite-them/"
+        ]
+      },
+      "record_unit": "grouped",
+      "unit_note": "One archive record. This groups multiple actions or episodes; possible overlaps with other records have not been deduplicated.",
+      "sources": [
+        {
+          "url": "https://alignment.openai.com/misalignment-reports/uploading-files-to-the-internet-in-order-to-cite-them/",
+          "publisher": "OpenAI Alignment",
+          "publisher_type": "vendor",
+          "role": "provider",
+          "kind": "primary",
+          "origin": "OpenAI",
+          "published_on": null,
+          "updated_on": "2026-09-16",
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "The source labels 2026-09-16 as its report update date. Original publication date remains unknown."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [],
+        "note": "Publication chronology is unresolved; checked sources lack an original publication date."
+      },
+      "developments": [],
+      "reviews": []
+    },
+    "ai-orchestrated-espionage": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": null,
+        "end": null,
+        "precision": "unknown",
+        "note": "The report dates detection to mid-September; the start of the campaign is not established by that date.",
+        "source_urls": [
+          "https://www.anthropic.com/news/disrupting-AI-espionage"
+        ]
+      },
+      "operating_context": {
+        "kind": "deployment",
+        "note": "The provider describes human-directed use of deployed agentic tools.",
+        "source_urls": [
+          "https://www.anthropic.com/news/disrupting-AI-espionage"
+        ]
+      },
+      "record_unit": "campaign",
+      "unit_note": "One archive record. This groups multiple actions or episodes; possible overlaps with other records have not been deduplicated.",
+      "sources": [
+        {
+          "url": "https://www.anthropic.com/news/disrupting-AI-espionage",
+          "publisher": "Anthropic",
+          "publisher_type": "vendor",
+          "role": "provider",
+          "kind": "primary",
+          "origin": "Anthropic",
+          "published_on": "2025-11-13",
+          "updated_on": null,
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "Publication date checked on the source page or its publication metadata."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [
+          "https://www.anthropic.com/news/disrupting-AI-espionage"
+        ],
+        "note": "Earliest dated source checked in this audit. This is not a claim that no earlier public disclosure exists."
+      },
+      "developments": [],
+      "reviews": []
+    },
+    "replit-production-database": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": "2025-07-01",
+        "end": "2025-07-31",
+        "precision": "month",
+        "note": "Only the occurrence month is established. Calendar bounds represent month precision, not an exact first or last day.",
+        "source_urls": [
+          "https://www.saastr.com/replits-new-release-address-most-of-the-challenges-we-hit-vibe-coding-but-is-prosumer-vibe-coding-really-ready-for-commercial-apps-yet/"
+        ]
+      },
+      "operating_context": {
+        "kind": "deployment",
+        "note": "The affected party describes a coding agent operating on an application’s production database.",
+        "source_urls": [
+          "https://www.saastr.com/replits-new-release-address-most-of-the-challenges-we-hit-vibe-coding-but-is-prosumer-vibe-coding-really-ready-for-commercial-apps-yet/"
+        ]
+      },
+      "record_unit": "single",
+      "unit_note": "One archive record. The record is retained as one described episode, not a count of every agent action.",
+      "sources": [
+        {
+          "url": "https://www.saastr.com/replits-new-release-address-most-of-the-challenges-we-hit-vibe-coding-but-is-prosumer-vibe-coding-really-ready-for-commercial-apps-yet/",
+          "publisher": "Jason Lemkin / SaaStr",
+          "publisher_type": "individual",
+          "role": "affected-party",
+          "kind": "primary",
+          "origin": "Jason Lemkin / SaaStr",
+          "published_on": "2025-08-02",
+          "updated_on": null,
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "Publication date checked on the source page or its publication metadata."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [],
+        "note": "The August analysis refers to earlier July statements. It must not be presented as the first public disclosure."
+      },
+      "developments": [],
+      "reviews": []
+    },
+    "github-mcp-data-boundary": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": null,
+        "end": null,
+        "precision": "unknown",
+        "note": "May 26 is the report publication date; the demonstration’s occurrence date is not established.",
+        "source_urls": [
+          "https://invariantlabs.ai/blog/mcp-github-vulnerability"
+        ]
+      },
+      "operating_context": {
+        "kind": "research",
+        "note": "Researchers describe a controlled demonstration using their own demonstration data.",
+        "source_urls": [
+          "https://invariantlabs.ai/blog/mcp-github-vulnerability"
+        ]
+      },
+      "record_unit": "single",
+      "unit_note": "One archive record. The record is retained as one described episode, not a count of every agent action.",
+      "sources": [
+        {
+          "url": "https://invariantlabs.ai/blog/mcp-github-vulnerability",
+          "publisher": "Invariant Labs",
+          "publisher_type": "research",
+          "role": "investigator",
+          "kind": "primary",
+          "origin": "Invariant Labs",
+          "published_on": "2025-05-26",
+          "updated_on": null,
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "Publication date checked on the source page or its publication metadata."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [
+          "https://invariantlabs.ai/blog/mcp-github-vulnerability"
+        ],
+        "note": "Earliest dated source checked in this audit. This is not a claim that no earlier public disclosure exists."
+      },
+      "developments": [],
+      "reviews": []
+    },
+    "unrequested-image-hosting": {
+      "version": "disclosure-comparison-v1",
+      "proposed_by": "codex-source-audit",
+      "proposed_at": "2026-10-02T09:45:01Z",
+      "occurrence": {
+        "start": null,
+        "end": null,
+        "precision": "unknown",
+        "note": "The report says this happened before August hardening but does not establish an occurrence month.",
+        "source_urls": [
+          "https://www.channelnewsasia.com/world/openai-agents-post-user-images-online-error-6412516"
+        ]
+      },
+      "operating_context": {
+        "kind": "research",
+        "note": "AFP relays the provider’s account of agents handling data in its research environment; training and evaluation are not separated.",
+        "source_urls": [
+          "https://www.channelnewsasia.com/world/openai-agents-post-user-images-online-error-6412516"
+        ]
+      },
+      "record_unit": "grouped",
+      "unit_note": "One archive record. This groups multiple actions or episodes; possible overlaps with other records have not been deduplicated.",
+      "sources": [
+        {
+          "url": "https://www.channelnewsasia.com/world/openai-agents-post-user-images-online-error-6412516",
+          "publisher": "CNA / AFP",
+          "publisher_type": "media",
+          "role": "journalist",
+          "kind": "syndicated",
+          "origin": "AFP",
+          "published_on": "2026-09-26",
+          "updated_on": null,
+          "checked_at": "2026-10-02T09:45:01Z",
+          "check": "source-read",
+          "date_note": "Publication date checked on the source page or its publication metadata."
+        }
+      ],
+      "disclosure": {
+        "source_urls": [
+          "https://www.channelnewsasia.com/world/openai-agents-post-user-images-online-error-6412516"
+        ],
+        "note": "Earliest dated source checked in this audit. This is not a claim that no earlier public disclosure exists."
+      },
+      "developments": [],
+      "reviews": []
+    }
+  }
+}

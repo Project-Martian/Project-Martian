@@ -28,7 +28,7 @@ function canonical(value: unknown): string {
 }
 export function mappingHash(record: Incident) {
   if (!record.map) throw new Error('Missing mapping: ' + record.id);
-  const {map, impact_assessment: _impact, ...evidence} = record;
+  const {map, impact_assessment: _impact, context: _context, ...evidence} = record;
   const {reviews: _reviews, ...mapping} = map;
   return createHash('sha256').update(canonical({evidence, mapping, taxonomy: {
     models: map.links.map(modelEntry),

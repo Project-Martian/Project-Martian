@@ -95,3 +95,17 @@ export async function readMappingHistory(pool: Pool, incidentId: string) {
       actor: row.actor, reason: row.reason, mapping: row.mapping, legacy_mapping: row.mapping ? null : row.legacy_mapping}];
   });
 }
+
+export async function readContextHistory(pool: Pool, incidentId: string) {
+  const result = await pool.query(`SELECT p.id::text AS publication_id, p.created_at, p.actor, p.reason,
+    r.content->'context' AS context FROM incident_revisions r JOIN publications p ON p.id=r.publication_id
+    WHERE r.incident_id=$1 ORDER BY p.id`, [incidentId]);
+  if (!result.rows.length) return null;
+  let previous: string | undefined;
+  return result.rows.flatMap(row => {
+    const serialized = JSON.stringify(row.context);
+    if (serialized === previous) return [];
+    previous = serialized;
+    return [{publication_id: row.publication_id, changed_at: row.created_at.toISOString(), actor: row.actor, reason: row.reason, context: row.context}];
+  });
+}
