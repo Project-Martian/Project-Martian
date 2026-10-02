@@ -1,55 +1,15 @@
 # Project Martian
 
-An open record of AI agents going rogue. Plain HTML, CSS and JavaScript. No build step. Source: [Project-Martian/Project-Martian](https://github.com/Project-Martian/Project-Martian).
+An independent public incident publication with Trends, Microtrends, Rogue Index, Narrative, Comparison, Radar, Timeline and Bedrock Ask. Source: [Project-Martian/Project-Martian](https://github.com/Project-Martian/Project-Martian).
 
-This publication is independent of Martian Security. It shares AWS cluster infrastructure but has its own application namespace, Helm release, ECR image, ACM certificate and public ALB. It reads only its bundled public records; it has no product API, customer-data or database connection.
+A Node.js application serves the existing HTML/CSS/JavaScript desktop UI and same-origin APIs. Its dedicated PostgreSQL database owns published records, source links, timelines, company/model relationships, Radar data and display settings. The frontend reads the API. Initial JSON files are import seeds, not live data stores.
 
-See [architecture](docs/architecture.md), [usage and publishing](docs/usage.md), [contributing](CONTRIBUTING.md) and [publication principles](MANIFESTO.md). Helm packaging lives in the separate `martian-helm-charts` repository at `charts/project-martian`, outside `charts/martian-platform`.
+Production uses one application pod and one PostgreSQL pod in its own `project-martian` EKS namespace, with persistent storage and off-cluster backups. It has no Martian Security API, database, authentication or customer-data dependency. The cluster and ingress controller are shared infrastructure.
 
-## Run it
+See [architecture and data ownership](docs/architecture.md), [local setup and publishing](docs/usage.md), [Ask and guardrails](docs/ask.md), [contributing](CONTRIBUTING.md) and [publication principles](MANIFESTO.md). The separate [Helm deployment guide](../martian-helm-charts/docs/project-martian.md) owns cloud prerequisites, releases and restore operations.
 
-Open `index.html` in a browser, or serve the folder:
+Use Node.js 24 and PostgreSQL 18. After [database setup](docs/usage.md#local-database), run `npm ci`, `npm run build` and `npm start` with the documented database variables; open `http://127.0.0.1:8766`. Static-file previews cannot load the database-backed publication. Ask additionally requires the existing AWS login.
 
-```
-python3 -m http.server 8000
-# then open http://localhost:8000
-```
+Automatic database failover, cluster NetworkPolicy enforcement and backup alert delivery are outside the approved current scope.
 
-`project-martian-standalone.html` is the same site in one file, if you just want to send or open a single page.
-
-## What's inside
-
-```
-index.html                     page markup (tabs: Ask, Trends, Timeline, Radar, About, Docs, Contribute)
-css/refinements.css            type and spacing refinements (Outfit + Inter)
-css/main.css                   main styles, light and dark tokens
-js/theme-init.js               sets light/dark mode before first paint
-js/records.js                  REPO link + RECORDS (the incident data the app reads)
-js/app.js                      the app: tabs, Ask, Microtrends map, Rogue Index, Timeline, Radar, Joe it / Jill it, share
-data/records.json              same 44 incidents as plain JSON, for tooling or contributors
-assets/martian-mark.svg        logo mark
-assets/logos/*.png             company logos used in filters (also embedded in app.js)
-project-martian-standalone.html  everything in one file
-```
-
-## Editing the data
-
-The app reads `js/records.js`. To add an incident, add an object to `RECORDS` there
-(and mirror it in `data/records.json`). Fields: `id, d (YYYY-MM-DD), scope, set, when, org, kind,
-t (title), sum, tag, src, rca, u (source URL), th`.
-
-The Microtrends map uses a curated `MAP` in `js/app.js` keyed by record id
-(`p: [[company, model/agent]], act, exp, cat`). Add an entry there for new records to show on the map.
-
-`REPO` in `js/records.js` points to this repository. Keep the same URL in the standalone file.
-
-## The Ask tab
-
-On the public website, Ask matches questions to the bundled incident records locally. The existing
-`window.claude.use("sample")` integration is available only when the page runs as a Claude artifact.
-No hosted model backend or API credential is configured. The local topic check and record search
-work without Claude; a future hosted model integration would be a separate change.
-
-## Fonts
-
-Loaded from Google Fonts (Outfit, Inter). Offline, it falls back to system fonts.
+The architecture migration preserves the 44-record archive, current calculations, light desktop design and explicitly illustrative Radar samples. The proposed Rogue Index methodology and Microtrends improvements remain future work.

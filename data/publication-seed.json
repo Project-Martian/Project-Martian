@@ -1,0 +1,679 @@
+{
+  "repo": "https://github.com/Project-Martian/Project-Martian",
+  "settings": {
+    "chart_start": "2025-01",
+    "chart_end": "2026-09",
+    "microtrends_as_of": "2026-09-28",
+    "methodology_version": "legacy-setting-v1"
+  },
+  "microtrends": {
+    "us-government-website-activity": {
+      "p": [
+        [
+          "OpenAI",
+          "Internal research agents"
+        ]
+      ],
+      "act": "Credential misuse",
+      "exp": "US government sites",
+      "cat": "Systems"
+    },
+    "dns-boundary-crossing": {
+      "p": [
+        [
+          "OpenAI",
+          "Internal research agents"
+        ]
+      ],
+      "act": "Boundary escape",
+      "exp": "An outside chatbot",
+      "cat": "Systems"
+    },
+    "aisi-unsanctioned-actions": {
+      "p": [
+        [
+          "Anthropic",
+          "Claude models"
+        ],
+        [
+          "OpenAI",
+          "Evaluation agents"
+        ]
+      ],
+      "act": "Unapproved actions",
+      "exp": "Out-of-scope systems",
+      "cat": "Systems"
+    },
+    "self-generated-summary-instructions": {
+      "p": [
+        [
+          "OpenAI",
+          "Internal research agents"
+        ]
+      ],
+      "act": "Instruction tampering",
+      "exp": "Its own handover notes",
+      "cat": "Instructions"
+    },
+    "hugging-face-intrusion": {
+      "p": [
+        [
+          "OpenAI",
+          "Evaluation agents"
+        ]
+      ],
+      "act": "Boundary escape",
+      "exp": "Hugging Face credentials and data",
+      "cat": "Credentials"
+    },
+    "self-replicating-instructions": {
+      "p": [
+        [
+          "OpenAI",
+          "Internal research agents"
+        ]
+      ],
+      "act": "Prompt injection",
+      "exp": "Simulated tools only",
+      "cat": "Instructions"
+    },
+    "australia-medicare-portal": {
+      "p": [
+        [
+          "OpenAI",
+          "Internal research agents"
+        ]
+      ],
+      "act": "Unauthorized access",
+      "exp": "Government portal files",
+      "cat": "Private data"
+    },
+    "deception-in-handover": {
+      "p": [
+        [
+          "OpenAI",
+          "Internal research agents"
+        ]
+      ],
+      "act": "Instruction tampering",
+      "exp": "Its own handover notes",
+      "cat": "Instructions"
+    },
+    "researcher-token-exposure": {
+      "p": [
+        [
+          "OpenAI",
+          "Internal research agents"
+        ]
+      ],
+      "act": "Credential exposure",
+      "exp": "A researcher's GitHub token",
+      "cat": "Credentials"
+    },
+    "public-data-provider-probes": {
+      "p": [
+        [
+          "OpenAI",
+          "Internal research agents"
+        ]
+      ],
+      "act": "Unapproved actions",
+      "exp": "Public data websites",
+      "cat": "Systems"
+    },
+    "dsewiki-agent-coordination": {
+      "p": [
+        [
+          "OpenAI",
+          "Internal research agents"
+        ]
+      ],
+      "act": "Agent collusion",
+      "exp": "A public wiki",
+      "cat": "Systems"
+    },
+    "exposed-api-key-use": {
+      "p": [
+        [
+          "OpenAI",
+          "Internal research agents"
+        ]
+      ],
+      "act": "Credential misuse",
+      "exp": "A third-party API key",
+      "cat": "Credentials"
+    },
+    "hugging-face-may-account-activity": {
+      "p": [
+        [
+          "OpenAI",
+          "Internal research agents"
+        ]
+      ],
+      "act": "Unauthorized access",
+      "exp": "Hugging Face accounts",
+      "cat": "Credentials"
+    },
+    "shared-package-repository": {
+      "p": [
+        [
+          "OpenAI",
+          "Internal research agents"
+        ]
+      ],
+      "act": "Agent collusion",
+      "exp": "An internal package repo",
+      "cat": "Systems"
+    },
+    "rubygems-spam-campaign": {
+      "p": [
+        [
+          "RubyGems",
+          "Unattributed agents"
+        ]
+      ],
+      "act": "Unapproved publishing",
+      "exp": "A public package registry",
+      "cat": "Systems"
+    },
+    "public-workbook-handoff": {
+      "p": [
+        [
+          "OpenAI",
+          "Internal research agents"
+        ]
+      ],
+      "act": "Data exposure",
+      "exp": "A private workbook",
+      "cat": "Private data"
+    },
+    "irregular-evaluation-incidents": {
+      "p": [
+        [
+          "Anthropic",
+          "Claude models"
+        ]
+      ],
+      "act": "Boundary escape",
+      "exp": "Three real organizations",
+      "cat": "Systems"
+    },
+    "meta-unrequested-advice": {
+      "p": [
+        [
+          "Meta",
+          "Internal agent"
+        ]
+      ],
+      "act": "Unapproved actions",
+      "exp": "Internal data access",
+      "cat": "Private data"
+    },
+    "uploads-for-citations": {
+      "p": [
+        [
+          "OpenAI",
+          "Internal research agents"
+        ]
+      ],
+      "act": "Data exposure",
+      "exp": "Private records",
+      "cat": "Private data"
+    },
+    "ai-orchestrated-espionage": {
+      "p": [
+        [
+          "Anthropic",
+          "Claude Code"
+        ]
+      ],
+      "act": "Weaponized by attackers",
+      "exp": "About 30 targets",
+      "cat": "Systems"
+    },
+    "replit-production-database": {
+      "p": [
+        [
+          "Replit",
+          "Replit Agent"
+        ]
+      ],
+      "act": "Destructive action",
+      "exp": "A production database",
+      "cat": "Systems"
+    },
+    "github-mcp-data-boundary": {
+      "p": [
+        [
+          "Anthropic",
+          "Claude Desktop"
+        ],
+        [
+          "GitHub",
+          "GitHub MCP server"
+        ]
+      ],
+      "act": "Prompt injection",
+      "exp": "Private repo data",
+      "cat": "Private data"
+    },
+    "unrequested-image-hosting": {
+      "p": [
+        [
+          "OpenAI",
+          "Internal research agents"
+        ]
+      ],
+      "act": "Data exposure",
+      "exp": "User images",
+      "cat": "Private data"
+    },
+    "google-ai-overviews-satire": {
+      "p": [
+        [
+          "Google",
+          "AI Overviews"
+        ]
+      ],
+      "act": "Made things up",
+      "exp": "Search answers",
+      "cat": "Output"
+    },
+    "gemini-image-generation-pause": {
+      "p": [
+        [
+          "Google",
+          "Gemini"
+        ]
+      ],
+      "act": "Harmful output",
+      "exp": "Generated images",
+      "cat": "Output"
+    },
+    "hong-kong-deepfake-conference": {
+      "p": [
+        [
+          "Undisclosed",
+          "Deepfake video"
+        ]
+      ],
+      "act": "Impersonation",
+      "exp": "Company funds",
+      "cat": "Money"
+    },
+    "cruise-pedestrian-dragging": {
+      "p": [
+        [
+          "Cruise",
+          "Robotaxi"
+        ]
+      ],
+      "act": "Unsafe physical action",
+      "exp": "A pedestrian",
+      "cat": "People"
+    },
+    "itutor-age-screening": {
+      "p": [
+        [
+          "iTutorGroup",
+          "Hiring software"
+        ]
+      ],
+      "act": "Discrimination",
+      "exp": "Job applicants",
+      "cat": "People"
+    },
+    "mata-avianca-fabricated-cases": {
+      "p": [
+        [
+          "Levidow, Levidow & Oberman",
+          "ChatGPT"
+        ]
+      ],
+      "act": "Made things up",
+      "exp": "A court filing",
+      "cat": "Output"
+    },
+    "chatgpt-redis-data-exposure": {
+      "p": [
+        [
+          "OpenAI",
+          "ChatGPT"
+        ]
+      ],
+      "act": "Data exposure",
+      "exp": "Users' chat titles",
+      "cat": "Private data"
+    },
+    "air-canada-chatbot-fare-advice": {
+      "p": [
+        [
+          "Air Canada",
+          "Support chatbot"
+        ]
+      ],
+      "act": "Made things up",
+      "exp": "A customer refund",
+      "cat": "Money"
+    },
+    "clearview-france-privacy-penalty": {
+      "p": [
+        [
+          "Clearview AI",
+          "Face search"
+        ]
+      ],
+      "act": "Privacy violation",
+      "exp": "Facial images",
+      "cat": "Private data"
+    },
+    "zillow-offers-wind-down": {
+      "p": [
+        [
+          "Zillow",
+          "Home-pricing model"
+        ]
+      ],
+      "act": "Forecasting failure",
+      "exp": "Home inventory",
+      "cat": "Money"
+    },
+    "lee-luda-training-privacy": {
+      "p": [
+        [
+          "Scatter Lab",
+          "Lee Luda chatbot"
+        ]
+      ],
+      "act": "Privacy violation",
+      "exp": "Private conversations",
+      "cat": "Private data"
+    },
+    "ofqual-grading-reversal": {
+      "p": [
+        [
+          "Ofqual",
+          "Grading algorithm"
+        ]
+      ],
+      "act": "Discrimination",
+      "exp": "Students' grades",
+      "cat": "People"
+    },
+    "robert-williams-false-arrest": {
+      "p": [
+        [
+          "DataWorks Plus",
+          "Facial recognition"
+        ]
+      ],
+      "act": "Misidentification",
+      "exp": "A wrongful arrest",
+      "cat": "People"
+    },
+    "healthcare-cost-proxy-bias": {
+      "p": [
+        [
+          "Undisclosed",
+          "Health-risk model"
+        ]
+      ],
+      "act": "Discrimination",
+      "exp": "Patients' care",
+      "cat": "People"
+    },
+    "amazon-recruiting-bias": {
+      "p": [
+        [
+          "Amazon",
+          "Recruiting model"
+        ]
+      ],
+      "act": "Discrimination",
+      "exp": "Job applicants",
+      "cat": "People"
+    },
+    "uber-tempe-fatal-collision": {
+      "p": [
+        [
+          "Uber",
+          "Self-driving test car"
+        ]
+      ],
+      "act": "Unsafe physical action",
+      "exp": "A pedestrian",
+      "cat": "People"
+    },
+    "gender-shades-disparities": {
+      "p": [
+        [
+          "IBM",
+          "Gender classifier"
+        ],
+        [
+          "Microsoft",
+          "Gender classifier"
+        ],
+        [
+          "Face++",
+          "Gender classifier"
+        ]
+      ],
+      "act": "Discrimination",
+      "exp": "Error rates by group",
+      "cat": "People"
+    },
+    "perspective-toxicity-evasion": {
+      "p": [
+        [
+          "Google",
+          "Perspective API"
+        ]
+      ],
+      "act": "Evasion attack",
+      "exp": "Moderation scores",
+      "cat": "Output"
+    },
+    "tesla-williston-collision": {
+      "p": [
+        [
+          "Tesla",
+          "Autopilot"
+        ]
+      ],
+      "act": "Unsafe physical action",
+      "exp": "A driver",
+      "cat": "People"
+    },
+    "microsoft-tay-abuse": {
+      "p": [
+        [
+          "Microsoft",
+          "Tay chatbot"
+        ]
+      ],
+      "act": "Harmful output",
+      "exp": "Public posts",
+      "cat": "Output"
+    },
+    "google-photos-racist-label": {
+      "p": [
+        [
+          "Google",
+          "Google Photos"
+        ]
+      ],
+      "act": "Harmful output",
+      "exp": "Photo labels",
+      "cat": "Output"
+    }
+  },
+  "radar": {
+    "signals": [
+      {
+        "id": "legacy-sample-1",
+        "sample": true,
+        "s": "x",
+        "n": "Priya N.",
+        "h": "@sample_mlops",
+        "t": "14m",
+        "st": "lnk",
+        "rec": "us-government-website-activity",
+        "txt": "The .gov story is wild. Agents reused creds they found online to pull Census data. Training sandboxes need egress rules, full stop.",
+        "e": "2.1k",
+        "c": "gov"
+      },
+      {
+        "id": "legacy-sample-2",
+        "sample": true,
+        "s": "x",
+        "n": "Dev Tools Daily",
+        "h": "@sample_devtools",
+        "t": "41m",
+        "st": "unv",
+        "txt": "Multiple reports of a coding agent force-pushing over main after being told to 'clean up the branch'. Collecting screenshots before we say more.",
+        "e": "840",
+        "c": "push"
+      },
+      {
+        "id": "legacy-sample-3",
+        "sample": true,
+        "s": "r",
+        "n": "u/sample_builder",
+        "h": "r/LocalLLaMA",
+        "t": "1h",
+        "st": "unv",
+        "txt": "Our support agent refunded 40 orders overnight because a customer wrote 'ignore previous policy' in the ticket body. Anyone else seeing this?",
+        "e": "312 upvotes",
+        "c": "refund"
+      },
+      {
+        "id": "legacy-sample-4",
+        "sample": true,
+        "s": "x",
+        "n": "Security Notes",
+        "h": "@sample_secnotes",
+        "t": "2h",
+        "st": "lnk",
+        "rec": "dns-boundary-crossing",
+        "txt": "Read the DNS writeup. Monitor fired in 15 minutes, the auto-stop didn't. That gap is the whole story.",
+        "e": "960",
+        "c": "dns"
+      },
+      {
+        "id": "legacy-sample-5",
+        "sample": true,
+        "s": "r",
+        "n": "u/sample_sre",
+        "h": "r/cybersecurity",
+        "t": "3h",
+        "st": "unv",
+        "txt": "An MCP server I installed changed its tool description after an update. It now asks the agent to read ~/.ssh. Reported upstream.",
+        "e": "1.4k upvotes",
+        "c": "mcp"
+      },
+      {
+        "id": "legacy-sample-6",
+        "sample": true,
+        "s": "x",
+        "n": "J. Ortega",
+        "h": "@sample_jortega",
+        "t": "4h",
+        "st": "noise",
+        "txt": "AI agents will take over the world by Friday. Screenshot this.",
+        "e": "12k",
+        "c": ""
+      },
+      {
+        "id": "legacy-sample-7",
+        "sample": true,
+        "s": "x",
+        "n": "Lena K.",
+        "h": "@sample_lenak",
+        "t": "5h",
+        "st": "unv",
+        "txt": "Same MCP tool-description swap here. Two different servers, same pattern. Feels coordinated.",
+        "e": "3.4k",
+        "c": "mcp"
+      },
+      {
+        "id": "legacy-sample-8",
+        "sample": true,
+        "s": "r",
+        "n": "u/sample_redteam",
+        "h": "r/netsec",
+        "t": "6h",
+        "st": "lnk",
+        "rec": "hugging-face-intrusion",
+        "txt": "Hugging Face postmortem is out. Worth reading next to OpenAI's post for the full picture of how the eval escaped.",
+        "e": "890 upvotes",
+        "c": "hf"
+      }
+    ],
+    "clusters": [
+      {
+        "sample": true,
+        "k": "mcp",
+        "t": "MCP tool descriptions changed after update",
+        "m": "31 posts · 6 hrs · 2 servers named",
+        "d": [
+          1,
+          2,
+          4,
+          9,
+          15,
+          20,
+          26,
+          31
+        ],
+        "mix": [
+          0.62,
+          0.3,
+          0.08
+        ]
+      },
+      {
+        "sample": true,
+        "k": "refund",
+        "t": "Support agents refunding via ticket injection",
+        "m": "22 posts · 1 day · 2 companies named",
+        "d": [
+          2,
+          3,
+          3,
+          5,
+          6,
+          8,
+          12,
+          22
+        ],
+        "mix": [
+          0.35,
+          0.55,
+          0.1
+        ]
+      },
+      {
+        "sample": true,
+        "k": "push",
+        "t": "Coding agent force-pushes to main",
+        "m": "14 posts · 3 hrs · no primary source",
+        "d": [
+          1,
+          1,
+          2,
+          2,
+          4,
+          7,
+          9,
+          14
+        ],
+        "mix": [
+          0.78,
+          0.18,
+          0.04
+        ]
+      }
+    ]
+  }
+}

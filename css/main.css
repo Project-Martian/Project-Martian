@@ -88,7 +88,10 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;backgroun
 .strip b{display:block;font:300 28px var(--display);letter-spacing:-.03em;color:var(--ink)}
 .chatting .globe{height:120px}
 .chatting .globe svg.planet{width:96px;height:96px;opacity:.9}
-.chatting .askbar{top:100%;transform:translate(-50%,-100%)}
+.chatting .askdock{position:fixed;left:50%;bottom:0;transform:translateX(-50%);z-index:20;width:min(calc(100% - 64px),860px);padding:18px 0 14px;background:var(--bg)}
+.chatting .askbar{position:relative;left:auto;top:auto;transform:none;margin:0 auto}
+.chatting .convo{padding-bottom:140px}
+.chatting .msg-a,.chatting .msg-u{scroll-margin-top:90px;scroll-margin-bottom:160px}
 .chatting h1,.chatting .strip,.chatting .chips{display:none}
 .convo{width:100%;text-align:left;display:flex;flex-direction:column;gap:22px;margin-top:28px}
 .convo:empty{display:none}
@@ -103,6 +106,8 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;backgroun
 .msg-a .body strong{color:var(--ink);font-weight:500}
 .cite{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--accent-line);background:var(--accent-soft);color:var(--accent-ink);border-radius:6px;padding:0 7px;font:500 11.5px var(--sans);cursor:pointer;vertical-align:1px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cite:hover{filter:brightness(1.1)}
+.explain-record{border:1px solid var(--line-2);background:var(--panel);color:var(--ink-2);border-radius:6px;padding:0 7px;font:500 11.5px var(--sans);cursor:pointer;vertical-align:1px}
+.explain-record:hover{border-color:var(--accent);color:var(--ink)}
 .thinking{color:var(--muted)}
 .blink{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-left:6px;animation:bl 1s infinite}
 @keyframes bl{50%{opacity:.2}}
