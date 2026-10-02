@@ -1,0 +1,5 @@
+boto3[crt]==1.43.106
+fastapi==0.142.2
+uvicorn==0.54.0
+mcp==2.2.0
+jsonschema==4.26.0
