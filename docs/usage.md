@@ -115,6 +115,21 @@ Run the app against the local database and check the archive, trends, mappings, 
 
 The 16 existing Python tests can still be run with `.venv/bin/python -m unittest discover -s tests`; they check the historical Python implementation only. Its October 1 live-language/browser evidence is preserved in the [previous deployment checkpoint](../../martian-helm-charts/docs/project-martian.md#bedrock-ask-deployment-and-idle-connection-correction--october-1-2026), not proof of the Node port. Current runtime and restore checks belong in the October 2 deployment checkpoint.
 
+## Responsive interface verification
+
+Run `npm run check`, `npm run build` and `git diff --check`, then start the database-backed app. Use `MARTIAN_ASK_ENABLED=false` for interface checks that do not need inference. Check both `/` and `/project-martian-standalone.html`; rebuild and reload after source changes.
+
+The October 2 mobile usability check used an isolated PostgreSQL 18 database with the 44 public seed records and a read-only application role. Browser checks covered all seven sections and all four Trends views at widths of 320, 390, 768 and 1280 pixels on both the main and generated standalone pages (88 combinations). They checked document overflow and that the contribution form and guide did not overlap. Additional interaction checks covered:
+
+- All mobile navigation entries and 44px navigation targets; theme switching; arrow navigation, wrapping and End; skip-to-content focus without changing the current section.
+- Incident search, explanation steps, dialog focus containment and restoration, and Radar keyboard selection.
+- Microtrends keyboard selection, zoom/reset, page scrolling over the map and explicit map dragging.
+- Horizontal line-chart scrolling and Rogue Index detail activation; enabled and disabled Ask controls, without invoking a model.
+- Conversation wrapping, the phone input dock and citation navigation using a clearly labelled local HTTP response fixture; the fixture forwards public archive/assets and replaces only Ask configuration/responses. This verifies the browser rendering path, not the model service.
+- Contribution source validation and local issue preparation, without submitting a GitHub issue.
+
+Screenshots: [phone homepage](screenshots/mobile-home.jpg), [contribution before](screenshots/mobile-contribute-before.jpg), [contribution after](screenshots/mobile-contribute.jpg), [mobile map](screenshots/mobile-trends.jpg), [mobile line chart](screenshots/mobile-index.jpg), [explanation dialog](screenshots/mobile-dialog.jpg), [conversation fixture](screenshots/mobile-chat-fixture.jpg), and [desktop homepage](screenshots/desktop-home.jpg). These show the local review environment; homepage captures use enabled Ask configuration, without invoking inference. Physical-device, screen-reader and live Bedrock inference checks remain separate follow-ups; browser viewport checks do not establish those results.
+
 ## Container
 
 For a release from an already approved clean source commit, run commands from this repository. Commit and Git push require separate authorization:
