@@ -35,7 +35,7 @@ These are review proposals, not new approved claims. With the current drafts, Ma
 
 One distinct reviewer must approve each assessment; Severe requires two. Reviews bind to a hash of the assessment and the full incident evidence. Edits invalidate old approvals and require removing the obsolete declarations and reviewing the new version. Explicit disputes, different landing categories, or a difference greater than one on a numeric dimension (against the proposed values or between reviewers) mark the assessment disputed. Disputed assessments can be shown in a labelled draft preview; they cannot pass reviewed publication validation. Reviewer identity is an operator-supplied public handle checked through the contributor/PR process, not authenticated by the CLI. Never use the same person under multiple handles to satisfy Severe review.
 
-Microtrends mappings and their reviews are excluded from impact approval hashes. An independent mapping correction does not change the impact assessment; changes to the underlying incident evidence still require renewed review.
+Microtrends mappings and [Narrative/Comparison context](narrative-comparison.md), including their reviews, are excluded from impact approval hashes. An independent annotation correction does not change the impact assessment; changes to the underlying incident evidence still require renewed review.
 
 ## Prepare and review
 

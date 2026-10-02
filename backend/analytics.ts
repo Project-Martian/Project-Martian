@@ -1,8 +1,9 @@
 import type { Incident, Publication } from './types.js';
 import { microtrendsMetadata } from './microtrends.js';
 import { impactIndex } from './impact.js';
+import { narrativeAnalytics, comparisonAnalytics } from './context.js';
 
-// Setting-based helpers remain for Narrative and Comparison.
+// Retained for legacy analytical outputs and unchanged views; context.ts owns the new views.
 export const isReal = (r: Incident) => /real-world|third-party|reported/i.test(r.set);
 export function sourceType(url: string) {
   const host=(url.match(/^https?:\/\/([^/]+)/)||[,''])[1];
@@ -57,6 +58,7 @@ export function analytics(data: Publication) {
       disclosure:Object.entries(rca).sort((a,b)=>b[1]-a[1])[0][0],forecast:fut[5].c>lastV?'Growing':fut[5].c<lastV?'Declining':'Steady',
       stage:y26>10?'Established':'Emerging'},
     comparison: {real:project(cumReal),lab:project(cumLab)},
+    narrative_v1: narrativeAnalytics(data), comparison_v1: comparisonAnalytics(data),
   };
 }
 function project(arr:number[]) {

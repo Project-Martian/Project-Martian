@@ -4,6 +4,7 @@ import type { PoolClient } from 'pg';
 import type { Publication } from './types.js';
 import { mappingSchema, validateMappings } from './microtrends.js';
 import { impactSchema, validateAssessments } from './impact.js';
+import { contextSchema, validateContexts } from './context.js';
 
 const text = z.string();
 const isoDate = z.string().refine(value => value === '' || (/^\d{4}-\d{2}-\d{2}$/.test(value)
@@ -17,6 +18,7 @@ const recordSchema = z.object({
   th: z.array(z.tuple([text,text,text])), srcs: z.array(z.tuple([text,text,sourceUrl,text])),
   impact_assessment: impactSchema.optional(),
   map: mappingSchema.optional(),
+  context: contextSchema.optional(),
 }).catchall(z.unknown());
 const month = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
 const inputSchema = z.strictObject({
@@ -25,7 +27,9 @@ const inputSchema = z.strictObject({
     methodology_version: z.enum(['legacy-setting-v1','impact-v1']),
     impact_review_mode: z.enum(['draft','reviewed']).optional(),
     microtrends_version: z.literal('maker-model-attack-v1').optional(),
-    microtrends_review_mode: z.enum(['draft','reviewed']).optional()}),
+    microtrends_review_mode: z.enum(['draft','reviewed']).optional(),
+    context_version: z.literal('disclosure-comparison-v1').optional(),
+    context_review_mode: z.enum(['draft','reviewed']).optional(), context_as_of: z.iso.date().optional()}),
   records: z.array(recordSchema).min(1).max(10000),
   microtrends: z.record(text,z.strictObject({p:z.array(z.tuple([text.min(1),text.min(1)])).min(1),act:text,exp:text,cat:text})),
   radar: z.strictObject({
@@ -59,6 +63,7 @@ export function validatePublication(value: unknown): Publication {
   }
   validateAssessments(result as Publication);
   validateMappings(result as Publication);
+  validateContexts(result as Publication);
   return result as Publication;
 }
 

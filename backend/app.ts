@@ -1,9 +1,10 @@
 import Fastify from 'fastify';
 import staticFiles from '@fastify/static';
 import { fileURLToPath } from 'node:url';
-import { createPool, readSnapshot, readImpactHistory, readMappingHistory } from './database.js';
+import { createPool, readSnapshot, readImpactHistory, readMappingHistory, readContextHistory } from './database.js';
 import { microtrendsMetadata } from './microtrends.js';
 import { analytics } from './analytics.js';
+import { narrativeAnalytics, comparisonAnalytics, comparisonQuery } from './context.js';
 import { askSchema, MAX_RECORDS } from './ask-models.js';
 import { answerQuestion, MODEL_ID, ModelUnavailable, InvalidAnswer } from './assistant.js';
 
@@ -72,6 +73,20 @@ app.get<{Params:{id:string}}>('/api/incidents/:id/mapping-history',async(request
   return history?{id:request.params.id,history}:reply.code(404).send({detail:'Unknown incident.'});
 });
 app.get('/api/trends',async()=>{const snapshot=await readSnapshot(pool);return {publication:snapshot.publication,...analytics(snapshot)};});
+app.get<{Params:{id:string}}>('/api/incidents/:id/context-history',async(request,reply)=>{
+  const history=await readContextHistory(pool,request.params.id);
+  return history?{id:request.params.id,history}:reply.code(404).send({detail:'Unknown incident.'});
+});
+app.get('/api/narrative',async(_request,reply)=>{
+  const snapshot=await readSnapshot(pool), narrative=narrativeAnalytics(snapshot);
+  return narrative?{publication:snapshot.publication,...narrative}:reply.code(409).send({detail:'Disclosure methodology is not enabled for this publication.'});
+});
+app.get('/api/comparison',async(request,reply)=>{
+  const filters=comparisonQuery.safeParse(request.query);
+  if(!filters.success)return reply.code(400).send({detail:'Use known context, evidence and date-basis filters.'});
+  const snapshot=await readSnapshot(pool), comparison=comparisonAnalytics(snapshot,filters.data);
+  return comparison?{publication:snapshot.publication,...comparison}:reply.code(409).send({detail:'Comparison methodology is not enabled for this publication.'});
+});
 app.get('/api/impact-index',async(_request,reply)=>{
   const snapshot=await readSnapshot(pool),impact=analytics(snapshot).impact;
   return impact?{publication:snapshot.publication,...impact}:reply.code(409).send({detail:'This publication uses the legacy methodology.'});
