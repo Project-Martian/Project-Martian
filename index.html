@@ -58,12 +58,14 @@
       <div><span class="eyebrow">From pattern recognition to autonomous action</span><h2>The timeline<span class="dotp">.</span></h2></div>
       <div class="strip" id="tlcounts" style="margin:0;justify-content:flex-end"></div>
     </div>
-    <div class="corow" id="tlco" role="group" aria-label="Filter by company"></div>
+    <p class="tl-label">Filter by model maker · operators and targets remain in each record</p>
+    <div class="corow" id="tlco" role="group" aria-label="Filter by model maker"></div>
     <div class="tl-tools">
       <div class="seg" id="tlseg" role="group" aria-label="Scope"></div>
       <label class="search"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="m20 20-4-4" stroke="currentColor" stroke-width="1.8"/></svg><input id="tlq" type="search" placeholder="Search incidents, companies, causes" aria-label="Search the timeline"></label>
     </div>
-    <p class="tl-cap"><span>Every incident answers three things: <b style="color:var(--accent-ink);font-weight:600">what happened</b>, <b style="color:var(--accent-ink);font-weight:600">how</b>, and <b style="color:var(--accent-ink);font-weight:600">what we can conclude</b>.</span><span class="how-note">Ask Joe/Jill for the visual walkthrough.</span></p>
+    <div class="tl-date-tools"><label for="tlbasis">Date basis <select id="tlbasis"><option value="archive">Archive order</option><option value="occurrence">Occurrence</option><option value="disclosure">Checked disclosure</option></select></label><a class="inline-cta" href="#contribute" data-go="contribute">Suggest an incident →</a></div>
+    <p class="tl-cap" id="tlstatus" role="status"></p>
     <div class="tl"><aside class="yidx"><nav id="yidx" aria-label="Years"></nav></aside><div id="tlist"></div></div>
   </section>
 
@@ -136,7 +138,7 @@
         <div class="pillar"><b>Record</b><h3>What happened</h3><p>Sourced incidents and an open history.</p></div>
         <div class="pillar"><b>Ask</b><h3>Interrogate the record</h3><p>Plain-language answers grounded in evidence.</p></div>
         <div class="pillar"><b>Patterns</b><h3>What changes over time</h3><p>Trends and recurring failure modes.</p></div>
-        <div class="pillar"><b>Contribute</b><h3>Make it better</h3><p>Report, verify, reproduce, or build on the data.</p></div>
+        <div class="pillar"><b>Contribute</b><h3>Make it better</h3><p>Report, correct, check sources, or build on the data.</p></div>
       </div>
       <div class="about-bottom">
         <p>Built for engineers, security teams, researchers, leaders, and anyone trying to understand what “rogue agent” actually means.</p>
@@ -152,12 +154,32 @@
         <div><span class="eyebrow">Contribute</span><h2>Help improve the record<span class="dotp">.</span></h2></div>
         <p>You do not need to be a security researcher. Bring evidence; we will help structure it.</p>
       </div>
-      <div class="contribute-steps">
-        <div class="cstep"><span class="n">01</span><h3>Find something</h3><p>An incident, disclosure, paper, screenshot, or credible report.</p><a class="repo-path" data-path="/issues/new?template=incident.yml" href="#" target="_blank" rel="noopener">Report an incident ↗</a></div>
-        <div class="cstep"><span class="n">02</span><h3>Add evidence</h3><p>Tell us what happened, link the source, and flag what is still uncertain.</p><a class="repo-path" data-path="/issues?q=is%3Aopen+label%3Averify" href="#" target="_blank" rel="noopener">Verify a record ↗</a></div>
-        <div class="cstep"><span class="n">03</span><h3>Get credit</h3><p>Accepted work is attributed publicly and can count toward the contributor board and certificate.</p><a href="#docs" data-go="docs">Contribution guide →</a></div>
+      <div class="contrib-layout">
+        <form id="incident-form" class="incident-form">
+          <div class="contrib-form-head"><span class="eyebrow">01 · Your report</span><h3>Bring the source. Explain the incident.</h3><p>One report becomes one GitHub issue. Nothing is published before review.</p></div>
+          <div class="contrib-pair"><label>Contribution type<select id="cf-kind" name="kind"><option value="incident">New incident</option><option value="correction">Correction or new evidence</option></select></label><label>Related record<select id="cf-related" name="related"><option value="">New incident — no existing record</option></select></label></div>
+          <label>Short title <input name="title" id="cf-title" required maxlength="140" placeholder="What happened, in one sentence"></label>
+          <label>Public source URL <input name="source" id="cf-source" type="url" required maxlength="600" placeholder="https://…" aria-describedby="cf-source-help"></label>
+          <p class="field-help" id="cf-source-help">Link a disclosure, original investigation or credible report. A social post alone is a lead, not verification.</p>
+          <div class="contrib-pair"><label>When it happened <input name="occurred" maxlength="80" placeholder="Date, range or unknown"></label><label>When it was reported <input name="reported" maxlength="80" placeholder="Source publication date or unknown"></label></div>
+          <label>Affected product or organization <input name="product" required maxlength="160" placeholder="Use the names the source gives; unknown is okay"></label>
+          <label>What happened? <textarea name="summary" required maxlength="900" rows="4" placeholder="Describe the task, what the system did and the observed outcome. Identify controlled lab demonstrations explicitly."></textarea></label>
+          <label>Impact and uncertainty <textarea name="uncertainty" required maxlength="600" rows="3" placeholder="What was actually affected? What is reported, disputed or unknown?"></textarea></label>
+          <label>Additional public sources <textarea name="sources" maxlength="800" rows="2" placeholder="Optional: one URL per line"></textarea></label>
+          <label class="contrib-consent"><input type="checkbox" name="consent" required><span>I understand this will be a public GitHub issue. I have removed personal data, credentials and private material.</span></label>
+          <button type="submit" class="contrib-primary">Prepare GitHub issue →</button>
+          <p id="cf-status" role="status" class="field-help">A GitHub account is needed to submit. This draft stays in this page until you leave or reload it.</p>
+          <div id="cf-preview" class="contrib-preview" hidden><h3>Review your report</h3><pre id="cf-preview-text"></pre><a id="cf-submit" class="contrib-primary" target="_blank" rel="noopener">Review and submit on GitHub ↗</a><p>Not sent yet. Submit on GitHub to get your issue number and follow the review there.</p></div>
+        </form>
+        <aside class="contrib-guide" aria-label="Contribution guide">
+          <span class="eyebrow">The contribution guide</span><h3>Evidence first.<br>People review it.</h3>
+          <ol><li><b>Check the archive</b><p>Search Timeline first. Add new evidence to an existing record instead of reporting the same event twice.</p><a href="#timeline" data-go="timeline">Browse the timeline →</a></li><li><b>Write one sourced report</b><p>Separate what happened from what the source claims. Keep occurrence and disclosure dates distinct. Unknown is a useful answer.</p></li><li><b>Follow your GitHub issue</b><p>Your issue is the review thread. The team checks the sources, resolves duplicates and prepares the structured incident.</p></li><li><b>Approval before publication</b><p>Once verified, the team approves the final record and marks the issue Done. The publication worker adds that record to the database and keeps the issue linked.</p></li></ol>
+          <form id="contribution-status-form" class="contrib-status-form"><label>Already submitted? Enter your issue number<input id="contribution-issue" type="number" min="1" max="999999999" step="1" required placeholder="e.g. 12"></label><button class="inline-cta" type="submit">Check publication</button><p id="contribution-result" role="status"></p></form>
+          <p class="contrib-example"><b>Useful reports include</b><br>Public incidents, documented research demonstrations, corrections and source follow-ups. Describe evidence and effects; do not include attack instructions for live systems.</p>
+          <a class="repo-path" data-path="/blob/main/CONTRIBUTING.md" href="#" target="_blank" rel="noopener">Full contributor & review guide ↗</a>
+          <a class="repo-path" data-path="/issues" href="#" target="_blank" rel="noopener">Browse contribution issues ↗</a>
+        </aside>
       </div>
-      <div class="contrib-reward"><p><b>Also useful:</b> attack reproductions, corrections, source images, datasets, and tools built on the record.</p><a class="inline-cta" href="#docs" data-go="docs">Open docs →</a></div>
     </div>
   </section>
 
@@ -167,8 +189,8 @@
       <div class="docs-head"><span class="eyebrow">Docs</span><h2>How Project Martian works<span class="dotp">.</span></h2><p>The detailed stuff lives here so the rest of the site stays simple.</p></div>
       <div class="docs-grid">
         <div class="doc-card"><span>01 · RECORD</span><h3>How an incident gets added</h3><p>Source → evidence check → plain-language summary → uncertainty label → historical record.</p><a class="repo-path" data-path="/blob/main/CONTRIBUTING.md" href="#" target="_blank" rel="noopener">Methodology ↗</a></div>
-        <div class="doc-card"><span>02 · CONTRIBUTE</span><h3>Contribution guide</h3><p>Report cases, verify records, add attacks, corrections, or source material.</p><a class="repo-path" data-path="/blob/main/CONTRIBUTING.md" href="#" target="_blank" rel="noopener">CONTRIBUTING.md ↗</a></div>
-        <div class="doc-card"><span>03 · DATA</span><h3>Dataset & schema</h3><p>Structured incident fields, source links, dates, failure types, impact, and limits.</p><a class="repo-path" data-path="/tree/main/data" href="#" target="_blank" rel="noopener">Browse data ↗</a></div>
+        <div class="doc-card"><span>02 · CONTRIBUTE</span><h3>Contribution guide</h3><p>Report cases, check sources, and suggest corrections or follow-ups.</p><a class="repo-path" data-path="/blob/main/CONTRIBUTING.md" href="#" target="_blank" rel="noopener">CONTRIBUTING.md ↗</a></div>
+        <div class="doc-card"><span>03 · DATA</span><h3>Dataset & schema</h3><p>Structured incident fields, source links, dates, failure types, impact, and limits.</p><a href="/api/incidents" target="_blank" rel="noopener">Published records API ↗</a></div>
         <div class="doc-card"><span>04 · PRINCIPLES</span><h3>Manifesto</h3><p>Evidence over hype. Open by default. Contributors are credited. Safety is built in public.</p><a class="repo-path" data-path="/blob/main/MANIFESTO.md" href="#" target="_blank" rel="noopener">Manifesto.md ↗</a></div>
       </div>
       <div class="docs-roadmap">

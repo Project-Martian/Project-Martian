@@ -10,7 +10,7 @@ const text = z.string();
 const isoDate = z.string().refine(value => value === '' || (/^\d{4}-\d{2}-\d{2}$/.test(value)
   && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0,10) === value));
 const sourceUrl = z.url().refine(value => ['https:', 'http:'].includes(new URL(value).protocol));
-const recordSchema = z.object({
+export const recordSchema = z.object({
   id: z.string().regex(/^[a-z0-9][a-z0-9-]{0,79}$/), d: isoDate,
   scope: z.enum(['agents','other-ai','automation']), t: text.min(1), org: text.min(1),
   when: text, set: text, kind: text, sum: text, tag: text, src: text, rca: text, u: sourceUrl,

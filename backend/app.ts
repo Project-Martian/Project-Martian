@@ -1,10 +1,12 @@
 import Fastify from 'fastify';
 import staticFiles from '@fastify/static';
 import { fileURLToPath } from 'node:url';
-import { createPool, readSnapshot, readImpactHistory, readMappingHistory, readContextHistory } from './database.js';
+import { createPool, readSnapshot, readImpactHistory, readMappingHistory, readContextHistory, readContributions } from './database.js';
 import { microtrendsMetadata } from './microtrends.js';
 import { analytics } from './analytics.js';
 import { narrativeAnalytics, comparisonAnalytics, comparisonQuery } from './context.js';
+import { timelineData } from './timeline.js';
+import { CONTRIBUTION_REPO } from './contributions.js';
 import { askSchema, MAX_RECORDS } from './ask-models.js';
 import { answerQuestion, MODEL_ID, ModelUnavailable, InvalidAnswer } from './assistant.js';
 
@@ -58,7 +60,15 @@ app.get('/readyz',async(_request,reply)=>{
 });
 app.get('/api/config',async()=>({enabled,provider:'Amazon Bedrock',model_id:MODEL_ID,
   model_name:MODEL_ID==='moonshotai.kimi-k2.5'?'Kimi K2.5':MODEL_ID}));
-app.get('/api/archive',async()=>{const snapshot=await readSnapshot(pool);return {...snapshot,analytics:analytics(snapshot)};});
+app.get('/api/archive',async()=>{const snapshot=await readSnapshot(pool);return {...snapshot,analytics:analytics(snapshot),timeline:timelineData(snapshot,await readContributions(pool,snapshot.publication.id))};});
+app.get('/api/timeline',async()=>{const snapshot=await readSnapshot(pool);return {publication:snapshot.publication,...timelineData(snapshot,await readContributions(pool,snapshot.publication.id))};});
+app.get<{Params:{issue:string}}>('/api/contributions/:issue',async(request,reply)=>{
+  if(!/^[1-9][0-9]{0,8}$/.test(request.params.issue))return reply.code(400).send({detail:'Use a positive GitHub issue number.'});
+  const number=Number(request.params.issue);
+  const result=await pool.query(`SELECT incident_id,operation,proposal_hash,publication_id::text,published_at
+    FROM contribution_publications WHERE repository=$1 AND issue_number=$2`,[CONTRIBUTION_REPO,number]);
+  return {issue:number,url:`https://github.com/${CONTRIBUTION_REPO}/issues/${number}`,published:result.rows.length===1,receipt:result.rows[0]||null};
+});
 app.get('/api/incidents',async()=>{const snapshot=await readSnapshot(pool);return {publication:snapshot.publication,records:snapshot.records};});
 app.get<{Params:{id:string}}>('/api/incidents/:id',async(request,reply)=>{
   const snapshot=await readSnapshot(pool),record=snapshot.records.find(r=>r.id===request.params.id);
