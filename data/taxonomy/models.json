@@ -1,0 +1,185 @@
+[
+  {
+    "name": "Unnamed OpenAI model",
+    "family": "Unnamed OpenAI model",
+    "company": "OpenAI",
+    "kind": "unnamed",
+    "harness": null,
+    "versions": []
+  },
+  {
+    "name": "Unnamed Anthropic model",
+    "family": "Unnamed Anthropic model",
+    "company": "Anthropic",
+    "kind": "unnamed",
+    "harness": null,
+    "versions": []
+  },
+  {
+    "name": "Unnamed Google model",
+    "family": "Unnamed Google model",
+    "company": "Google",
+    "kind": "unnamed",
+    "harness": null,
+    "versions": []
+  },
+  {
+    "name": "Unnamed Meta model",
+    "family": "Unnamed Meta model",
+    "company": "Meta",
+    "kind": "unnamed",
+    "harness": null,
+    "versions": []
+  },
+  {
+    "name": "Unnamed xAI model",
+    "family": "Unnamed xAI model",
+    "company": "xAI",
+    "kind": "unnamed",
+    "harness": null,
+    "versions": []
+  },
+  {
+    "name": "Unnamed Mistral model",
+    "family": "Unnamed Mistral model",
+    "company": "Mistral",
+    "kind": "unnamed",
+    "harness": null,
+    "versions": []
+  },
+  {
+    "name": "Unnamed DeepSeek model",
+    "family": "Unnamed DeepSeek model",
+    "company": "DeepSeek",
+    "kind": "unnamed",
+    "harness": null,
+    "versions": []
+  },
+  {
+    "name": "Unnamed Microsoft model",
+    "family": "Unnamed Microsoft model",
+    "company": "Microsoft",
+    "kind": "unnamed",
+    "harness": null,
+    "versions": []
+  },
+  {
+    "name": "Unnamed IBM model",
+    "family": "Unnamed IBM model",
+    "company": "IBM",
+    "kind": "unnamed",
+    "harness": null,
+    "versions": []
+  },
+  {
+    "name": "Unnamed Face++ model",
+    "family": "Unnamed Face++ model",
+    "company": "Face++",
+    "kind": "unnamed",
+    "harness": null,
+    "versions": []
+  },
+  {
+    "name": "Unnamed Amazon model",
+    "family": "Unnamed Amazon model",
+    "company": "Amazon",
+    "kind": "unnamed",
+    "harness": null,
+    "versions": []
+  },
+  {
+    "name": "Unnamed Open source model",
+    "family": "Unnamed Open source model",
+    "company": "Open source",
+    "kind": "unnamed",
+    "harness": null,
+    "versions": []
+  },
+  {
+    "name": "Unknown model",
+    "family": "Unknown model",
+    "company": "Unknown",
+    "kind": "unnamed",
+    "harness": null,
+    "versions": []
+  },
+  {
+    "name": "GPT",
+    "family": "GPT",
+    "company": "OpenAI",
+    "kind": "named",
+    "harness": null,
+    "versions": [
+      {
+        "id": "5.6-sol",
+        "label": "GPT-5.6 Sol"
+      },
+      {
+        "id": "5.5",
+        "label": "GPT-5.5"
+      }
+    ]
+  },
+  {
+    "name": "GPT-5.4 mini (research)",
+    "family": "GPT research checkpoints",
+    "company": "OpenAI",
+    "kind": "named",
+    "harness": null,
+    "versions": []
+  },
+  {
+    "name": "Astra",
+    "family": "Astra",
+    "company": "OpenAI",
+    "kind": "named",
+    "harness": null,
+    "versions": []
+  },
+  {
+    "name": "Internal Model 1 (IM1)",
+    "family": "Internal Model 1 (IM1)",
+    "company": "OpenAI",
+    "kind": "named",
+    "harness": null,
+    "versions": []
+  },
+  {
+    "name": "Claude Opus",
+    "family": "Claude Opus",
+    "company": "Anthropic",
+    "kind": "named",
+    "harness": null,
+    "versions": [
+      {
+        "id": "4",
+        "label": "Claude Opus 4"
+      },
+      {
+        "id": "4.7",
+        "label": "Claude Opus 4.7"
+      }
+    ]
+  },
+  {
+    "name": "Mythos",
+    "family": "Mythos",
+    "company": "Anthropic",
+    "kind": "named",
+    "harness": null,
+    "versions": [
+      {
+        "id": "5",
+        "label": "Mythos 5"
+      }
+    ]
+  },
+  {
+    "name": "Claude (via Claude Code)",
+    "family": "Claude (via Claude Code)",
+    "company": "Anthropic",
+    "kind": "harness",
+    "harness": "Claude Code",
+    "versions": []
+  }
+]

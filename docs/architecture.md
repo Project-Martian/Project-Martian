@@ -10,7 +10,9 @@ PostgreSQL is the runtime source of truth. A publication contains an actor, reas
 
 The operator exports a publication, edits and reviews it, then explicitly publishes a new version. A transaction and advisory lock prevent partial or interleaved publication. Old revisions remain available in SQL; the public API reads the latest committed publication in a read-only repeatable-read transaction. A running page retains its loaded snapshot until reloaded. Ask reads one current database snapshot per request and returns its publication ID. No per-process incident cache or static-data fallback is used.
 
-The application role `project_martian_app` has SELECT access only. The separate `project_martian_owner` role is reserved for bootstrap, migrations and operator publication. There is no public write API, admin screen, automatic source ingestion, reviewer assignment or factual verification system. Publication history records operator changes; it does not prove that an incident claim is true. Future Rogue Index assessments can build on these stable identities and revisions.
+The application role `project_martian_app` has SELECT access only. The separate `project_martian_owner` role is reserved for bootstrap, migrations and operator publication. There is no public write API, admin screen, automatic source ingestion, reviewer assignment or factual verification system. Publication history records operator changes; it does not prove that an incident claim is true. Versioned Rogue Index assessments live in each revision's `content.impact_assessment`, separately from the preserved descriptive `impact` text. No additional database schema or service is needed. The [scoring and review guide](rogue-index.md) defines the rubric, declared human reviews, draft preview and historical API.
+
+Microtrends v1 stores canonical `content.map` fields alongside impact assessments. Controlled catalogs and source/review validation generate its normalized maker/model relationships and primary attack; publication rejects any divergent derived mapping. The [mapping guide](microtrends.md) owns taxonomy, grouping, attribution and review rules. Impact and mapping approvals independently bind to the shared incident evidence.
 
 ## API and presentation
 
@@ -19,8 +21,12 @@ The application role `project_martian_app` has SELECT access only. The separate 
 | `GET /api/archive` | One consistent publication: records, metadata, mappings, Radar and analytical series; frontend entry point |
 | `GET /api/incidents` | Current publication and all records |
 | `GET /api/incidents/:id` | One current record, or 404 |
+| `GET /api/incidents/:id/impact-history` | Published changes to one assessment, including prior inputs and computed scores |
 | `GET /api/trends` | Rogue Index, Narrative, Comparison and sidebar series |
-| `GET /api/microtrends` | Curated incident/system/action mappings and display date |
+| `GET /api/impact-index` | Impact methodology, monthly series, assessments and coverage; 409 for a legacy publication |
+| `GET /data/impact_index.json` | Monthly impact entries with methodology, review mode and publication ID; 409 for a legacy publication |
+| `GET /api/microtrends` | Generated maker/model/attack mappings, display date, version, review mode, family map and coverage; explicit legacy metadata for old publications |
+| `GET /api/incidents/:id/mapping-history` | Changed mapping values and publication dates, including original legacy mapping |
 | `GET /api/radar` | Stored signals/clusters with sample flags |
 | `GET /data/records.json` | Current records as JSON from the database, for compatibility |
 | `GET /healthz` | Process health |
@@ -29,7 +35,9 @@ The application role `project_martian_app` has SELECT access only. The separate 
 
 The browser renders, filters and navigates the returned snapshot. Shared analytical calculations run in `backend/analytics.ts`; Microtrends interaction and layout remain in `js/app.js`. HTML, CSS, logo assets and editorial interface text remain source-controlled. `js/records.js` is removed. The standalone HTML embeds assets but still loads `/api/archive` and requires the Node service.
 
-The migration deliberately preserves `legacy-setting-v1`: setting weights 3/2/1, three-month rolling values normalized to the archive peak, Jan 2025–Sep 2026 chart range and the Sep 28, 2026 Microtrends display date. Narrative uses the existing URL-based source categories; Comparison retains its illustrative projection. Radar retains eight illustrative posts and three sample clusters, alongside recent incident rows derived from records. These are not live social monitoring, a calibrated risk measure or the proposed thesis implementation.
+Publications explicitly select `legacy-setting-v1` or `impact-v1`. The former preserves the original setting weights 3/2/1 and archive-peak normalization. Impact v1 calculates Damage, Reach and Reversal with the landing multiplier, sums exact points over three months and uses a fixed 300-point reference capped at 100. The chart's months, axis, six-month illustrative extension, colors and controls are retained; its tooltip lists each incident's computed score, band and uncertainty. A draft publication is visibly labelled and needs an explicit operator flag. Version selection is part of publication data, never an automatic recovery path.
+
+The Jan 2025–Sep 2026 chart range and Sep 28, 2026 Microtrends date are unchanged. Narrative still uses URL-based source categories; Comparison retains its illustrative projection. Radar retains eight illustrative posts and three sample clusters. These are not live monitoring or calibrated risk measures. The current Rogue Index preview adds 44 proposed assessments without human approvals; production still uses the legacy publication. Other views and the original record content are preserved.
 
 ## Runtime boundaries
 

@@ -294,6 +294,11 @@ function shareBox(r){
     <button class="share-btn" type="button" data-share="copy" data-id="${r.id}" aria-label="Copy summary and source">${I.copy}</button>
   </div></div>`;
 }
+function mappingEvidence(r){
+  if(!r.map) return "";
+  const m=r.map;
+  return `<p class="rca"><b>Microtrends mapping${archive.settings.microtrends_review_mode==="draft"?" · draft":""}</b><br>${m.links.map(link=>`<a href="${esc(link.source)}" target="_blank" rel="noopener">${esc(link.company)} → ${esc(link.model)}${link.version?` (${esc(link.version)})`:""}</a>${link.quote?` · “${esc(link.quote)}”`:" · model not named"}`).join("<br>")}<br><a href="${esc(m.sources.attack)}" target="_blank" rel="noopener">${esc(m.attack)}</a>${m.attack_2?` → ${esc(m.attack_2)} (secondary)`:""}<br>Ran by ${esc(m.ran_by)} · Hit: ${esc(m.hit)}${m.harness?` · Harness: ${esc(m.harness)}`:""}<br>${esc(m.notes)}</p>`;
+}
 function entryHTML(r){
   const who = whoFor(r.id);
   return `<article class="ent" id="r-${r.id}">
@@ -304,7 +309,7 @@ function entryHTML(r){
         <h4>${esc(r.t)}</h4>
         <div class="ent-meta"><span>${esc(r.tag)}</span><a href="${esc(r.u)}" target="_blank" rel="noopener">${esc(r.src)} ↗</a></div>
         <div class="ent-grid">${sourcePreview(r)}</div>
-        <details class="thr"><summary><i>+</i>Evidence & timeline</summary><p class="sum">${esc(r.sum)}</p>${r.th&&r.th.length?`<ol>${r.th.map(t=>`<li><span>${esc(t[0])}</span><b>${esc(t[1])}</b>${esc(t[2])}</li>`).join("")}</ol>`:""}<p class="rca">${esc(r.rca)}</p></details>
+        <details class="thr"><summary><i>+</i>Evidence & timeline</summary><p class="sum">${esc(r.sum)}</p>${r.th&&r.th.length?`<ol>${r.th.map(t=>`<li><span>${esc(t[0])}</span><b>${esc(t[1])}</b>${esc(t[2])}</li>`).join("")}</ol>`:""}<p class="rca">${esc(r.rca)}</p>${mappingEvidence(r)}</details>
       </div>
       <aside class="ent-summary">
         <div class="at-glance"><div class="at-glance-h"><b>At a glance</b><span>PLAIN LANGUAGE</span></div>${questionCards(r)}</div>
@@ -379,7 +384,7 @@ renderFeed();
 
 /* ================= TRENDS ================= */
 const css = n => getComputedStyle(document.body).getPropertyValue(n).trim();
-// Published data and legacy calculations come from the backend.
+// Published data and versioned calculations come from the backend.
 const {months, raw, roll, idx, fut, futMonths, cumReal, cumLab, lastV} = archive.analytics;
 const mkey = (y,m)=>`${y}-${String(m+1).padStart(2,"0")}`;
 const dated = AGENTS.filter(r=>r.d);
@@ -411,6 +416,8 @@ $("#qupd").textContent = "Last updated " + (latest ? latest.when.replace(/^Repor
 function axisY(ch,x0,x1,ys,scale,fmt){return ys.map(v=>`<line x1="${x0}" x2="${x1}" y1="${scale(v)}" y2="${scale(v)}" stroke="${css("--line")}" stroke-dasharray="3 5"/><text x="${x0-10}" y="${scale(v)+4}" text-anchor="end" font-size="11" fill="${css("--muted")}">${fmt?fmt(v):v}</text>`).join("");}
 
 function renderImpact(){
+  const impact=archive.analytics.impact;
+  const monthIncidents=mi=>impact?impact.series[mi].incidents:dated.filter(r=>r.d.startsWith(mkey(...months[mi])));
   const W=900,H=340,L=46,R=18,T=20,B=40;
   const all=[...months,...futMonths], n=all.length;
   const x=i=>L+i*(W-L-R)/(n-1), y=v=>T+(1-v/100)*(H-T-B);
@@ -432,15 +439,15 @@ function renderImpact(){
   }
   g += `<path d="${smooth(idx.map((v,i)=>[x(i),y(v)]))}" fill="none" stroke="${accent}" stroke-width="1.9"/>`;
   if(showMoments){
-    months.forEach(([yy,mm],mi)=>{const same=dated.filter(r=>r.d.startsWith(mkey(yy,mm))); if(!same.length) return;
-      const cy=y(idx[mi]); const rr=same.some(isReal)?3.2:2.6;
+    months.forEach(([yy,mm],mi)=>{const same=monthIncidents(mi); if(!same.length) return;
+      const cy=y(idx[mi]); const rr=same.some(r=>impact?r.landed==='world':isReal(r))?3.2:2.6;
       g+=`<circle cx="${x(mi)}" cy="${cy}" r="${rr}" fill="${css("--panel")}" stroke="${accent}" stroke-width="1.2"><title>${same.length} incident${same.length>1?"s":""} · ${MON[mm]} ${yy}</title></circle>`;
     });
   }
   [0,4,8,12,16,20,24].forEach(i=>{ if(i<n){const [yy,mm]=all[i]; g+=`<text x="${x(i)}" y="${H-12}" text-anchor="middle" font-size="11" fill="${muted}">${MON[mm]} ${yy}</text>`;}});
   g += `<g id="hov" style="display:none"><line id="hl" y1="${T}" y2="${H-B}" stroke="${accent}" stroke-dasharray="3 4"/><circle id="hc" r="5" fill="${css("--panel")}" stroke="${accent}" stroke-width="2"/></g>`;
   $("#tpanel").innerHTML = `
-    <div class="tph"><div><h3>Rogue Index</h3><p>Observed incident pressure from the record, impact-weighted over a rolling 3-month window. The shaded extension is an illustrative scenario, not a forecast.</p></div>
+    <div class="tph"><div><h3>Rogue Index${impact?.review_mode==='draft'?' · Draft scores':''}</h3><p>${impact?'Impact points over three months; 300 points = 100. '+(impact.review_mode==='draft'?'Assessments await review. ':''):'Observed incident pressure from the record, impact-weighted over a rolling 3-month window. '}The shaded extension is an illustrative scenario, not a forecast.</p></div>
       <div style="display:flex;gap:24px;align-items:flex-start"><span class="delta"><b class="${dPct<0?"neg":""}">${dPct>=0?"+":""}${dPct} pts</b><span>Selected timeline</span></span></div></div>
     <div class="chartbox" id="cb"><svg viewBox="0 0 ${W} ${H}" id="impsvg" role="img" aria-label="Rogue Index by month with an illustrative estimate">${g}</svg><div class="tip" id="tip" hidden></div></div>
     <div class="range" id="rng"><div class="rail"></div><div class="fill" id="rfill"></div>
@@ -463,9 +470,17 @@ function renderImpact(){
     let i=Math.round((px-L)/((W-L-R)/(n-1))); i=Math.max(0,Math.min(n-1,i));
     const isF=i>=months.length, v=isF?fut[i-months.length].c:idx[i], [yy,mm]=all[i];
     $("#hov").style.display=""; $("#hl").setAttribute("x1",x(i)); $("#hl").setAttribute("x2",x(i)); $("#hc").setAttribute("cx",x(i)); $("#hc").setAttribute("cy",y(v));
-    const inM = isF?[]:dated.filter(r=>r.d.startsWith(mkey(yy,mm)));
-    tip.hidden=false; tip.innerHTML=`<small>${isF?"Estimate":"Rogue Index"}</small><b>${v}</b><small>${MON[mm]} ${yy}</small>${inM.length?`<em>${inM.length} incident${inM.length>1?"s":""}: ${esc(inM[0].t)}</em>`:""}`;
-    const bx=box.getBoundingClientRect(); tip.style.left=(x(i)/W*bx.width)+"px"; tip.style.top=(y(v)/H*bx.height-14)+"px";
+    const inM = isF?[]:monthIncidents(i);
+    const details=impact?inM.map(r=>`<em>${esc(r.title)} · ${r.score} ${esc(r.band)}${r.estimated.length?' · estimated':''}${r.review_status!=='reviewed'?' · '+esc(r.review_status):''}</em>`).join('')
+      :inM.length?`<em>${inM.length} incident${inM.length>1?"s":""}: ${esc(inM[0].t)}</em>`:'';
+    const points=impact&&!isF?`<small>${impact.series[i].points.toFixed(1)} points across 3 months${impact.series[i].capped?' · capped at 100':''}</small>`:'';
+    tip.hidden=false; tip.innerHTML=`<small>${isF?"Estimate":"Rogue Index"}</small><b>${v}</b><small>${MON[mm]} ${yy}</small>${points}${details}`;
+    const bx=box.getBoundingClientRect();
+    const half=tip.offsetWidth/2, headerBottom=document.querySelector('header').getBoundingClientRect().bottom;
+    tip.style.left=Math.max(half+8-bx.left,Math.min(window.innerWidth-bx.left-half-8,x(i)/W*bx.width))+"px";
+    // A busy month can list many records; keep the existing tooltip inside the desktop viewport.
+    tip.style.top=Math.max(Math.max(8,headerBottom+8)+tip.offsetHeight-bx.top,
+      Math.min(window.innerHeight-8-bx.top,y(v)/H*bx.height-14))+"px";
   });
   svg.addEventListener("pointerleave",()=>{$("#hov").style.display="none"; tip.hidden=true;});
 }
@@ -500,12 +515,14 @@ function renderNarrative(){
 }
 
 /* ================= MICROTRENDS: who · with what · did what ================= */
-// Curated from each record's sources. "sys" only names a model or product when the source names it;
-// unnamed internal systems are labeled as such.
-const MAP = archive.microtrends;
+// Publication mappings are generated from source-linked incident fields on the backend.
+const MICRO = archive.analytics.microtrends;
+const MAPPED = MICRO.version === 'maker-model-attack-v1';
+let MAP = archive.microtrends, mxGrouped = false;
+const mxLabels = MAPPED ? {co:'Model makers',sys:'Models',act:'Attack types'} : {co:'Companies',sys:'Models and agents',act:'What it did'};
 const TODAY = Date.parse(archive.analytics.microtrends_as_of+"T00:00:00Z");
 const WINDOWS = [["30","30 days"],["60","60 days"],["90","90 days"],["365","1 year"],["all","All time"]];
-const PIVOTS = [["co","Company"],["sys","Model or agent"],["act","What it did"]];
+const PIVOTS = MAPPED ? [["co","Maker"],["sys","Model"],["act","Attack type"]] : [["co","Company"],["sys","Model or agent"],["act","What it did"]];
 let MX = {vb:null, win:"365", scope:"agents", setting:"any", pivot:"act", sel:{co:[],sys:[],act:[]}, hover:null};
 const coKey = name => { const c=COMPANIES.find(c=>c.re.test(name)); return c?c.k:""; };
 function mxRows(){
@@ -520,25 +537,28 @@ function mxRows(){
 }
 const cosOf = r => Array.from(new Set(MAP[r.id].p.map(x=>x[0])));
 const syssOf = r => Array.from(new Set(MAP[r.id].p.map(x=>x[1])));
+const pairMatches = ([company,model]) => (!MX.sel.co.length || MX.sel.co.includes(company)) && (!MX.sel.sys.length || MX.sel.sys.includes(model));
+const matchingPairs = r => MAP[r.id].p.filter(pairMatches);
+const selectedCosOf = r => [...new Set(matchingPairs(r).map(pair=>pair[0]))];
+const selectedSyssOf = r => [...new Set(matchingPairs(r).map(pair=>pair[1]))];
 function selMatch(r){
   const s=MX.sel;
-  if(s.co.length && !cosOf(r).some(c=>s.co.includes(c))) return false;
-  if(s.sys.length && !syssOf(r).some(c=>s.sys.includes(c))) return false;
+  if(!matchingPairs(r).length) return false;
   if(s.act.length && !s.act.includes(MAP[r.id].act)) return false;
   return true;
 }
 const selCount = () => MX.sel.co.length+MX.sel.sys.length+MX.sel.act.length;
-function countBy(rows, fn){ const c={}; rows.forEach(r=>[].concat(fn(r)).forEach(k=>c[k]=(c[k]||0)+1)); return Object.entries(c).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])); }
+function countBy(rows, fn){ const c={}; rows.forEach(r=>[...new Set([].concat(fn(r)))].forEach(k=>c[k]=(c[k]||0)+1)); return Object.entries(c).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])); }
 function mxConclusion(rows, all){
   const win = WINDOWS.find(w=>w[0]===MX.win)[1].toLowerCase();
   const period = MX.win==="all" ? "Across the whole record" : `In the last ${win}`;
   if(!rows.length) return `${period}, nothing matches this path yet.`;
-  const co=countBy(rows,cosOf), sy=countBy(rows,syssOf), ac=countBy(rows,r=>MAP[r.id].act), ca=countBy(rows,r=>MAP[r.id].cat);
+  const co=countBy(rows,selectedCosOf), sy=countBy(rows,r=>matchingPairs(r).filter(([c])=>c===co[0][0]).map(([,s])=>s)), ac=countBy(rows,r=>MAP[r.id].act), ca=countBy(rows,r=>MAP[r.id].cat);
   const real=rows.filter(isReal).length, cred=rows.filter(r=>MAP[r.id].cat==="Credentials"||/credential/i.test(MAP[r.id].act)).length;
   const noun = MX.scope==="agents"?"agent incident":"incident";
   let s = `${period}, <b>${rows.length}</b> ${noun}${rows.length>1?"s":""}${selCount()?` ${rows.length>1?"match":"matches"} this path (of ${all.length})`:""}. `;
   s += `<b>${esc(co[0][0])}</b> appears in ${co[0][1]}${co.length>1?`, then ${esc(co[1][0])} (${co[1][1]})`:""}. `;
-  s += `Most often through <b>${esc(sy[0][0])}</b>, and the most common behavior is <b>${esc(ac[0][0].toLowerCase())}</b> (${ac[0][1]}). `;
+  s += `Most often through <b>${esc(sy[0][0])}</b>, and the most common ${MAPPED?"attack type":"behavior"} is <b>${esc(ac[0][0].toLowerCase())}</b> (${ac[0][1]}). `;
   s += `${real} reached the real world. `;
   if(cred) s += `Credentials were exposed or misused in <b>${cred}</b>. `;
   else s += `Most exposure was ${esc(ca[0][0].toLowerCase())}. `;
@@ -565,9 +585,19 @@ function mxLayout(all){
   return {W,H,cx,cy,R1,R2,R3,pos,co,sy,ac};
 }
 function renderMicro(){
-  const all=mxRows(), rows=all.filter(selMatch), L=mxLayout(all);
+  const all=mxRows();
+  // Only the data labels roll up. Ring geometry, controls and incident totals stay the same.
+  const versionModels=[...new Set(all.flatMap(r=>archive.microtrends[r.id].p.map(([,model])=>model)))];
+  const grouped=MAPPED && versionModels.length>MICRO.group_above;
+  if(grouped!==mxGrouped){
+    MX.sel.sys=grouped ? [...new Set(MX.sel.sys.map(model=>MICRO.model_families[model]))]
+      : [...new Set(REC.flatMap(r=>archive.microtrends[r.id]?.p.map(([,model])=>model)||[]))].filter(model=>MX.sel.sys.includes(MICRO.model_families[model]));
+    mxGrouped=grouped;
+  }
+  MAP=grouped?MICRO.family_map:archive.microtrends;
+  const rows=all.filter(selMatch), L=mxLayout(all);
   const acc=css("--accent"), s2=css("--s2"), ink=css("--ink"), ink2=css("--ink-2"), muted=css("--muted"), line=css("--line"), line2=css("--line-2"), panel=css("--panel");
-  const active = new Set(); rows.forEach(r=>{ cosOf(r).forEach(k=>active.add("co|"+k)); syssOf(r).forEach(k=>active.add("sys|"+k)); active.add("act|"+MAP[r.id].act); });
+  const active = new Set(); rows.forEach(r=>{ selectedCosOf(r).forEach(k=>active.add("co|"+k)); selectedSyssOf(r).forEach(k=>active.add("sys|"+k)); active.add("act|"+MAP[r.id].act); });
   const isSel = (ring,k)=>MX.sel[ring].includes(k);
   const dim = selCount()>0;
   let g=`<defs><filter id="mxglow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3"/></filter></defs>`;
@@ -578,7 +608,13 @@ function renderMicro(){
   const edge=(a,b,col,on,w)=>{ const mx=(a.x+b.x)/2+(L.cx-(a.x+b.x)/2)*.18, my=(a.y+b.y)/2+(L.cy-(a.y+b.y)/2)*.18;
     return `<path d="M${a.x.toFixed(1)},${a.y.toFixed(1)} Q${mx.toFixed(1)},${my.toFixed(1)} ${b.x.toFixed(1)},${b.y.toFixed(1)}" fill="none" stroke="${col}" stroke-width="${w}" stroke-opacity="${on?.85:(dim?.06:.22)}" stroke-linecap="round"/>`; };
   const E={};
-  all.forEach(r=>{ const on=rows.includes(r)&&dim; MAP[r.id].p.forEach(([c,s])=>{ const k1="co|"+c+">sys|"+s, k2="sys|"+s+">act|"+MAP[r.id].act; E[k1]=E[k1]||{a:L.pos["co|"+c],b:L.pos["sys|"+s],n:0,on:false,col:s2}; E[k1].n++; E[k1].on=E[k1].on||on; E[k2]=E[k2]||{a:L.pos["sys|"+s],b:L.pos["act|"+MAP[r.id].act],n:0,on:false,col:acc}; E[k2].n++; E[k2].on=E[k2].on||on; }); });
+  all.forEach(r=>{ const seen=new Set(); MAP[r.id].p.forEach(([c,s])=>{
+    const on=rows.includes(r)&&dim&&pairMatches([c,s]);
+    [["co|"+c,"sys|"+s,s2],["sys|"+s,"act|"+MAP[r.id].act,acc]].forEach(([a,b,col])=>{
+      const key=a+">"+b; E[key]=E[key]||{a:L.pos[a],b:L.pos[b],n:0,on:false,col};
+      if(!seen.has(key)){E[key].n++;seen.add(key);} E[key].on=E[key].on||on;
+    });
+  }); });
   Object.values(E).sort((x,y)=>x.on-y.on).forEach(e=>{ if(e.a&&e.b) g+=edge(e.a,e.b,e.col,e.on,Math.min(4,1+e.n*.45)); });
   // nodes
   const maxN=Math.max(1,...Object.values(L.pos).map(p=>p.n));
@@ -611,7 +647,7 @@ function renderMicro(){
   // incidents
   const inc = rows.slice().sort((a,b)=>(b.d||"").localeCompare(a.d||""));
   $("#tpanel").innerHTML = `
-  <div class="tph"><div><h3>Microtrends</h3><p>Which company, with which model or agent, did what. Pick anything on the left or on the map to trace its path. The map grows as the record grows.</p></div></div>
+  <div class="tph"><div><h3>Microtrends</h3><p>${MAPPED?"Which model maker, with which model, was involved in which attack type.":"Which company, with which model or agent, did what."} Pick anything on the left or on the map to trace its path.${MAPPED&&MICRO.review_mode==="draft"?" Draft mappings · human review pending.":""}${mxGrouped?" Models grouped by family (more than 20 versions in this window).":""}</p></div></div>
   <div class="mxbar">
     <div class="seg" role="group" aria-label="Time window">${WINDOWS.map(([k,l])=>`<button type="button" data-win="${k}" aria-pressed="${MX.win===k}">${l}</button>`).join("")}</div>
     <div class="seg" role="group" aria-label="Setting">${[["any","Anywhere"],["real","Real world"],["lab","Lab"]].map(([k,l])=>`<button type="button" data-set="${k}" aria-pressed="${MX.setting===k}">${l}</button>`).join("")}</div>
@@ -622,17 +658,17 @@ function renderMicro(){
       <div class="mxpiv" role="group" aria-label="Start from">${PIVOTS.map(([k,l])=>`<button type="button" data-piv="${k}" aria-pressed="${pv===k}">${l}</button>`).join("")}</div>
       <div class="mxlist">${leftHTML||'<p class="none">No incidents in this window.</p>'}</div>
     </aside>
-    <div class="mxmap chartbox">${all.length?`<div class="mxzoom" role="group" aria-label="Zoom"><button type="button" data-zoom="in" aria-label="Zoom in">+</button><button type="button" data-zoom="out" aria-label="Zoom out">−</button><button type="button" data-zoom="fit" aria-label="Reset zoom">Fit</button><span id="mxzl">${Math.round(L.W/(MX.vb?MX.vb[2]:L.W)*100)}%</span></div><svg viewBox="${(MX.vb||[0,0,L.W,L.H]).join(" ")}" id="mxsvg" role="img" aria-label="Map linking companies to models and agents to what they did">${g}</svg>`:`<div class="mxempty">No ${MX.scope==="agents"?"agent ":""}incidents in this window yet. Try a longer window.</div>`}<div class="tip" id="mxtip" hidden></div><div class="mxlegend"><span><i class="dot k-co"></i>Companies, center</span><span><i class="dot k-sys"></i>Models and agents</span><span><i class="dot k-act"></i>What it did, outer ring</span><span>Line weight = number of incidents</span></div></div>
+    <div class="mxmap chartbox">${all.length?`<div class="mxzoom" role="group" aria-label="Zoom"><button type="button" data-zoom="in" aria-label="Zoom in">+</button><button type="button" data-zoom="out" aria-label="Zoom out">−</button><button type="button" data-zoom="fit" aria-label="Reset zoom">Fit</button><span id="mxzl">${Math.round(L.W/(MX.vb?MX.vb[2]:L.W)*100)}%</span></div><svg viewBox="${(MX.vb||[0,0,L.W,L.H]).join(" ")}" id="mxsvg" role="img" aria-label="${MAPPED?'Map linking model makers to models to attack types':'Map linking companies to models and agents to what they did'}">${g}</svg>`:`<div class="mxempty">No ${MX.scope==="agents"?"agent ":""}incidents in this window yet. Try a longer window.</div>`}<div class="tip" id="mxtip" hidden></div><div class="mxlegend"><span><i class="dot k-co"></i>${mxLabels.co}, center</span><span><i class="dot k-sys"></i>${mxLabels.sys}</span><span><i class="dot k-act"></i>${mxLabels.act}, outer ring</span><span>Line weight = number of incidents</span></div></div>
     <aside class="mxright">
       <div class="mxsel"><div class="mxsel-h"><b>Your path</b>${selCount()?'<button type="button" id="mxclear">Clear</button>':""}</div>${chips||'<p class="none">Nothing picked. Showing everything in this window.</p>'}</div>
       <div class="mxconc"><span>What this tells us</span><p>${mxConclusion(rows, all)}</p></div>
-      ${mini("Companies",countBy(rows,cosOf),"co")}${mini("Models and agents",countBy(rows,syssOf),"sys")}${mini("What it did",countBy(rows,r=>MAP[r.id].act),"act")}
+      ${mini(mxLabels.co,countBy(rows,selectedCosOf),"co")}${mini(mxLabels.sys,countBy(rows,selectedSyssOf),"sys")}${mini(mxLabels.act,countBy(rows,r=>MAP[r.id].act),"act")}
       <div class="mxmini"><h5>What was exposed</h5>${expl.map(([k,n])=>`<div><i class="dot k-exp"></i><span>${esc(k)}</span><b>${n}</b></div>`).join("")||'<p class="none">None</p>'}</div>
     </aside>
   </div>
   <div class="mxinc">
     <div class="mxinc-h"><b>${inc.length} incident${inc.length===1?"":"s"} on this path</b><span>Open any one on the timeline</span></div>
-    ${inc.map(r=>`<a href="#" class="mxrow" data-rec="${r.id}"><span class="d">${esc((r.when||"Undated").replace(/^Reported /,""))}</span><span class="c">${cosOf(r).map(c=>logoTile(coKey(c),c)).join("")}${esc(cosOf(r).join(" · "))}</span><span class="t">${esc(r.t)}</span><span class="m">${esc(syssOf(r).join(" · "))}</span><span class="a"><i class="dot k-act"></i>${esc(MAP[r.id].act)}</span><span class="e">${esc(MAP[r.id].exp)}</span><span class="go">→</span></a>`).join("")||'<p class="none" style="padding:16px 0">Nothing here yet.</p>'}
+    ${inc.map(r=>`<a href="#" class="mxrow" data-rec="${r.id}"><span class="d">${esc((r.when||"Undated").replace(/^Reported /,""))}</span><span class="c">${cosOf(r).map(c=>logoTile(coKey(c),c)).join("")}${esc(cosOf(r).join(" · "))}</span><span class="t">${esc(r.t)}${r.map?`<br><small>Ran by ${esc(r.map.ran_by)}${r.map.harness?` · ${esc(r.map.harness)}`:""}</small>`:""}</span><span class="m">${esc(syssOf(r).join(" · "))}</span><span class="a"><i class="dot k-act"></i>${esc(MAP[r.id].act)}</span><span class="e">${r.map?"Hit: ":""}${esc(MAP[r.id].exp)}</span><span class="go">→</span></a>`).join("")||'<p class="none" style="padding:16px 0">Nothing here yet.</p>'}
   </div>`;
   const toggle=(ring,k)=>{ const arr=MX.sel[ring]; const i=arr.indexOf(k); if(i>=0) arr.splice(i,1); else { if(selCount()>=5) return; arr.push(k); } renderMicro(); };
   $("#tpanel").onclick=e=>{
@@ -672,8 +708,11 @@ function renderMicro(){
   if(svg){
     svg.addEventListener("pointermove",ev=>{ const n=ev.target.closest(".mxn"); if(!n){tip.hidden=true;return;}
       const ring=n.dataset.ring,k=n.dataset.k, rs=all.filter(r=>ring==="co"?cosOf(r).includes(k):ring==="sys"?syssOf(r).includes(k):MAP[r.id].act===k);
-      const other = ring==="act"? `${new Set(rs.flatMap(cosOf)).size} companies · ${new Set(rs.flatMap(syssOf)).size} models or agents` : ring==="co"? `${new Set(rs.flatMap(syssOf)).size} models or agents · ${new Set(rs.map(r=>MAP[r.id].act)).size} behaviors` : `${new Set(rs.flatMap(cosOf)).size} companies · ${new Set(rs.map(r=>MAP[r.id].act)).size} behaviors`;
-      tip.hidden=false; tip.innerHTML=`<small>${ring==="co"?"Company":ring==="sys"?"Model or agent":"What it did"}</small><b>${rs.length}</b><small>${esc(k)}</small><em>${other}<br>Click to pick</em>`;
+      const related=rs.flatMap(r=>MAP[r.id].p.filter(([c,s])=>ring==="co"?c===k:ring==="sys"?s===k:true));
+      const makerCount=new Set(related.map(([c])=>c)).size, modelCount=new Set(related.map(([,s])=>s)).size;
+      const attackCount=new Set(rs.map(r=>MAP[r.id].act)).size;
+      const other = ring==="act"? `${makerCount} ${MAPPED?"model makers":"companies"} · ${modelCount} ${MAPPED?"models":"models or agents"}` : ring==="co"? `${modelCount} ${MAPPED?"models":"models or agents"} · ${attackCount} ${MAPPED?"attack types":"behaviors"}` : `${makerCount} ${MAPPED?"model makers":"companies"} · ${attackCount} ${MAPPED?"attack types":"behaviors"}`;
+      tip.hidden=false; tip.innerHTML=`<small>${ring==="co"?mxLabels.co:ring==="sys"?mxLabels.sys:mxLabels.act}</small><b>${rs.length}</b><small>${esc(k)}</small><em>${other}<br>Click to pick</em>`;
       const bx=$(".mxmap").getBoundingClientRect(); tip.style.left=(ev.clientX-bx.left)+"px"; tip.style.top=(ev.clientY-bx.top-14)+"px"; });
     svg.addEventListener("pointerleave",()=>tip.hidden=true);
   }

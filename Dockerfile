@@ -4,6 +4,7 @@ WORKDIR /app
 COPY package.json package-lock.json tsconfig.json ./
 RUN npm ci
 COPY backend/ ./backend/
+COPY data/taxonomy/ ./data/taxonomy/
 COPY scripts/build-standalone.mjs ./scripts/build-standalone.mjs
 COPY index.html ./
 COPY css/ ./css/

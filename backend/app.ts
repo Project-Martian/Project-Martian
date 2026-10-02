@@ -1,7 +1,8 @@
 import Fastify from 'fastify';
 import staticFiles from '@fastify/static';
 import { fileURLToPath } from 'node:url';
-import { createPool, readSnapshot } from './database.js';
+import { createPool, readSnapshot, readImpactHistory, readMappingHistory } from './database.js';
+import { microtrendsMetadata } from './microtrends.js';
 import { analytics } from './analytics.js';
 import { askSchema, MAX_RECORDS } from './ask-models.js';
 import { answerQuestion, MODEL_ID, ModelUnavailable, InvalidAnswer } from './assistant.js';
@@ -62,8 +63,25 @@ app.get<{Params:{id:string}}>('/api/incidents/:id',async(request,reply)=>{
   const snapshot=await readSnapshot(pool),record=snapshot.records.find(r=>r.id===request.params.id);
   return record?{publication:snapshot.publication,record}:reply.code(404).send({detail:'Unknown incident.'});
 });
+app.get<{Params:{id:string}}>('/api/incidents/:id/impact-history',async(request,reply)=>{
+  const history=await readImpactHistory(pool,request.params.id);
+  return history?{id:request.params.id,history}:reply.code(404).send({detail:'Unknown incident.'});
+});
+app.get<{Params:{id:string}}>('/api/incidents/:id/mapping-history',async(request,reply)=>{
+  const history=await readMappingHistory(pool,request.params.id);
+  return history?{id:request.params.id,history}:reply.code(404).send({detail:'Unknown incident.'});
+});
 app.get('/api/trends',async()=>{const snapshot=await readSnapshot(pool);return {publication:snapshot.publication,...analytics(snapshot)};});
-app.get('/api/microtrends',async()=>{const snapshot=await readSnapshot(pool);return {publication:snapshot.publication,map:snapshot.microtrends,as_of:snapshot.settings.microtrends_as_of};});
+app.get('/api/impact-index',async(_request,reply)=>{
+  const snapshot=await readSnapshot(pool),impact=analytics(snapshot).impact;
+  return impact?{publication:snapshot.publication,...impact}:reply.code(409).send({detail:'This publication uses the legacy methodology.'});
+});
+app.get('/data/impact_index.json',async(_request,reply)=>{
+  const snapshot=await readSnapshot(pool),impact=analytics(snapshot).impact;
+  return impact?impact.series.map(row=>({...row,methodology_version:impact.version,review_mode:impact.review_mode,
+    publication_id:snapshot.publication.id})):reply.code(409).send({detail:'This publication uses the legacy methodology.'});
+});
+app.get('/api/microtrends',async()=>{const snapshot=await readSnapshot(pool);return {publication:snapshot.publication,map:snapshot.microtrends,as_of:snapshot.settings.microtrends_as_of,...microtrendsMetadata(snapshot)};});
 app.get('/api/radar',async()=>{const snapshot=await readSnapshot(pool);return {publication:snapshot.publication,...snapshot.radar};});
 app.get('/data/records.json',async()=> (await readSnapshot(pool)).records);
 app.post('/api/ask',async(request,reply)=>{

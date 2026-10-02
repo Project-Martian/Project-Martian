@@ -1,6 +1,7 @@
 import { Pool, type PoolClient } from 'pg';
 import { readFile } from 'node:fs/promises';
 import type { Snapshot, Incident, Microtrend } from './types.js';
+import { impactScore } from './impact.js';
 
 export async function createPool() {
   const password = process.env.PGPASSWORD_FILE
@@ -57,4 +58,40 @@ async function readRecords(client: PoolClient, publicationId: string): Promise<I
     FROM incident_revisions r WHERE r.publication_id=$1 ORDER BY r.sort_date DESC NULLS LAST,r.id`, [publicationId]);
   return result.rows.map(row => ({ ...row.content, id: row.id, scope: row.scope, d: row.d || '',
     t: row.title, org: row.organization_display, srcs: row.srcs, th: row.th }));
+}
+
+export async function readImpactHistory(pool: Pool, incidentId: string) {
+  const result = await pool.query(`SELECT p.id::text AS publication_id, p.created_at, p.actor, p.reason,
+    r.content->'impact_assessment' AS assessment
+    FROM incident_revisions r JOIN publications p ON p.id=r.publication_id
+    WHERE r.incident_id=$1 ORDER BY p.id`, [incidentId]);
+  if (!result.rows.length) return null;
+  let previous: string | undefined;
+  return result.rows.flatMap(row => {
+    const serialized = JSON.stringify(row.assessment);
+    if (serialized === previous) return [];
+    previous = serialized;
+    return [{publication_id: row.publication_id, changed_at: row.created_at.toISOString(),
+      actor: row.actor, reason: row.reason, assessment: row.assessment,
+      impact: row.assessment ? impactScore(row.assessment) : null}];
+  });
+}
+
+export async function readMappingHistory(pool: Pool, incidentId: string) {
+  const result = await pool.query(`SELECT p.id::text AS publication_id, p.created_at, p.actor, p.reason,
+    r.content->'map' AS mapping,
+    jsonb_build_object('act',r.action,'exp',r.exposure,'cat',r.category,'p',
+      (SELECT jsonb_agg(jsonb_build_array(s.organization_name,s.name) ORDER BY rs.position)
+       FROM revision_systems rs JOIN systems s ON s.id=rs.system_id WHERE rs.revision_id=r.id)) AS legacy_mapping
+    FROM incident_revisions r JOIN publications p ON p.id=r.publication_id
+    WHERE r.incident_id=$1 ORDER BY p.id`, [incidentId]);
+  if (!result.rows.length) return null;
+  let previous: string | undefined;
+  return result.rows.flatMap(row => {
+    const serialized = JSON.stringify(row.mapping || row.legacy_mapping);
+    if (serialized === previous) return [];
+    previous = serialized;
+    return [{publication_id: row.publication_id, changed_at: row.created_at.toISOString(),
+      actor: row.actor, reason: row.reason, mapping: row.mapping, legacy_mapping: row.mapping ? null : row.legacy_mapping}];
+  });
 }
