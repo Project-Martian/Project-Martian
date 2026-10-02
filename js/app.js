@@ -18,10 +18,24 @@ const isLab = r => !isReal(r);
 
 /* ---------- tabs / routing ---------- */
 const VIEWS = [["ask","Ask"],["trends","Trends"],["timeline","Timeline"],["signals","Radar"],["mission","About"],["docs","Docs"],["contribute","Contribute"]];
+VIEWS.forEach(([key,label])=>{const view=$("#v-"+key);view.setAttribute("role","tabpanel");view.setAttribute("aria-label",label);});
 function renderTabs(cur){
-  const html = VIEWS.map(([k,l])=>`<button class="tab" role="tab" data-go="${k}" aria-selected="${k===cur}">${l}</button>`).join("");
-  $("#tabs").innerHTML = html; $("#tabs-m").innerHTML = html;
+  const focusedNav=document.activeElement.closest("#tabs,#tabs-m")?.id;
+  for(const nav of [$("#tabs"),$("#tabs-m")]){
+    nav.innerHTML = VIEWS.map(([k,l])=>`<button class="tab" role="tab" data-go="${k}" aria-controls="v-${k}" aria-selected="${k===cur}" tabindex="${k===cur?0:-1}">${l}</button>`).join("");
+    if(nav.id===focusedNav)nav.querySelector('[aria-selected="true"]').focus({preventScroll:true});
+  }
 }
+// Each tab group is one keyboard stop; arrow keys activate the adjacent view.
+document.addEventListener("keydown",e=>{
+  const tab=e.target.closest('[role="tab"]'), group=tab?.closest('[role="tablist"]');
+  if(!group||!["ArrowLeft","ArrowRight","Home","End"].includes(e.key))return;
+  const tabs=Array.from(group.querySelectorAll('[role="tab"]')), i=tabs.indexOf(tab);
+  const next=e.key==="Home"?0:e.key==="End"?tabs.length-1:(i+(e.key==="ArrowRight"?1:-1)+tabs.length)%tabs.length;
+  e.preventDefault();tabs[next].click();
+  const active=group.querySelectorAll('[role="tab"]')[next];
+  active.focus({preventScroll:true});active.scrollIntoView({block:"nearest",inline:"nearest"});
+});
 let current = "ask";
 function go(v, opts){
   if(!VIEWS.some(x=>x[0]===v)) v="ask";
@@ -34,6 +48,7 @@ function go(v, opts){
   try{ history.replaceState(null,"",opts?.record ? "#timeline/"+encodeURIComponent(opts.record) : "#"+v); }catch(e){ location.hash = v; }
 }
 document.addEventListener("click",e=>{
+  if(e.target.closest(".skip-link")){e.preventDefault();$("#main-content").focus({preventScroll:true});$("#main-content").scrollIntoView({block:"start"});return;}
   const g = e.target.closest("[data-go]");
   if(g){ e.preventDefault(); go(g.dataset.go); }
 });
@@ -185,6 +200,7 @@ function startChat(){
 }
 /* ---------- server-side Bedrock Ask ---------- */
 $("#q").maxLength = 900;
+$("#q").disabled = true;
 $("#send").disabled = true;
 $$("#chips button").forEach(button=>button.disabled=true);
 (async()=>{
@@ -199,11 +215,14 @@ $$("#chips button").forEach(button=>button.disabled=true);
     if(!config.enabled || !config.model_name) throw new Error("Ask is unavailable");
     modelName=config.model_name;
     apiReady=true;
+    $("#q").disabled=false;
     $("#send").disabled=false;
     $$("#chips button").forEach(button=>button.disabled=false);
     $("#asknote").textContent=`${modelName} on Amazon Bedrock · Answers use the incident record. Unrelated questions are rejected.`;
   }catch(error){
     $("#asknote").textContent="Ask is unavailable on this deployment.";
+    const browse=document.createElement("a");browse.href="#timeline";browse.dataset.go="timeline";
+    browse.textContent=" Browse the incident timeline →";$("#asknote").append(browse);
   }
 })();
 
@@ -447,7 +466,7 @@ function feedItems(){ const all=[...SAMPLE_POSTS,...wild]; return sigSrc==="all"
 const STL={unv:"Unverified",lnk:"Linked",con:"In the record",noise:"Filtered as noise"};
 function renderFeed(){
   const items=feedItems(); if(sigSel>=items.length) sigSel=0;
-  $("#feed").innerHTML = items.map((p,i)=>`<div class="post ${i===sigSel?"sel":""}" data-i="${i}" tabindex="0">
+  $("#feed").innerHTML = items.map((p,i)=>`<div class="post ${i===sigSel?"sel":""}" data-i="${i}" role="button" aria-pressed="${i===sigSel}" tabindex="0">
     <span class="src ${p.s}">${p.s==="x"?"𝕏":p.s==="r"?"r/":"●"}</span>
     <div><div class="top"><b>${esc(p.n)}</b><span class="h">${esc(p.h)}</span><span class="t">${esc(p.t)}</span></div>
     <p>${esc(p.txt)}</p>
@@ -473,7 +492,7 @@ function renderDetail(p){
 }
 $("#sigseg").addEventListener("click",e=>{const b=e.target.closest("button"); if(!b) return; sigSrc=b.dataset.k; sigSel=0; $$("#sigseg button").forEach(x=>x.setAttribute("aria-pressed",x===b)); renderFeed();});
 $("#feed").addEventListener("click",e=>{const p=e.target.closest(".post"); if(!p) return; sigSel=+p.dataset.i; renderFeed();});
-$("#feed").addEventListener("keydown",e=>{if(e.key==="Enter"){const p=e.target.closest(".post"); if(p){sigSel=+p.dataset.i; renderFeed();}}});
+$("#feed").addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){const p=e.target.closest(".post"); if(p){e.preventDefault();sigSel=+p.dataset.i; renderFeed();$("#feed").children[sigSel].focus({preventScroll:true});}}});
 $("#sigdetail").addEventListener("click",e=>{const c=e.target.closest(".cite"); if(c){e.preventDefault(); openRecord(c.dataset.rec);}});
 $("#clusters").innerHTML = CLUSTERS.map(c=>`<div class="clu"><b>${esc(c.t)}</b>${spark(c.d)}<small>${esc(c.m)}</small></div>`).join("");
 renderFeed();
@@ -491,8 +510,8 @@ function smooth(pts){ if(pts.length<2) return ""; let d=`M${pts[0][0]},${pts[0][
 function band(xs,lo,hi){ const top=xs.map((x,i)=>[x,hi[i]]), bot=xs.map((x,i)=>[x,lo[i]]).reverse(); return smooth(top)+" L"+bot.map(p=>p.join(",")).join(" L")+"Z"; }
 
 const TT = [["micro","Microtrends"],["impact","Rogue Index"],["narrative","Narrative"],["compare","Comparison"]];
-$("#ttabs").innerHTML = TT.map(([k,l])=>`<button class="ttab" role="tab" data-k="${k}" aria-selected="${k===ttab}">${l}</button>`).join("");
-$("#ttabs").addEventListener("click",e=>{const b=e.target.closest(".ttab"); if(!b) return; ttab=b.dataset.k; $$("#ttabs .ttab").forEach(x=>x.setAttribute("aria-selected",x===b)); renderTrendPanel();});
+$("#ttabs").innerHTML = TT.map(([k,l])=>`<button class="ttab" role="tab" data-k="${k}" aria-selected="${k===ttab}" tabindex="${k===ttab?0:-1}">${l}</button>`).join("");
+$("#ttabs").addEventListener("click",e=>{const b=e.target.closest(".ttab"); if(!b) return; ttab=b.dataset.k; $$("#ttabs .ttab").forEach(x=>{x.setAttribute("aria-selected",x===b);x.tabIndex=x===b?0:-1;}); renderTrendPanel();});
 $("#qupd").textContent = "Latest dated agent record " + (latest ? latest.when.replace(/^Reported /,"") : "");
 
 // Indicators use the same published revision as the chart and records.
@@ -545,7 +564,7 @@ function renderImpact(){
   $("#tpanel").innerHTML = `
     <div class="tph"><div><h3>Rogue Index${impact?.review_mode==='draft'?' · Draft scores':''}</h3><p>${impact?'Impact points over three months; 300 points = 100. '+(impact.review_mode==='draft'?'Assessments await review. ':''):'Observed incident pressure from the record, impact-weighted over a rolling 3-month window. '}The shaded extension is an illustrative scenario, not a forecast.</p></div>
       <div style="display:flex;gap:24px;align-items:flex-start"><span class="delta"><b class="${dPct<0?"neg":""}">${dPct>=0?"+":""}${dPct} pts</b><span>Selected timeline</span></span></div></div>
-    <div class="chartbox" id="cb"><svg viewBox="0 0 ${W} ${H}" id="impsvg" role="img" aria-label="Rogue Index by month with an illustrative estimate">${g}</svg><div class="tip" id="tip" hidden></div></div>
+    <p class="mobile-chart-hint">Scroll sideways to read the chart. Tap for details.</p><div class="chartbox" id="cb"><div class="chart-scroll"><svg viewBox="0 0 ${W} ${H}" id="impsvg" role="img" aria-label="Rogue Index by month with an illustrative estimate">${g}</svg></div><div class="tip" id="tip" hidden></div></div>
     <div class="range" id="rng"><div class="rail"></div><div class="fill" id="rfill"></div>
       <input type="range" id="r0" min="0" max="${months.length-1}" value="${a}" aria-label="Range start">
       <input type="range" id="r1" min="0" max="${months.length-1}" value="${b}" aria-label="Range end"></div>
@@ -561,7 +580,7 @@ function renderImpact(){
   $("#tgm").onclick=()=>{showMoments=!showMoments; renderImpact();};
   $("#tgs").onclick=()=>{showSplit=!showSplit; renderImpact();};
   const svg=$("#impsvg"), tip=$("#tip"), box=$("#cb");
-  svg.addEventListener("pointermove",ev=>{
+  const showIndexTip=ev=>{
     const rc=svg.getBoundingClientRect(), px=(ev.clientX-rc.left)/rc.width*W;
     let i=Math.round((px-L)/((W-L-R)/(n-1))); i=Math.max(0,Math.min(n-1,i));
     const isF=i>=months.length, v=isF?fut[i-months.length].c:idx[i], [yy,mm]=all[i];
@@ -573,12 +592,14 @@ function renderImpact(){
     tip.hidden=false; tip.innerHTML=`<small>${isF?"Estimate":"Rogue Index"}</small><b>${v}</b><small>${MON[mm]} ${yy}</small>${points}${details}`;
     const bx=box.getBoundingClientRect();
     const half=tip.offsetWidth/2, headerBottom=document.querySelector('header').getBoundingClientRect().bottom;
-    tip.style.left=Math.max(half+8-bx.left,Math.min(window.innerWidth-bx.left-half-8,x(i)/W*bx.width))+"px";
+    tip.style.left=Math.max(half+8-bx.left,Math.min(window.innerWidth-bx.left-half-8,ev.clientX-bx.left))+"px";
     // A busy month can list many records; keep the existing tooltip inside the desktop viewport.
     tip.style.top=Math.max(Math.max(8,headerBottom+8)+tip.offsetHeight-bx.top,
       Math.min(window.innerHeight-8-bx.top,y(v)/H*bx.height-14))+"px";
-  });
-  svg.addEventListener("pointerleave",()=>{$("#hov").style.display="none"; tip.hidden=true;});
+  };
+  svg.addEventListener("pointermove",showIndexTip);
+  svg.addEventListener("pointerdown",showIndexTip);
+  svg.addEventListener("pointerleave",e=>{if(e.pointerType!=="touch"){$("#hov").style.display="none";tip.hidden=true;}});
 }
 
 const NARRATIVE=archive.analytics.narrative_v1;
@@ -637,7 +658,7 @@ const mxLabels = MAPPED ? {co:'Model makers',sys:'Models',act:'Attack types'} : 
 const TODAY = Date.parse(archive.analytics.microtrends_as_of+"T00:00:00Z");
 const WINDOWS = [["30","30 days"],["60","60 days"],["90","90 days"],["365","1 year"],["all","All time"]];
 const PIVOTS = MAPPED ? [["co","Maker"],["sys","Model"],["act","Attack type"]] : [["co","Company"],["sys","Model or agent"],["act","What it did"]];
-let MX = {vb:null, win:"365", scope:"agents", setting:"any", pivot:"act", sel:{co:[],sys:[],act:[]}, hover:null};
+let MX = {vb:null, move:false, win:"365", scope:"agents", setting:"any", pivot:"act", sel:{co:[],sys:[],act:[]}, hover:null};
 const coKey = name => { const c=COMPANIES.find(c=>c.re.test(name)); return c?c.k:""; };
 function mxRows(){
   return REC.filter(r=>{
@@ -740,7 +761,7 @@ function renderMicro(){
     const anchor = below||Math.abs(Math.cos(p.a))<.3?"middle":(Math.cos(p.a)>0?"start":"end");
     const dy = below?0:(Math.abs(Math.cos(p.a))<.3 ? (Math.sin(p.a)>0?15:-5) : 5);
     const logo = p.ring==="co" && UPLOADED_BRAND_IMG[coKey(p.k)];
-    g+=`<g class="mxn" data-ring="${p.ring}" data-k="${esc(p.k)}" style="cursor:pointer;opacity:${on?1:.18}">`;
+    g+=`<g class="mxn" data-ring="${p.ring}" data-k="${esc(p.k)}" role="button" tabindex="0" aria-pressed="${sel}" aria-label="${esc(p.k)}: ${p.n} incidents" style="cursor:pointer;opacity:${on?1:.18}">`;
     if(sel) g+=`<circle cx="${p.x}" cy="${p.y}" r="${r+7}" fill="${col}" opacity=".35" filter="url(#mxglow)"/>`;
     g+=`<circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${p.ring==="co"?"#fff":panel}" stroke="${sel?col:(p.ring==="co"?line2:col)}" stroke-width="${sel?2.4:1.3}"/>`;
     if(logo) g+=`<image href="${logo}" x="${p.x-r*.58}" y="${p.y-r*.58}" width="${r*1.16}" height="${r*1.16}" preserveAspectRatio="xMidYMid meet"/>`;
@@ -772,7 +793,7 @@ function renderMicro(){
       <div class="mxpiv" role="group" aria-label="Start from">${PIVOTS.map(([k,l])=>`<button type="button" data-piv="${k}" aria-pressed="${pv===k}">${l}</button>`).join("")}</div>
       <div class="mxlist">${leftHTML||'<p class="none">No incidents in this window.</p>'}</div>
     </aside>
-    <div class="mxmap chartbox">${all.length?`<div class="mxzoom" role="group" aria-label="Zoom"><button type="button" data-zoom="in" aria-label="Zoom in">+</button><button type="button" data-zoom="out" aria-label="Zoom out">−</button><button type="button" data-zoom="fit" aria-label="Reset zoom">Fit</button><span id="mxzl">${Math.round(L.W/(MX.vb?MX.vb[2]:L.W)*100)}%</span></div><svg viewBox="${(MX.vb||[0,0,L.W,L.H]).join(" ")}" id="mxsvg" role="img" aria-label="${MAPPED?'Map linking model makers to models to attack types':'Map linking companies to models and agents to what they did'}">${g}</svg>`:`<div class="mxempty">No ${MX.scope==="agents"?"agent ":""}incidents in this window yet. Try a longer window.</div>`}<div class="tip" id="mxtip" hidden></div><div class="mxlegend"><span><i class="dot k-co"></i>${mxLabels.co}, center</span><span><i class="dot k-sys"></i>${mxLabels.sys}</span><span><i class="dot k-act"></i>${mxLabels.act}, outer ring</span><span>Line weight = number of incidents</span></div></div>
+    <div class="mxmap chartbox">${all.length?`<div class="mxzoom" role="group" aria-label="Zoom"><button type="button" data-zoom="in" aria-label="Zoom in">+</button><button type="button" data-zoom="out" aria-label="Zoom out">−</button><button type="button" data-zoom="fit" aria-label="Reset zoom">Fit</button><span id="mxzl">${Math.round(L.W/(MX.vb?MX.vb[2]:L.W)*100)}%</span><button type="button" class="mxpan" aria-pressed="${MX.move}" aria-controls="mxsvg">Move map</button></div><svg viewBox="${(MX.vb||[0,0,L.W,L.H]).join(" ")}" id="mxsvg" class="${MX.move?'move-map':''}" role="group" aria-label="${MAPPED?'Map linking model makers to models to attack types':'Map linking companies to models and agents to what they did'}">${g}</svg>`:`<div class="mxempty">No ${MX.scope==="agents"?"agent ":""}incidents in this window yet. Try a longer window.</div>`}<div class="tip" id="mxtip" hidden></div><div class="mxlegend"><span><i class="dot k-co"></i>${mxLabels.co}, center</span><span><i class="dot k-sys"></i>${mxLabels.sys}</span><span><i class="dot k-act"></i>${mxLabels.act}, outer ring</span><span>Line weight = number of incidents</span></div></div>
     <aside class="mxright">
       <div class="mxsel"><div class="mxsel-h"><b>Your path</b>${selCount()?'<button type="button" id="mxclear">Clear</button>':""}</div>${chips||'<p class="none">Nothing picked. Showing everything in this window.</p>'}</div>
       <div class="mxconc"><span>What this tells us</span><p>${mxConclusion(rows, all)}</p></div>
@@ -797,6 +818,12 @@ function renderMicro(){
     else if(t.dataset.ring) toggle(t.dataset.ring,t.dataset.k);
   };
   const svg=$("#mxsvg"), tip=$("#mxtip");
+  $("#tpanel").onkeydown=e=>{
+    const node=e.target.closest(".mxn");
+    if(!node||!["Enter"," "].includes(e.key))return;
+    e.preventDefault();const {ring,k}=node.dataset;toggle(ring,k);
+    $$(".mxn").find(n=>n.dataset.ring===ring&&n.dataset.k===k)?.focus({preventScroll:true});
+  };
   if(svg){
     const full=[0,0,L.W,L.H]; if(!MX.vb) MX.vb=full.slice();
     const apply=()=>{ svg.setAttribute("viewBox",MX.vb.map(v=>v.toFixed(1)).join(" ")); const z=$("#mxzl"); if(z) z.textContent=Math.round(L.W/MX.vb[2]*100)+"%"; };
@@ -806,12 +833,14 @@ function renderMicro(){
       x=Math.max(-L.W*.1,Math.min(L.W*1.1-nw,x)); y=Math.max(-L.H*.1,Math.min(L.H*1.1-nh,y));
       MX.vb=[x,y,nw,nh]; apply(); };
     const toSvg=(cx,cy)=>{ const r=svg.getBoundingClientRect(); return [MX.vb[0]+(cx-r.left)/r.width*MX.vb[2], MX.vb[1]+(cy-r.top)/r.height*MX.vb[3]]; };
-    $(".mxzoom").onclick=e=>{ const b=e.target.closest("[data-zoom]"); if(!b) return; e.stopPropagation();
+    $(".mxzoom").onclick=e=>{ const b=e.target.closest("[data-zoom],.mxpan"); if(!b) return; e.stopPropagation();
+      if(b.classList.contains("mxpan")){MX.move=!MX.move;b.setAttribute("aria-pressed",MX.move);svg.classList.toggle("move-map",MX.move);return;}
       const c=[MX.vb[0]+MX.vb[2]/2, MX.vb[1]+MX.vb[3]/2];
       if(b.dataset.zoom==="in") zoomAt(.75,c[0],c[1]); else if(b.dataset.zoom==="out") zoomAt(1/.75,c[0],c[1]); else { MX.vb=full.slice(); apply(); } };
-    svg.addEventListener("wheel",e=>{ e.preventDefault(); const [px,py]=toSvg(e.clientX,e.clientY); zoomAt(e.deltaY<0?.88:1/.88,px,py); },{passive:false});
+    const scrollableMap=()=>window.matchMedia("(max-width:760px), (pointer:coarse)").matches&&!MX.move;
+    svg.addEventListener("wheel",e=>{ if(scrollableMap())return;e.preventDefault(); const [px,py]=toSvg(e.clientX,e.clientY); zoomAt(e.deltaY<0?.88:1/.88,px,py); },{passive:false});
     let drag=null;
-    svg.addEventListener("pointerdown",e=>{ drag={x:e.clientX,y:e.clientY,vb:MX.vb.slice(),moved:false}; });
+    svg.addEventListener("pointerdown",e=>{ if(scrollableMap())return;drag={x:e.clientX,y:e.clientY,vb:MX.vb.slice(),moved:false}; });
     svg.addEventListener("pointermove",e=>{ if(!drag) return; const dx=e.clientX-drag.x, dy=e.clientY-drag.y; if(!drag.moved && Math.hypot(dx,dy)<5) return;
       if(!drag.moved){ drag.moved=true; svg.setPointerCapture(e.pointerId); svg.classList.add("panning"); }
       const r=svg.getBoundingClientRect(); MX.vb=[drag.vb[0]-dx/r.width*drag.vb[2], drag.vb[1]-dy/r.height*drag.vb[3], drag.vb[2], drag.vb[3]]; apply(); });
@@ -872,7 +901,7 @@ function renderCompare(){
   const legend=d.series.map(s=>{const {total,recent,change:diff}=s;
     return `<button type="button" class="nc-series" data-clanding="${s.key}" aria-pressed="${CP.landing===s.key&&!CP.excluded}"><i style="background:${ncColor(s.key)}"></i><span>${esc(s.label)}<small>${recent} in last 6 months · ${diff>0?"+":""}${diff} vs prior 6</small></span><b>${total}</b></button>`;}).join("");
   $("#tpanel").innerHTML=header+`<div class="nc-coverage"><b>${d.coverage.included} records plotted</b><span>${d.coverage.total} match filters</span><span>${d.coverage.reviewed}/${d.coverage.included} fully reviewed</span><button type="button" data-cexcluded="true" aria-pressed="${CP.excluded}">${d.coverage.unknown_month} without a known month · ${d.coverage.outside_window} outside window</button></div>
-    <div class="chartbox nc-chart"><svg viewBox="0 0 ${W} ${H}" role="group" aria-label="${CP.mode==='monthly'?'Monthly':'Cumulative'} archive records by landing, using ${CP.basis} dates">${graph}</svg>${!d.coverage.included?'<p class="nc-chart-empty">No records have a usable month for this selection.</p>':""}</div>
+    <p class="mobile-chart-hint">Scroll sideways to read the chart.</p><div class="chartbox nc-chart"><svg viewBox="0 0 ${W} ${H}" role="group" aria-label="${CP.mode==='monthly'?'Monthly':'Cumulative'} archive records by landing, using ${CP.basis} dates">${graph}</svg>${!d.coverage.included?'<p class="nc-chart-empty">No records have a usable month for this selection.</p>':""}</div>
     <div class="nc-series-grid">${legend}</div><p class="note">${CP.mode==="cumulative"?"Cumulative counts start at the beginning of the displayed window. ":""}One archive record is one count. ${d.coverage.grouped} plotted record${d.coverage.grouped===1?" is":"s are"} grouped, campaign-level or unclear in scope. ${CP.basis==="occurrence"?"Unknown dates and ranges spanning months are excluded; disclosure dates are never substituted.":"Only dated, checked disclosure sources enter this series."} External effects do not by themselves establish harm. Counts describe this archive, not failure rates.</p>
     <div class="nc-list-head"><b>${records.length} ${CP.excluded?"excluded":"selected"} records</b><div><label class="nc-month-label">${CP.mode==="monthly"?"Month":"Through"}<select id="nc-month">${option("all","All months",CP.month)}${d.months.map(m=>option(m,m,CP.month)).join("")}</select></label><button type="button" class="nc-link" data-cclear="true">Show all</button></div></div>
     <div class="nc-compare-records">${records.map(r=>`<button type="button" class="nc-compare-row" data-crecord="${r.id}"><time>${r.month||"Unknown month"}</time><span><b>${esc(r.title)}</b><small>${esc(d.context_labels[r.context])} · ${esc(d.landing_labels[r.landed])} · ${esc(r.record_unit)} record${r.exclusion?' · '+(r.exclusion==="unknown-month"?"No single known month":"Outside chart window"):""}</small>${CP.excluded?`<small>${esc(CP.basis==="occurrence"?r.occurrence.note:NARRATIVE.records.find(n=>n.id===r.id).disclosure.note)}</small>`:""}</span><span>→</span></button>`).join("")||'<p class="nc-intro">No records in this selection.</p>'}</div>`;
@@ -982,17 +1011,24 @@ function openJoe(id, who){
   $("#joe-lesson").innerHTML = r.lesson?`<span>Takeaway</span><q>${esc(r.lesson)}</q>`:"";
   $("#joe-srcs").innerHTML=TLBYID[r.id].sources.map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener"><span>${esc(s.label)}</span>${esc(s.title)} ↗</a>`).join("");
   $("#joe").hidden=false; document.body.style.overflow="hidden";
+  $$("header,main,footer,.skip-link").forEach(el=>el.inert=true);
   setJoeStep(0); $("#joe-close").focus();
   if(!window.matchMedia("(prefers-reduced-motion: reduce)").matches) setTimeout(()=>{ if(!$("#joe").hidden) playJoe(); }, 500);
 }
-function closeJoe(){ stopJoe(); $("#joe").hidden=true; document.body.style.overflow=""; joeReturn&&joeReturn.focus&&joeReturn.focus(); }
+function closeJoe(){ stopJoe(); $("#joe").hidden=true; document.body.style.overflow="";$$("header,main,footer,.skip-link").forEach(el=>el.inert=false);joeReturn&&joeReturn.focus&&joeReturn.focus(); }
 document.addEventListener("click",e=>{ const b=e.target.closest("[data-joe]"); if(b){ e.preventDefault(); openJoe(b.dataset.joe, b.dataset.who); } });
 $("#joe-close").addEventListener("click",closeJoe);
 $("#joe").addEventListener("click",e=>{ if(e.target.id==="joe") closeJoe(); });
 document.addEventListener("keydown",e=>{ if($("#joe").hidden) return;
-  if(e.key==="Escape") closeJoe();
-  if(e.key==="ArrowRight"){ stopJoe(); setJoeStep(J.i+1); }
-  if(e.key==="ArrowLeft"){ stopJoe(); setJoeStep(J.i-1); } });
+  if(e.key==="Escape"){e.preventDefault();closeJoe();}
+  if(e.key==="Tab"){
+    const controls=$$("#joe button:not([disabled]),#joe a[href]").filter(el=>el.getClientRects().length);
+    const first=controls[0],last=controls[controls.length-1];
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+  }
+  if(e.key==="ArrowRight"){e.preventDefault();stopJoe();setJoeStep(J.i+1);}
+  if(e.key==="ArrowLeft"){e.preventDefault();stopJoe();setJoeStep(J.i-1);} });
 $("#joe-play").addEventListener("click",()=>{ if(joeTimer){ stopJoe(); setJoeStep(J.i); } else playJoe(); });
 $("#joe-prev").addEventListener("click",()=>{ stopJoe(); setJoeStep(J.i-1); });
 $("#joe-next").addEventListener("click",()=>{ stopJoe(); setJoeStep(J.i+1); });
@@ -1005,7 +1041,7 @@ const IGN=[{name:"The record",d:"Sourced incidents, with evidence and limits.",s
 const LOCK='<svg class="lock" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="1.6"/></svg>';
 let ph="ignition";
 function renderPhases(){
-  $("#track").innerHTML=PHASES.map(p=>`<button class="step ${p.live?"":"locked"}" role="tab" id="tab-${p.id}" data-id="${p.id}" aria-selected="${p.id===ph}"><span class="n">${p.n}${p.live?"":LOCK}</span><span class="nm">${p.name}</span><span class="stt ${p.live?"live":""}">${p.live?'<i class="pulse"></i>In flight':"Locked"}</span></button>`).join("");
+  $("#track").innerHTML=PHASES.map(p=>`<button class="step ${p.live?"":"locked"}" role="tab" id="tab-${p.id}" data-id="${p.id}" aria-selected="${p.id===ph}" tabindex="${p.id===ph?0:-1}"><span class="n">${p.n}${p.live?"":LOCK}</span><span class="nm">${p.name}</span><span class="stt ${p.live?"live":""}">${p.live?'<i class="pulse"></i>In flight':"Locked"}</span></button>`).join("");
   const p=PHASES.find(x=>x.id===ph);
   $("#stage").innerHTML = p.live ? `<div class="card"><div class="ph"><div><span class="eyebrow">Phase 01 · In flight</span><h3>Open the record<span class="dotp">.</span></h3><p>Track what agents do in the wild. Make it free.</p></div><div style="display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-end;gap:8px"><div class="bars">${IGN.map(x=>`<i class="${x.s==="live"?"on":""}"></i>`).join("")}</div><span class="eyebrow">${IGN.filter(x=>x.s).length} of ${IGN.length} live</span></div></div>${IGN.map((x,i)=>`<div class="row"><span class="i">0${i+1}</span><b>${x.name}</b><span class="d">${x.d}</span><span class="pill ${x.s}">${x.l}</span></div>`).join("")}</div>`
     : `<div class="card lockpanel">${LOCK}<span class="eyebrow">Phase ${p.n}</span><h3>${p.name}</h3><p>Locked. Opens after Ignition.</p></div>`;
