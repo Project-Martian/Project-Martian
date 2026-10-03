@@ -3,17 +3,18 @@ import { readFile } from 'node:fs/promises';
 import type { Snapshot, Incident, Microtrend } from './types.js';
 import { impactScore } from './impact.js';
 
-export async function createPool() {
-  const password = process.env.PGPASSWORD_FILE
-    ? (await readFile(process.env.PGPASSWORD_FILE, 'utf8')).trim()
-    : process.env.PGPASSWORD;
-  if (!process.env.PGHOST || !process.env.PGDATABASE || !process.env.PGUSER || !password) {
+export async function createPool(options: {max?:number;prefix?:string} = {}) {
+  const env=(name:string)=>process.env[(options.prefix||'')+name];
+  const password = env('PGPASSWORD_FILE')
+    ? (await readFile(env('PGPASSWORD_FILE')!, 'utf8')).trim()
+    : env('PGPASSWORD');
+  if (!env('PGHOST') || !env('PGDATABASE') || !env('PGUSER') || !password) {
     throw new Error('PGHOST, PGDATABASE, PGUSER and PGPASSWORD_FILE (or PGPASSWORD) are required');
   }
   const pool = new Pool({
-    host: process.env.PGHOST, port: Number(process.env.PGPORT || 5432),
-    database: process.env.PGDATABASE, user: process.env.PGUSER, password,
-    max: 5, connectionTimeoutMillis: 5000, idleTimeoutMillis: 30000,
+    host: env('PGHOST'), port: Number(env('PGPORT') || 5432),
+    database: env('PGDATABASE'), user: env('PGUSER'), password,
+    max: options.max||5, connectionTimeoutMillis: 5000, idleTimeoutMillis: 30000,
     statement_timeout: 15000, application_name: 'project-martian',
     keepAlive: true, keepAliveInitialDelayMillis: 45000,
   });

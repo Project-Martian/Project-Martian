@@ -1,0 +1,223 @@
+[
+  {
+    "id": "x-agent-security",
+    "platform": "x",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 168,
+    "requests_per_day": 192,
+    "config": {
+      "kind": "x-search",
+      "query": "(\"agent went rogue\" OR \"prompt injection\" OR \"indirect injection\" OR \"tool poisoning\" OR \"sandbox escape\" OR \"agent deleted\" OR \"agent leaked\" OR exfiltration OR jailbreak) (agent OR LLM OR MCP OR \"Claude Code\" OR Codex OR Operator OR \"computer use\" OR \"browser agent\")",
+      "researcher_ids": []
+    }
+  },
+  {
+    "id": "x-mcp-credentials",
+    "platform": "x",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 168,
+    "requests_per_day": 192,
+    "config": {
+      "kind": "x-search",
+      "query": "(MCP OR \"Claude Code\" OR Codex OR \"browser agent\") (credential OR security OR vulnerability OR poisoning)",
+      "researcher_ids": []
+    }
+  },
+  {
+    "id": "x-tags-configure-user-id",
+    "platform": "x",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 168,
+    "requests_per_day": 192,
+    "config": {
+      "kind": "x-tags",
+      "user_id": "0",
+      "researcher_ids": []
+    }
+  },
+  {
+    "id": "reddit-cybersecurity-new",
+    "platform": "reddit",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 168,
+    "requests_per_day": 192,
+    "config": {
+      "kind": "reddit",
+      "subreddit": "cybersecurity",
+      "listing": "new",
+      "researcher_ids": []
+    }
+  },
+  {
+    "id": "reddit-cybersecurity-comments",
+    "platform": "reddit",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 168,
+    "requests_per_day": 192,
+    "config": {
+      "kind": "reddit",
+      "subreddit": "cybersecurity",
+      "listing": "comments",
+      "researcher_ids": []
+    }
+  },
+  {
+    "id": "reddit-localllama-new",
+    "platform": "reddit",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 168,
+    "requests_per_day": 192,
+    "config": {
+      "kind": "reddit",
+      "subreddit": "LocalLLaMA",
+      "listing": "new",
+      "researcher_ids": []
+    }
+  },
+  {
+    "id": "reddit-localllama-comments",
+    "platform": "reddit",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 168,
+    "requests_per_day": 192,
+    "config": {
+      "kind": "reddit",
+      "subreddit": "LocalLLaMA",
+      "listing": "comments",
+      "researcher_ids": []
+    }
+  },
+  {
+    "id": "reddit-netsec-new",
+    "platform": "reddit",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 168,
+    "requests_per_day": 192,
+    "config": {
+      "kind": "reddit",
+      "subreddit": "netsec",
+      "listing": "new",
+      "researcher_ids": []
+    }
+  },
+  {
+    "id": "reddit-netsec-comments",
+    "platform": "reddit",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 168,
+    "requests_per_day": 192,
+    "config": {
+      "kind": "reddit",
+      "subreddit": "netsec",
+      "listing": "comments",
+      "researcher_ids": []
+    }
+  },
+  {
+    "id": "reddit-machinelearning-new",
+    "platform": "reddit",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 168,
+    "requests_per_day": 192,
+    "config": {
+      "kind": "reddit",
+      "subreddit": "MachineLearning",
+      "listing": "new",
+      "researcher_ids": []
+    }
+  },
+  {
+    "id": "reddit-machinelearning-comments",
+    "platform": "reddit",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 168,
+    "requests_per_day": 192,
+    "config": {
+      "kind": "reddit",
+      "subreddit": "MachineLearning",
+      "listing": "comments",
+      "researcher_ids": []
+    }
+  },
+  {
+    "id": "reddit-chatgpt-new",
+    "platform": "reddit",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 168,
+    "requests_per_day": 192,
+    "config": {
+      "kind": "reddit",
+      "subreddit": "ChatGPT",
+      "listing": "new",
+      "researcher_ids": []
+    }
+  },
+  {
+    "id": "reddit-chatgpt-comments",
+    "platform": "reddit",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 168,
+    "requests_per_day": 192,
+    "config": {
+      "kind": "reddit",
+      "subreddit": "ChatGPT",
+      "listing": "comments",
+      "researcher_ids": []
+    }
+  },
+  {
+    "id": "reddit-claudeai-new",
+    "platform": "reddit",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 168,
+    "requests_per_day": 192,
+    "config": {
+      "kind": "reddit",
+      "subreddit": "ClaudeAI",
+      "listing": "new",
+      "researcher_ids": []
+    }
+  },
+  {
+    "id": "reddit-claudeai-comments",
+    "platform": "reddit",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 168,
+    "requests_per_day": 192,
+    "config": {
+      "kind": "reddit",
+      "subreddit": "ClaudeAI",
+      "listing": "comments",
+      "researcher_ids": []
+    }
+  },
+  {
+    "id": "rss-configure-approved-feed",
+    "platform": "wild",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 168,
+    "requests_per_day": 192,
+    "config": {
+      "kind": "rss",
+      "url": "https://example.org/feed.xml",
+      "publisher": "Replace with an approved publisher",
+      "researcher_ids": []
+    }
+  }
+]

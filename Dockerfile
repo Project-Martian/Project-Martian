@@ -23,6 +23,7 @@ COPY css/ ./css/
 COPY js/ ./js/
 COPY assets/ ./assets/
 COPY db/ ./db/
+COPY config/ ./config/
 # Initial import only. These files are never served as a static archive.
 COPY data/records.json data/publication-seed.json ./data/
 USER 101:101
