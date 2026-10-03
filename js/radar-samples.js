@@ -11,7 +11,7 @@ let sigSrc="all", sigSel=0;
 const SRCS=[["all","All"],["x","X"],["r","Reddit"],["w","In the wild"]];
 $("#sigseg").innerHTML = SRCS.map(([k,l])=>`<button type="button" data-k="${k}" aria-pressed="${k==="all"}">${l}</button>`).join("");
 function feedItems(){ const all=[...SAMPLE_POSTS,...wild]; return sigSrc==="all"?all:all.filter(p=>p.s===sigSrc); }
-const STL={unv:"Unverified",lnk:"Linked",con:"Confirmed",noise:"Filtered as noise"};
+const STL={unv:"Unverified",lnk:"Linked",con:"In the record",noise:"Filtered as noise"};
 function renderFeed(){
   const items=feedItems(); if(sigSel>=items.length) sigSel=0;
   $("#feed").innerHTML = items.map((p,i)=>`<div class="post ${i===sigSel?"sel":""}" data-i="${i}" tabindex="0">

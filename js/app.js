@@ -128,7 +128,9 @@ document.addEventListener("click",e=>{
 /* ---------- stats ---------- */
 const latest = AGENTS.filter(r=>r.d).sort((a,b)=>b.d.localeCompare(a.d))[0];
 const y26 = AGENTS.filter(r=>r.d.startsWith("2026")).length, y25 = AGENTS.filter(r=>r.d.startsWith("2025")).length;
-$("#strip").innerHTML = `<div><b class="mono">${REC.length}</b>Records</div><div><b class="mono">${AGENTS.length}</b>Agent incidents</div><div><b class="mono">${y26}</b>In 2026</div><div><b>${esc(latest.when.replace(/^Reported /,""))}</b>Latest</div>`;
+$("#strip").innerHTML = `<div><b class="mono">${REC.length}</b>Records</div><div><b class="mono">${AGENTS.length}</b>Agent incidents</div><div><b class="mono">${y26}</b>In 2026</div><div><b>${esc(latest.when.replace(/^Reported /,""))}</b>Latest dated agent record</div>`;
+const publishedAt = new Date(archive.publication.published_at).toLocaleString("en-GB", {day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"UTC"});
+$("#publication-note").textContent = `Publication ${archive.publication.id} · Published ${publishedAt} UTC. Incident dates and evidence review dates are separate.`;
 
 /* ================= ASK ================= */
 const QUESTIONS = [
@@ -452,7 +454,7 @@ function band(xs,lo,hi){ const top=xs.map((x,i)=>[x,hi[i]]), bot=xs.map((x,i)=>[
 const TT = [["micro","Microtrends"],["impact","Rogue Index"],["narrative","Narrative"],["compare","Comparison"]];
 $("#ttabs").innerHTML = TT.map(([k,l])=>`<button class="ttab" role="tab" data-k="${k}" aria-selected="${k===ttab}">${l}</button>`).join("");
 $("#ttabs").addEventListener("click",e=>{const b=e.target.closest(".ttab"); if(!b) return; ttab=b.dataset.k; $$("#ttabs .ttab").forEach(x=>x.setAttribute("aria-selected",x===b)); renderTrendPanel();});
-$("#qupd").textContent = "Last updated " + (latest ? latest.when.replace(/^Reported /,"") : "");
+$("#qupd").textContent = "Latest dated agent record " + (latest ? latest.when.replace(/^Reported /,"") : "");
 
 // Indicators use the same published revision as the chart and records.
 (function(){
