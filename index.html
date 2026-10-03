@@ -78,12 +78,13 @@
     </div>
     <div class="sig">
       <div class="card" style="overflow:hidden">
-        <div class="feedhead"><div class="seg" id="sigseg" role="group" aria-label="Source"></div><span class="sample">X and Reddit are sample posts</span></div>
-        <div id="feed"></div>
+        <div class="feedhead"><div class="seg" id="sigseg" role="group" aria-label="Source"></div><span class="sample" id="radar-label">Loading Radar</span></div>
+        <div id="radar-tools" class="radar-tools" hidden><label>Search <input id="radar-search" type="search" maxlength="120" placeholder="Search published signals"></label><button id="radar-refresh" type="button">Refresh</button><button id="radar-send" type="button" hidden>Send to Radar</button><p class="note" id="radar-source-status" role="status"></p></div>
+        <div id="feed"></div><button id="radar-more" class="radar-more" type="button" hidden>Load more signals</button>
       </div>
       <div class="side-stack">
         <div class="card detail" id="sigdetail"></div>
-        <div class="card" style="overflow:hidden"><div class="feedhead"><b style="font-weight:500">Emerging clusters</b><span class="sample">Sample</span></div><div id="clusters"></div></div>
+        <div class="card" style="overflow:hidden"><div class="feedhead"><b style="font-weight:500">Emerging clusters</b><span class="sample" id="radar-cluster-label">Sample</span></div><div id="clusters"></div></div>
       </div>
     </div>
   </section>
@@ -231,6 +232,12 @@
     <div class="fl"><a class="repo" href="#" target="_blank" rel="noopener">GitHub ↗</a><a class="repo-path" data-path="/blob/main/MANIFESTO.md" href="#" target="_blank" rel="noopener">Manifesto.md ↗</a></div>
   </div>
 </footer>
+
+<dialog class="radar-dialog" id="radar-submit-dialog"><button type="button" data-radar-close aria-label="Close">Close</button><h3>Send to Radar</h3><form id="radar-submit-form"><label>LinkedIn post URL<input name="url" type="url" maxlength="2048" required></label><label>Post text<textarea name="text" minlength="12" maxlength="5000" required></textarea></label><label>Contact for follow-up (optional)<input name="contact" maxlength="200"></label><p class="note">Submit public information only. Do not paste personal data, credentials or working exploit instructions.</p><button type="submit">Send for private review</button></form><p id="radar-submit-status" role="status"></p></dialog>
+<dialog class="radar-dialog" id="radar-report-dialog"><button type="button" data-radar-close aria-label="Close">Close</button><h3>Report a signal</h3><form id="radar-report-form"><input id="radar-report-id" type="hidden" name="post_id"><label>Reason<textarea name="reason" minlength="5" maxlength="1500" required></textarea></label><label>Contact for follow-up (optional)<input name="contact" maxlength="200"></label><button type="submit">Send report</button></form><p id="radar-report-status" role="status"></p></dialog>
+<dialog class="radar-dialog" id="radar-share-dialog"><button type="button" data-radar-close aria-label="Close">Close</button><h3>Share this signal</h3><label>Draft<textarea id="radar-share-text" maxlength="3000"></textarea></label><div class="radar-actions"><a id="radar-x-share" href="https://x.com/intent/tweet" target="_blank" rel="noopener noreferrer">Open X draft ↗</a><button type="button" id="radar-copy-share">Copy draft</button><a id="radar-linkedin-share" href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer">Share link on LinkedIn ↗</a></div><p id="radar-share-status" role="status"></p></dialog>
+<script src="js/radar-samples.js"></script>
+<script src="js/radar.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

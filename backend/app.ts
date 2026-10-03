@@ -9,9 +9,10 @@ import { timelineData } from './timeline.js';
 import { CONTRIBUTION_REPO } from './contributions.js';
 import { askSchema, MAX_RECORDS } from './ask-models.js';
 import { answerQuestion, MODEL_ID, ModelUnavailable, InvalidAnswer } from './assistant.js';
+import { registerRadar } from './radar/api.js';
 
 const pool=await createPool();
-const app=Fastify({bodyLimit:65536,trustProxy:false,logger:false});
+const app=Fastify({bodyLimit:65536,trustProxy:process.env.MARTIAN_TRUSTED_PROXIES?.split(',').map(s=>s.trim())||false,logger:false});
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const enabled=(process.env.MARTIAN_ASK_ENABLED||'true').toLowerCase()==='true';
 const hosts=(process.env.MARTIAN_ASK_ALLOWED_HOSTS||'127.0.0.1,localhost,projectmartian.ai,www.projectmartian.ai').split(',').map(s=>s.trim());
@@ -45,7 +46,7 @@ app.addHook('onSend',async(request,reply)=>{
 });
 app.setErrorHandler((error,request,reply)=>{
   const status=(error as {statusCode?:number}).statusCode;
-  if(status===413)return reply.code(413).send({detail:'Question request is too large.'});
+  if(status===413)return reply.code(413).send({detail:'Request is too large.'});
   if(status===400)return reply.code(400).send({detail:'Invalid JSON request.'});
   console.warn('Request failed:',error instanceof Error?error.name:'UnknownError');
   return reply.code(503).send({detail:'The service is unavailable. Please try again later.'});
@@ -55,6 +56,7 @@ app.get('/readyz',async(_request,reply)=>{
   try {
     const result=await pool.query('SELECT id FROM publications ORDER BY id DESC LIMIT 1');
     if(!result.rows.length)throw new Error('No publication');
+    if(process.env.MARTIAN_RADAR_MODE==='live'&&!(await pool.query('SELECT 1 FROM radar_public.status')).rowCount)throw new Error('Radar controls are not initialized');
     return {status:'ready'};
   } catch{return reply.code(503).send({status:'unavailable'});}
 });
@@ -107,7 +109,7 @@ app.get('/data/impact_index.json',async(_request,reply)=>{
     publication_id:snapshot.publication.id})):reply.code(409).send({detail:'This publication uses the legacy methodology.'});
 });
 app.get('/api/microtrends',async()=>{const snapshot=await readSnapshot(pool);return {publication:snapshot.publication,map:snapshot.microtrends,as_of:snapshot.settings.microtrends_as_of,...microtrendsMetadata(snapshot)};});
-app.get('/api/radar',async()=>{const snapshot=await readSnapshot(pool);return {publication:snapshot.publication,...snapshot.radar};});
+await registerRadar(app,pool);
 app.get('/data/records.json',async()=> (await readSnapshot(pool)).records);
 app.post('/api/ask',async(request,reply)=>{
   const body=askSchema.safeParse(request.body);

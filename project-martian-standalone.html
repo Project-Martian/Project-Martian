@@ -240,6 +240,32 @@
 #v-contribute .contrib-preview p{font-size:12px;line-height:1.6;color:var(--muted);margin-top:12px}
 #v-contribute .contrib-status-form{display:grid;gap:12px;border-top:1px solid var(--line);margin-top:24px;padding-top:20px}
 #v-contribute .contrib-status-form button{justify-self:start;background:var(--panel);cursor:pointer}
+/* Radar retains the desktop feed and existing 380px detail column. */
+.radar-tools{padding:12px 18px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.radar-tools[hidden],.radar-more[hidden]{display:none}
+.radar-tools label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.radar-tools input{width:230px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:7px 10px}
+.radar-tools .note{width:100%;margin:0;font-size:11px}
+.radar-empty{padding:24px 18px;color:var(--muted);font-size:14px}
+.radar-more{display:block;margin:14px auto}
+.radar-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover}
+.post p{white-space:pre-wrap;overflow-wrap:anywhere}
+.radar-provenance{border-top:1px solid var(--line);margin-top:16px;padding-top:14px;font-size:12px}
+.radar-source{display:grid;grid-template-columns:85px minmax(0,1fr) auto;gap:8px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.radar-source b{font-weight:500;overflow-wrap:anywhere}
+.radar-source small{display:block;color:var(--muted);font-size:10px;margin-top:3px}
+.radar-source-kind{font-size:10px;border:1px solid var(--line);border-radius:12px;padding:3px 5px;text-align:center}
+.radar-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:15px;font-size:12px}
+.radar-actions button,.radar-tools button,.radar-more{border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);padding:6px 10px;cursor:pointer}
+.radar-cluster{width:100%;text-align:left;color:var(--ink);background:transparent;border-right:0;border-left:0;border-bottom:0;font-family:var(--sans);cursor:pointer}
+.radar-cluster:hover{background:var(--panel-2)}
+.radar-dialog{width:520px;padding:24px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);box-shadow:0 20px 80px #0003}
+.radar-dialog::backdrop{background:#0005}
+.radar-dialog h3{margin-bottom:14px}.radar-dialog>button{float:right}
+.radar-dialog label{display:block;margin:12px 0;font-size:13px}
+.radar-dialog input,.radar-dialog textarea{display:block;width:100%;margin-top:6px;padding:10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:13px var(--sans)}
+.radar-dialog textarea{min-height:140px;resize:vertical}
+.radar-dialog p[role=status]{margin-top:14px;font-size:12px;color:var(--muted);overflow-wrap:anywhere}
 </style>
 <style>
 body{
@@ -796,12 +822,13 @@ footer{border-top:1px solid var(--line);padding-block:26px 40px}
     </div>
     <div class="sig">
       <div class="card" style="overflow:hidden">
-        <div class="feedhead"><div class="seg" id="sigseg" role="group" aria-label="Source"></div><span class="sample">X and Reddit are sample posts</span></div>
-        <div id="feed"></div>
+        <div class="feedhead"><div class="seg" id="sigseg" role="group" aria-label="Source"></div><span class="sample" id="radar-label">Loading Radar</span></div>
+        <div id="radar-tools" class="radar-tools" hidden><label>Search <input id="radar-search" type="search" maxlength="120" placeholder="Search published signals"></label><button id="radar-refresh" type="button">Refresh</button><button id="radar-send" type="button" hidden>Send to Radar</button><p class="note" id="radar-source-status" role="status"></p></div>
+        <div id="feed"></div><button id="radar-more" class="radar-more" type="button" hidden>Load more signals</button>
       </div>
       <div class="side-stack">
         <div class="card detail" id="sigdetail"></div>
-        <div class="card" style="overflow:hidden"><div class="feedhead"><b style="font-weight:500">Emerging clusters</b><span class="sample">Sample</span></div><div id="clusters"></div></div>
+        <div class="card" style="overflow:hidden"><div class="feedhead"><b style="font-weight:500">Emerging clusters</b><span class="sample" id="radar-cluster-label">Sample</span></div><div id="clusters"></div></div>
       </div>
     </div>
   </section>
@@ -949,6 +976,187 @@ footer{border-top:1px solid var(--line);padding-block:26px 40px}
     <div class="fl"><a class="repo" href="#" target="_blank" rel="noopener">GitHub ↗</a><a class="repo-path" data-path="/blob/main/MANIFESTO.md" href="#" target="_blank" rel="noopener">Manifesto.md ↗</a></div>
   </div>
 </footer>
+
+<dialog class="radar-dialog" id="radar-submit-dialog"><button type="button" data-radar-close aria-label="Close">Close</button><h3>Send to Radar</h3><form id="radar-submit-form"><label>LinkedIn post URL<input name="url" type="url" maxlength="2048" required></label><label>Post text<textarea name="text" minlength="12" maxlength="5000" required></textarea></label><label>Contact for follow-up (optional)<input name="contact" maxlength="200"></label><p class="note">Submit public information only. Do not paste personal data, credentials or working exploit instructions.</p><button type="submit">Send for private review</button></form><p id="radar-submit-status" role="status"></p></dialog>
+<dialog class="radar-dialog" id="radar-report-dialog"><button type="button" data-radar-close aria-label="Close">Close</button><h3>Report a signal</h3><form id="radar-report-form"><input id="radar-report-id" type="hidden" name="post_id"><label>Reason<textarea name="reason" minlength="5" maxlength="1500" required></textarea></label><label>Contact for follow-up (optional)<input name="contact" maxlength="200"></label><button type="submit">Send report</button></form><p id="radar-report-status" role="status"></p></dialog>
+<dialog class="radar-dialog" id="radar-share-dialog"><button type="button" data-radar-close aria-label="Close">Close</button><h3>Share this signal</h3><label>Draft<textarea id="radar-share-text" maxlength="3000"></textarea></label><div class="radar-actions"><a id="radar-x-share" href="https://x.com/intent/tweet" target="_blank" rel="noopener noreferrer">Open X draft ↗</a><button type="button" id="radar-copy-share">Copy draft</button><a id="radar-linkedin-share" href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer">Share link on LinkedIn ↗</a></div><p id="radar-share-status" role="status"></p></dialog>
+<script>
+window.renderRadarSamples=function({archive,openRecord}){
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const esc=s=>String(s??" ").replace(/[&<>\"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const AGENTS=archive.records.filter(r=>r.scope==="agents"),BYID=Object.fromEntries(archive.records.map(r=>[r.id,r]));
+/* ================= SIGNALS ================= */
+// X and Reddit posts are illustrative samples with invented handles. "In the wild" rows are real records.
+const SAMPLE_POSTS = archive.radar.signals;
+const CLUSTERS = archive.radar.clusters;
+const wild = AGENTS.filter(r=>r.d).sort((a,b)=>b.d.localeCompare(a.d)).slice(0,6).map(r=>({s:"w",n:r.org,h:r.set,t:r.when.replace(/^Reported /,""),st:"con",rec:r.id,txt:r.t,e:r.src,c:""}));
+let sigSrc="all", sigSel=0;
+const SRCS=[["all","All"],["x","X"],["r","Reddit"],["w","In the wild"]];
+$("#sigseg").innerHTML = SRCS.map(([k,l])=>`<button type="button" data-k="${k}" aria-pressed="${k==="all"}">${l}</button>`).join("");
+function feedItems(){ const all=[...SAMPLE_POSTS,...wild]; return sigSrc==="all"?all:all.filter(p=>p.s===sigSrc); }
+const STL={unv:"Unverified",lnk:"Linked",con:"In the record",noise:"Filtered as noise"};
+function renderFeed(){
+  const items=feedItems(); if(sigSel>=items.length) sigSel=0;
+  $("#feed").innerHTML = items.map((p,i)=>`<div class="post ${i===sigSel?"sel":""}" data-i="${i}" tabindex="0">
+    <span class="src ${p.s}">${p.s==="x"?"𝕏":p.s==="r"?"r/":"●"}</span>
+    <div><div class="top"><b>${esc(p.n)}</b><span class="h">${esc(p.h)}</span><span class="t">${esc(p.t)}</span></div>
+    <p>${esc(p.txt)}</p>
+    <div class="ft"><span class="st ${p.st}">${STL[p.st]}</span>${p.sample?'<span class="sample">Sample</span>':""}<span class="eng">${esc(p.e)}</span></div></div></div>`).join("");
+  renderDetail(items[sigSel]);
+}
+function spark(d,w=74,h=26){const m=Math.max(...d);const pts=d.map((v,i)=>`${(i/(d.length-1)*w).toFixed(1)},${(h-3-(v/m)*(h-6)).toFixed(1)}`);const l=pts[pts.length-1].split(",");return `<svg width="${w+4}" height="${h}" viewBox="0 0 ${w+4} ${h}" aria-hidden="true"><polyline points="${pts.join(" ")}" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round"/><circle cx="${l[0]}" cy="${l[1]}" r="2.8" fill="var(--accent)"/></svg>`;}
+function renderDetail(p){
+  if(!p){$("#sigdetail").innerHTML="";return;}
+  const cl = CLUSTERS.find(c=>c.k===p.c);
+  const r = p.rec && BYID[p.rec];
+  const mix = cl?cl.mix:(p.s==="w"?[.2,.1,.7]:[.5,.3,.2]);
+  $("#sigdetail").innerHTML = `<span class="eyebrow">Signal detail</span>
+    <h3>${esc(cl?cl.t:(r?r.t:p.txt))}</h3>
+    <span class="st ${p.st}">${STL[p.st]}</span>
+    <div class="mix"><i style="flex:${mix[0]};background:var(--ink)"></i><i style="flex:${mix[1]};background:#FF4500"></i><i style="flex:${mix[2]};background:var(--accent)"></i></div>
+    <div class="mixl"><span><i style="background:var(--ink)"></i>X ${Math.round(mix[0]*100)}%</span><span><i style="background:#FF4500"></i>Reddit ${Math.round(mix[1]*100)}%</span><span><i style="background:var(--accent)"></i>News & disclosures ${Math.round(mix[2]*100)}%</span></div>
+    <div class="kv">
+      <div><span>Velocity</span>${cl?spark(cl.d):"<b>—</b>"}</div>
+      <div><span>${r?"Record":"Status"}</span><b style="font-size:15px;font-family:var(--sans);font-weight:500">${r?`<a href="#" class="cite" data-rec="${r.id}">Open record ↗</a>`:(p.st==="noise"?"Ignored":"Needs 2 sources")}</b></div>
+    </div>
+    ${p.sample?'<p class="note">Sample signal. The live feed will fill this in from X and Reddit.</p>':""}`;
+}
+$("#sigseg").addEventListener("click",e=>{const b=e.target.closest("button"); if(!b) return; sigSrc=b.dataset.k; sigSel=0; $$("#sigseg button").forEach(x=>x.setAttribute("aria-pressed",x===b)); renderFeed();});
+$("#feed").addEventListener("click",e=>{const p=e.target.closest(".post"); if(!p) return; sigSel=+p.dataset.i; renderFeed();});
+$("#feed").addEventListener("keydown",e=>{if(e.key==="Enter"){const p=e.target.closest(".post"); if(p){sigSel=+p.dataset.i; renderFeed();}}});
+$("#sigdetail").addEventListener("click",e=>{const c=e.target.closest(".cite"); if(c){e.preventDefault(); openRecord(c.dataset.rec);}});
+$("#clusters").innerHTML = CLUSTERS.map(c=>`<div class="clu"><b>${esc(c.t)}</b>${spark(c.d)}<small>${esc(c.m)}</small></div>`).join("");
+renderFeed();
+
+
+};
+</script>
+<script>
+/* Live Radar uses an independently refreshed API, never the archive's samples. */
+window.mountRadar=function({archive,openRecord}){
+  const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const names={x:'X',reddit:'Reddit',linkedin:'LinkedIn',wild:'News and disclosures'};
+  const colors={x:'var(--ink)',reddit:'#d94b17',linkedin:'#0a66c2',wild:'var(--accent)'};
+  let mode=null,active=false,source='all',search='',cursor=null,posts=[],selected=null,detail=null,serial=0,detailSerial=0,publication=null;
+  let sampleReady=false,intakeEnabled=false,queryTimer,shareExpires=0;
+  const clearShare=()=>{if($('#radar-share-dialog').open)$('#radar-share-dialog').close();$('#radar-share-text').value='';shareExpires=0;};
+  const date=value=>new Date(value).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  const spark=values=>{const max=Math.max(1,...values),points=values.map((v,i)=>`${i*74/(values.length-1)},${23-v/max*20}`).join(' ');return `<svg width="78" height="26" viewBox="0 0 78 26" aria-hidden="true"><polyline points="${points}" fill="none" stroke="var(--accent)" stroke-width="1.6"/></svg>`;};
+  const route=(kind,id)=>`${location.origin}${location.pathname}#signals/${kind}/${encodeURIComponent(id)}`;
+  function text(post){
+    const chars=Array.from(post.text),entities=[...(post.entities||[])].sort((a,b)=>a.start-b.start);let out='',at=0;
+    for(const e of entities){if(e.start<at||e.end>chars.length||e.end<=e.start)continue;
+      out+=esc(chars.slice(at,e.start).join(''))+`<a href="${esc(e.url)}" target="_blank" rel="noopener noreferrer">${esc(chars.slice(e.start,e.end).join(''))}</a>`;at=e.end;}
+    return out+esc(chars.slice(at).join(''));
+  }
+  function filters(){
+    $('#sigseg').innerHTML=[['all','All'],['x','X'],['reddit','Reddit'],['linkedin','LinkedIn'],['wild','In the wild']].map(([id,name])=>
+      `<button type="button" data-source="${id}" aria-pressed="${source===id}" ${id==='linkedin'?'disabled title="LinkedIn API feed is not enabled"':''}>${name}</button>`).join('');
+  }
+  function renderFeed(){
+    posts=posts.filter(p=>Date.parse(p.display_until)>Date.now());
+    $('#feed').innerHTML=posts.length?posts.map(p=>`<article class="post ${selected?.kind==='post'&&selected.id===p.id?'sel':''}" data-post="${p.id}" tabindex="0" aria-label="Select signal from ${esc(p.author_name)}">
+      <span class="src ${p.platform==='reddit'?'r':p.platform==='wild'?'w':'x'}">${p.author_avatar?`<img class="radar-avatar" src="${esc(p.author_avatar)}" alt="" referrerpolicy="no-referrer">`:p.platform==='reddit'?'r/':p.platform==='x'?'𝕏':'●'}</span>
+      <div><div class="top">${p.author_url?`<a href="${esc(p.author_url)}" target="_blank" rel="noopener noreferrer"><b>${esc(p.author_name)}</b> <span class="h">${esc(p.author_handle)}</span></a>`:`<b>${esc(p.author_name)}</b>`}
+      <a class="t" href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">${date(p.posted_at)}</a></div>
+      <p>${text(p)}</p><div class="ft"><span class="st ${p.record_id?'lnk':'unv'}">${p.record_id?'Linked':'Unverified'}</span>
+      <a href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">${p.platform==='x'?'View on X':'Open on '+(p.platform==='wild'?'source':names[p.platform])} ↗</a>
+      ${p.engagement===null?'':`<span class="eng">${Number(p.engagement).toLocaleString()} ${p.platform==='reddit'?'score':'likes'}</span>`}</div></div></article>`).join(''):
+      '<p class="radar-empty">No published signals match these filters.</p>';
+    $('#radar-more').hidden=!cursor;
+  }
+  function renderDetail(data){
+    detail=data;const p=data.post,mix=data.platforms,total=Object.values(mix).reduce((a,b)=>a+b,0);
+    $('#sigdetail').innerHTML=`<span class="eyebrow">Signal detail</span><h3>${esc(data.cluster?.title||'Report from '+p.author_name)}</h3>
+      <span class="st ${p.record_id?'lnk':'unv'}">${p.record_id?'Linked':'Unverified'}</span>
+      <div class="mix">${Object.entries(mix).filter(([,n])=>n).map(([s,n])=>`<i style="flex:${n};background:${colors[s]}"></i>`).join('')}</div>
+      <div class="mixl">${Object.entries(mix).filter(([,n])=>n).map(([s,n])=>`<span><i style="background:${colors[s]}"></i>${names[s]} ${Math.round(n/total*100)}%</span>`).join('')}</div>
+      <p class="note">Source mix and distinct accounts · last 72 hours</p>
+      <div class="kv"><div><span>First seen</span><b>${data.first_seen?date(data.first_seen.at)+' on '+names[data.first_seen.platform]:'—'}</b></div>
+      <div><span>Velocity</span><b>${data.velocity.posts} posts in 24 h · ${esc(data.velocity.trend)}</b></div>
+      <div><span>Distinct accounts</span><b>${data.authors} on ${Object.values(mix).filter(Boolean).length} platforms</b></div></div>
+      <div class="radar-provenance"><b>Where it’s coming from</b><p class="note">Reviewed primary sources first, then reports.</p>
+      ${data.sources.map(s=>`<div class="radar-source"><span class="radar-source-kind">${esc(s.kind)}</span><div><b>${esc(s.name)}</b><small>${esc(names[s.platform])} · ${date(s.posted_at)}</small></div><a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">Open ↗</a></div>`).join('')}
+      <p class="note">${data.reshares} reshares folded in</p></div>
+      <div class="radar-actions">${p.record_id?`<button type="button" data-radar-record="${esc(p.record_id)}">Open record ↗</button>`:''}
+      <button type="button" data-radar-share>Share signal</button>${intakeEnabled?'<button type="button" data-radar-report>Report</button>':''}</div>`;
+  }
+  async function loadDetail(kind,id){
+    selected={kind,id};const n=++detailSerial;detail=null;$('#sigdetail').innerHTML='<p class="note">Loading source detail…</p>';
+    try{
+      const response=await fetch(`/api/radar/${kind==='post'?'posts':'clusters'}/${encodeURIComponent(id)}`,{cache:'no-store'});
+      if(!response.ok)throw new Error('unavailable');const value=await response.json();if(n!==detailSerial)return;
+      renderDetail(value);renderFeed();
+    }catch{if(n===detailSerial){detail=null;clearShare();$('#sigdetail').innerHTML='<p class="note">This signal is unavailable or no longer published.</p>';}}
+  }
+  async function load(append=false){
+    const n=++serial;$('#radar-label').textContent='Refreshing…';
+    const params=new URLSearchParams({source,q:search});if(append&&cursor)params.set('cursor',cursor);
+    try{
+      const response=await fetch('/api/radar?'+params,{cache:'no-store'});if(!response.ok)throw new Error('unavailable');
+      const data=await response.json();if(n!==serial)return;
+      if(data.version!=='radar-v1')throw new Error('version');mode=data.mode;
+      if(mode==='sample'){
+        if(!sampleReady){window.renderRadarSamples({archive,openRecord});sampleReady=true;}
+        $('#radar-label').textContent='X and Reddit are sample posts';return;
+      }
+      intakeEnabled=data.intake_enabled;$('#radar-tools').hidden=false;$('#radar-send').hidden=!data.intake_enabled;$('#radar-cluster-label').textContent='Live';filters();
+      publication=data.publication_id;posts=append?[...new Map([...posts,...data.posts].map(p=>[p.id,p])).values()]:data.posts;cursor=data.next_cursor;
+      $('#radar-label').textContent=data.published?'Published signals':'Private pilot · not published';
+      $('#radar-source-status').textContent=data.sources.length?data.sources.map(s=>`${names[s.platform]}: ${!s.enabled?'disabled':s.last_error?'needs attention':s.last_success?'checked '+date(s.last_success):'awaiting first collection'}`).join(' · '):'No live sources are enabled.';
+      $('#clusters').innerHTML=data.clusters.length?data.clusters.map(c=>`<button class="clu radar-cluster" data-cluster="${c.id}" data-expires="${c.expires_at}" type="button"><b>${esc(c.title)}</b>${spark(c.hourly)}<small>${c.posts} posts · ${c.authors} accounts · ${esc(c.state)}${c.record_id?' · Linked':''}<br>${c.first_seen?'Since '+date(c.first_seen.at)+' · ':''}${c.named.length?esc(c.named.slice(0,3).join(', ')):'No named entities'}</small></button>`).join(''):'<p class="radar-empty">No clusters meet the five-post, three-account minimum.</p>';
+      renderFeed();
+      if(selected)await loadDetail(selected.kind,selected.id);else if(posts[0])await loadDetail('post',posts[0].id);else $('#sigdetail').innerHTML='<p class="note">Select a published signal to trace its sources.</p>';
+    }catch{
+      if(n!==serial)return;posts=[];detail=null;detailSerial++;$('#feed').innerHTML='<p class="radar-empty" role="status">Radar is unavailable. Try refreshing shortly.</p>';
+      $('#clusters').innerHTML='';$('#sigdetail').innerHTML='';$('#radar-label').textContent='Unavailable';$('#radar-more').hidden=true;
+    }
+  }
+  $('#sigseg').addEventListener('click',e=>{const b=e.target.closest('[data-source]');if(!b)return;source=b.dataset.source;cursor=null;selected=null;void load();});
+  $('#radar-search').addEventListener('input',e=>{clearTimeout(queryTimer);queryTimer=setTimeout(()=>{search=e.target.value.trim();cursor=null;selected=null;void load();},250);});
+  $('#radar-refresh').addEventListener('click',()=>{void load();});$('#radar-more').addEventListener('click',()=>{void load(true);});
+  function select(e){if(e.target.closest('a,button'))return;const p=e.target.closest('[data-post]');if(p){history.replaceState(null,'',route('post',p.dataset.post));void loadDetail('post',p.dataset.post);}}
+  $('#feed').addEventListener('click',select);$('#feed').addEventListener('keydown',e=>{if(e.key==='Enter')select(e);});
+  $('#clusters').addEventListener('click',e=>{const c=e.target.closest('[data-cluster]');if(c){history.replaceState(null,'',route('cluster',c.dataset.cluster));void loadDetail('cluster',c.dataset.cluster);}});
+  $('#sigdetail').addEventListener('click',e=>{
+    const record=e.target.closest('[data-radar-record]');if(record){if(detail?.publication_id===archive.publication.id)openRecord(record.dataset.radarRecord);else location.href=location.pathname+'?publication='+encodeURIComponent(detail?.publication_id||publication)+'#timeline/'+encodeURIComponent(record.dataset.radarRecord);return;}
+    if(!detail)return;
+    if(e.target.closest('[data-radar-report]')){$('#radar-report-id').value=detail.post.id;$('#radar-report-status').textContent='Reports are reviewed privately.';$('#radar-report-dialog').showModal();}
+    if(e.target.closest('[data-radar-share]')){
+      shareExpires=Date.parse(detail.expires_at);
+      const url=route(selected.kind,selected.id);
+      $('#radar-share-text').value=`${detail.cluster?.title||'Agent-security report'} — reported by ${detail.post.author_handle||detail.post.author_name}. Unverified chatter.\n${url}`;
+      $('#radar-share-status').textContent='Review the draft. Posting is your choice.';
+      $('#radar-linkedin-share').href='https://www.linkedin.com/sharing/share-offsite/?url='+encodeURIComponent(url);$('#radar-share-dialog').showModal();
+    }
+  });
+  $('#radar-x-share').addEventListener('click',e=>{e.currentTarget.href='https://x.com/intent/tweet?text='+encodeURIComponent($('#radar-share-text').value);});
+  $('#radar-copy-share').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('#radar-share-text').value);$('#radar-share-status').textContent='Copied. Paste the draft into your LinkedIn share.';}catch{$('#radar-share-status').textContent='Clipboard access was denied.';}});
+  $('#radar-send').addEventListener('click',()=>{$('#radar-submit-status').textContent='LinkedIn links are private tips. They are not published automatically.';$('#radar-submit-dialog').showModal();});
+  for(const kind of ['submit','report']){
+    $(`#radar-${kind}-form`).addEventListener('submit',async e=>{
+      e.preventDefault();const form=e.currentTarget,button=form.querySelector('button[type=submit]');button.disabled=true;
+      const content=Object.fromEntries(new FormData(form));if(!content.contact)delete content.contact;
+      try{const response=await fetch('/api/radar/'+(kind==='submit'?'submissions':'reports'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(content)});
+        const result=await response.json();if(!response.ok)throw new Error(result.detail||'Intake unavailable.');
+        $(`#radar-${kind}-status`).textContent=result.message+' Receipt: '+result.receipt;form.reset();
+      }catch(error){$(`#radar-${kind}-status`).textContent=error.message;}finally{button.disabled=false;}
+    });
+  }
+  document.querySelectorAll('[data-radar-close]').forEach(b=>b.addEventListener('click',()=>b.closest('dialog').close()));
+  setInterval(()=>{
+    if(mode!=='live')return;
+    if(shareExpires&&shareExpires<=Date.now())clearShare();
+    document.querySelectorAll('[data-cluster][data-expires]').forEach(c=>{if(Date.parse(c.dataset.expires)<=Date.now())c.remove();});
+    const expired=detail?.expires_at&&Date.parse(detail.expires_at)<=Date.now();
+    if(expired){detail=null;$('#sigdetail').innerHTML='<p class="note">Source verification expired. Refreshing…</p>';if($('#radar-share-dialog').open){$('#radar-share-dialog').close();$('#radar-share-text').value='';}}
+    if(posts.some(p=>Date.parse(p.display_until)<=Date.now()))renderFeed();
+  },1000);
+  setInterval(()=>{if(active&&mode==='live'&&!document.hidden)void load();},30000);
+  document.addEventListener('visibilitychange',()=>{if(active&&!document.hidden)void load();});
+  return {activate(routeSelection){active=true;if(routeSelection)selected=routeSelection;void load();},deactivate(){active=false;}};
+};
+</script>
 <script>
 (async function(){
 const $ = s => document.querySelector(s);
@@ -982,8 +1190,9 @@ function go(v, opts){
   renderTabs(v);
   if(v==="trends") renderTrendPanel();
   if(v==="timeline") loadLogos();
+  if(v==="signals") radar.activate(opts?.radar); else radar.deactivate();
   if(!(opts&&opts.keepScroll)) window.scrollTo({top:0});
-  try{ history.replaceState(null,"",opts?.record ? "#timeline/"+encodeURIComponent(opts.record) : "#"+v); }catch(e){ location.hash = v; }
+  try{ history.replaceState(null,"",opts?.record ? "#timeline/"+encodeURIComponent(opts.record) : opts?.radar ? "#signals/"+opts.radar.kind+"/"+encodeURIComponent(opts.radar.id) : "#"+v); }catch(e){ location.hash = v; }
 }
 document.addEventListener("click",e=>{
   const g = e.target.closest("[data-go]");
@@ -1388,47 +1597,7 @@ $("#tlist").addEventListener("click",e=>{
 });
 
 /* ================= SIGNALS ================= */
-// X and Reddit posts are illustrative samples with invented handles. "In the wild" rows are real records.
-const SAMPLE_POSTS = archive.radar.signals;
-const CLUSTERS = archive.radar.clusters;
-const wild = AGENTS.filter(r=>r.d).sort((a,b)=>b.d.localeCompare(a.d)).slice(0,6).map(r=>({s:"w",n:r.org,h:r.set,t:r.when.replace(/^Reported /,""),st:"con",rec:r.id,txt:r.t,e:r.src,c:""}));
-let sigSrc="all", sigSel=0;
-const SRCS=[["all","All"],["x","X"],["r","Reddit"],["w","In the wild"]];
-$("#sigseg").innerHTML = SRCS.map(([k,l])=>`<button type="button" data-k="${k}" aria-pressed="${k==="all"}">${l}</button>`).join("");
-function feedItems(){ const all=[...SAMPLE_POSTS,...wild]; return sigSrc==="all"?all:all.filter(p=>p.s===sigSrc); }
-const STL={unv:"Unverified",lnk:"Linked",con:"In the record",noise:"Filtered as noise"};
-function renderFeed(){
-  const items=feedItems(); if(sigSel>=items.length) sigSel=0;
-  $("#feed").innerHTML = items.map((p,i)=>`<div class="post ${i===sigSel?"sel":""}" data-i="${i}" tabindex="0">
-    <span class="src ${p.s}">${p.s==="x"?"𝕏":p.s==="r"?"r/":"●"}</span>
-    <div><div class="top"><b>${esc(p.n)}</b><span class="h">${esc(p.h)}</span><span class="t">${esc(p.t)}</span></div>
-    <p>${esc(p.txt)}</p>
-    <div class="ft"><span class="st ${p.st}">${STL[p.st]}</span>${p.sample?'<span class="sample">Sample</span>':""}<span class="eng">${esc(p.e)}</span></div></div></div>`).join("");
-  renderDetail(items[sigSel]);
-}
-function spark(d,w=74,h=26){const m=Math.max(...d);const pts=d.map((v,i)=>`${(i/(d.length-1)*w).toFixed(1)},${(h-3-(v/m)*(h-6)).toFixed(1)}`);const l=pts[pts.length-1].split(",");return `<svg width="${w+4}" height="${h}" viewBox="0 0 ${w+4} ${h}" aria-hidden="true"><polyline points="${pts.join(" ")}" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round"/><circle cx="${l[0]}" cy="${l[1]}" r="2.8" fill="var(--accent)"/></svg>`;}
-function renderDetail(p){
-  if(!p){$("#sigdetail").innerHTML="";return;}
-  const cl = CLUSTERS.find(c=>c.k===p.c);
-  const r = p.rec && BYID[p.rec];
-  const mix = cl?cl.mix:(p.s==="w"?[.2,.1,.7]:[.5,.3,.2]);
-  $("#sigdetail").innerHTML = `<span class="eyebrow">Signal detail</span>
-    <h3>${esc(cl?cl.t:(r?r.t:p.txt))}</h3>
-    <span class="st ${p.st}">${STL[p.st]}</span>
-    <div class="mix"><i style="flex:${mix[0]};background:var(--ink)"></i><i style="flex:${mix[1]};background:#FF4500"></i><i style="flex:${mix[2]};background:var(--accent)"></i></div>
-    <div class="mixl"><span><i style="background:var(--ink)"></i>X ${Math.round(mix[0]*100)}%</span><span><i style="background:#FF4500"></i>Reddit ${Math.round(mix[1]*100)}%</span><span><i style="background:var(--accent)"></i>News & disclosures ${Math.round(mix[2]*100)}%</span></div>
-    <div class="kv">
-      <div><span>Velocity</span>${cl?spark(cl.d):"<b>—</b>"}</div>
-      <div><span>${r?"Record":"Status"}</span><b style="font-size:15px;font-family:var(--sans);font-weight:500">${r?`<a href="#" class="cite" data-rec="${r.id}">Open record ↗</a>`:(p.st==="noise"?"Ignored":"Needs 2 sources")}</b></div>
-    </div>
-    ${p.sample?'<p class="note">Sample signal. The live feed will fill this in from X and Reddit.</p>':""}`;
-}
-$("#sigseg").addEventListener("click",e=>{const b=e.target.closest("button"); if(!b) return; sigSrc=b.dataset.k; sigSel=0; $$("#sigseg button").forEach(x=>x.setAttribute("aria-pressed",x===b)); renderFeed();});
-$("#feed").addEventListener("click",e=>{const p=e.target.closest(".post"); if(!p) return; sigSel=+p.dataset.i; renderFeed();});
-$("#feed").addEventListener("keydown",e=>{if(e.key==="Enter"){const p=e.target.closest(".post"); if(p){sigSel=+p.dataset.i; renderFeed();}}});
-$("#sigdetail").addEventListener("click",e=>{const c=e.target.closest(".cite"); if(c){e.preventDefault(); openRecord(c.dataset.rec);}});
-$("#clusters").innerHTML = CLUSTERS.map(c=>`<div class="clu"><b>${esc(c.t)}</b>${spark(c.d)}<small>${esc(c.m)}</small></div>`).join("");
-renderFeed();
+const radar=window.mountRadar({archive,openRecord});
 
 /* ================= TRENDS ================= */
 const css = n => getComputedStyle(document.body).getPropertyValue(n).trim();
@@ -1972,6 +2141,9 @@ function routeHash(){
   if(hash.startsWith("timeline/")){
     let id;try{id=decodeURIComponent(hash.slice(9));}catch{go("timeline");return;}
     openRecord(id);
+  }else if(/^signals\/(post|cluster)\//.test(hash)){
+    const [,kind,id]=hash.split("/");
+    go("signals",{radar:{kind,id}});
   }else go(hash||"ask",{});
 }
 window.addEventListener("hashchange",routeHash);

@@ -1,6 +1,6 @@
 {
   "name": "project-martian",
-  "version": "0.3.0",
+  "version": "0.4.1",
   "private": true,
   "type": "module",
   "engines": {
@@ -8,12 +8,14 @@
   },
   "scripts": {
     "build": "tsc && node scripts/build-standalone.mjs",
-    "check": "tsc --noEmit && node --check js/app.js && node --check js/theme-init.js",
+    "check": "tsc --noEmit && node --check js/app.js && node --check js/theme-init.js && node --check js/radar.js && node --check js/radar-samples.js",
     "start": "node dist/backend/app.js",
     "db:migrate": "node dist/backend/manage.js migrate",
     "db:import": "node dist/backend/manage.js import",
     "db:publish": "node dist/backend/manage.js publish",
-    "db:export": "node dist/backend/manage.js export"
+    "db:export": "node dist/backend/manage.js export",
+    "radar:worker": "node dist/backend/radar-worker.js",
+    "radar:manage": "node dist/backend/radar-manage.js"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "3.1145.0",
@@ -22,6 +24,7 @@
     "@smithy/node-http-handler": "4.12.1",
     "fastify": "5.12.5",
     "pg": "8.23.1",
+    "saxes": "6.0.0",
     "zod": "4.6.5"
   },
   "devDependencies": {
