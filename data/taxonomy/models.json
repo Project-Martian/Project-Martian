@@ -162,6 +162,19 @@
     ]
   },
   {
+    "name": "Claude Haiku",
+    "family": "Claude Haiku",
+    "company": "Anthropic",
+    "kind": "named",
+    "harness": null,
+    "versions": [
+      {
+        "id": "4.5",
+        "label": "Claude Haiku 4.5"
+      }
+    ]
+  },
+  {
     "name": "Mythos",
     "family": "Mythos",
     "company": "Anthropic",
