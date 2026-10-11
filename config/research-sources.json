@@ -1,0 +1,8 @@
+{
+  "queries": [
+    "AI agent security incident unauthorized action data leak original disclosure",
+    "autonomous AI agent prompt injection incident investigation"
+  ],
+  "max_candidates": 3,
+  "max_new_issues": 2
+}

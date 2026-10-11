@@ -27,13 +27,13 @@ const {stats,registerRadar}=await import('../dist/backend/radar/api.js');
 const {sourceSchema,contentSchema}=await import('../dist/backend/radar/schema.js');
 const results=[];
 const check=async(name,fn)=>{await fn();results.push(name);console.log('PASS '+name);};
-const source=platform=>({...sourceSchema.parse({id:'fixture-'+platform,platform,enabled:true,approved_by:'isolated-local-acceptance',retention_hours:720,requests_per_day:5,
+const source=platform=>({...sourceSchema.parse({id:'fixture-'+platform,platform,enabled:true,publication_mode:'public',approved_by:'isolated-local-acceptance',retention_hours:720,requests_per_day:5,
  config:platform==='x'?{kind:'x-search',query:'local fixture'}:platform==='reddit'?{kind:'reddit',subreddit:'LocalFixture',listing:'new'}:{kind:'rss',url:'https://example.com/fixture.xml',publisher:'Local Fixture Publisher'}}),cursor:{},last_attempt:null});
 const sources=Object.fromEntries(['x','reddit','wild'].map(p=>[p,source(p)]));
 const HOUR=3600000,now=Date.now();
 const content=(id,platform='x',extra={})=>contentSchema.parse({external_id:id,platform,url:`https://example.com/fixture/${id}`,
  text:`Local fixture ${id}: an OpenAI agent leaked fictional internal notes during a synthetic security check. This is not a real incident.`,context:'',
- author:{id:'author-'+id,name:'Fixture '+id,handle:'fixture_'+id,url:'https://example.com/authors/'+id,avatar:null,account_age_days:500},
+ author:{id:'author-'+id,name:'Fixture '+id,handle:'fixture_'+id,url:'https://example.com/authors/'+id,avatar:null,account_age_days:500,verified:true},
  posted_at:new Date(now-HOUR).toISOString(),via:'search',engagement:2,links:['https://example.com/evidence/'+id],...extra});
 const row=async id=>(await owner.query('SELECT * FROM radar_private.posts WHERE external_id=$1',[id])).rows[0];
 const add=async(id,platform='x',extra={})=>{const c=content(id,platform,extra);await ingest(worker,sources[platform],c);return row(id);};
@@ -41,7 +41,7 @@ let api;
 try{
  await owner.query('INSERT INTO radar_private.control DEFAULT VALUES ON CONFLICT DO NOTHING');
  await owner.query('UPDATE radar_private.control SET public_enabled=true,intake_enabled=true,model_calls_per_day=10');
- for(const s of Object.values(sources))await owner.query('INSERT INTO radar_private.sources(id,platform,enabled,config,approved_by,retention_hours,requests_per_day) VALUES($1,$2,true,$3,$4,$5,$6)',[s.id,s.platform,s.config,s.approved_by,s.retention_hours,s.requests_per_day]);
+ for(const s of Object.values(sources))await owner.query('INSERT INTO radar_private.sources(id,platform,enabled,publication_mode,config,approved_by,retention_hours,requests_per_day) VALUES($1,$2,true,$3,$4,$5,$6,$7)',[s.id,s.platform,s.publication_mode,s.config,s.approved_by,s.retention_hours,s.requests_per_day]);
  process.env.MARTIAN_RADAR_MODE='live';process.env.MARTIAN_RADAR_INFERENCE_ENABLED='true';process.env.MARTIAN_RADAR_INTAKE_ENABLED='true';
  api=Fastify({logger:false});await registerRadar(api,appPool);await api.ready();
  const get=async url=>{const r=await api.inject({url});assert.equal(r.statusCode,200,r.body);return r.json();};
@@ -54,14 +54,14 @@ try{
   assert.equal(rssPosts(atom,sources.wild)[0].text,'Atom fixture One clear sentence.');
  });
  await check('moderation confidence boundaries and flags',async()=>{
-  for(const [n,expected] of [[0.49,'dropped'],[0.5,'held'],[0.79,'held'],[0.8,'published']])assert.equal(decision({...classification,confidence:n}),expected);
+  for(const [n,expected] of [[0.34,'dropped'],[0.35,'held'],[0.54,'held'],[0.55,'published']])assert.equal(decision({...classification,confidence:n}),expected);
   assert.equal(decision({...classification,flags:['personal-data']}),'held');
   assert.equal(decision({...classification,relevant:false}),'dropped');
   assert.equal(rules(content('short','x',{text:'agent hello',links:[]})).score,0);
  });
  await check('rules drop irrelevant posts; media hold bypasses the model',async()=>{
   await add('irrelevant','wild',{text:'Local fixture: a bread recipe with cinnamon and raisins.',links:[]});
-  await add('media','x',{has_media:true});const calls=classificationCount;
+  await add('media','wild',{has_media:true});const calls=classificationCount;
   await vet(worker,async()=>{});assert.equal((await row('irrelevant')).decision,'dropped');assert.equal((await row('media')).decision,'held');assert.equal(classificationCount,calls);
  });
  await check('model failure stays private and requires reprocessing',async()=>{

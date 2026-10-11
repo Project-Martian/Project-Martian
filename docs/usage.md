@@ -64,6 +64,14 @@ systemctl --user status project-martian-preview.service --no-pager
 
 This transient service survives the launching terminal but is not enabled at boot and has no restart policy. The database container must also be running. Rebuild and restart the preview after backend edits. Credentials remain in the existing local AWS profile; renew its login when expired.
 
+## Desktop navigation
+
+The header and footer Project Martian titles link to `https://projectmartian.ai/`, opening a fresh Ask homepage. Use the Ask tab to return to the current conversation without reloading it. After the first question, the follow-up chatbox stays within the Ask section and above the footer; see [Ask interaction](ask.md#desktop-chat-interaction).
+
+The homepage totals use the same published archive as Timeline: all records, agent incidents, and agent records whose archive date falls in the current UTC year. Unknown archive dates are excluded from the year count. **Timeline updated (UTC)** shows the latest successful publication date; the note below includes its exact timestamp and publication ID. It reflects successful publication of approved contributions, including records whose occurrence date is unknown. It is not an incident date or the time research last ran. Use **View Timeline** to inspect incident/disclosure dates; reload after an approved contribution publishes to see updated totals. Pending GitHub drafts and Radar chatter are not included.
+
+Each Trends tab has an information (`i`) icon: Microtrends explains maker/model/attack connections, Rogue Index explains recorded impact scoring, Narrative explains disclosure sources and account updates, and Comparison explains counts by where effects landed. Hover over an icon or focus it with the keyboard to reveal its tooltip without clicking or changing the selected view. The tooltip stays open while the pointer is over its text; move away, move keyboard focus away, or press Escape to dismiss it. The descriptions summarize the [mapping](microtrends.md), [scoring](rogue-index.md) and [context](narrative-comparison.md) guides; they do not change the data or review status.
+
 ## Publishing data
 
 PostgreSQL owns current data. The JSON seed files are only the original import, and application deployment never overwrites later publications. Export from the application role, review the complete document, then publish using the owner role:
@@ -76,7 +84,7 @@ PGUSER=project_martian_owner PGPASSWORD_FILE="$MARTIAN_DB_SECRETS/owner-password
   --actor YOUR_OPERATOR_NAME --reason 'Reviewed correction with source references'
 ```
 
-Use `node … export`, not `npm run db:export > file`, because npm's script banner would corrupt the JSON. Every publish requires an actor and reason and creates a complete immutable revision in one transaction. Prior publications are preserved. Removed IDs disappear from the current view but remain in historical SQL rows. Reload the website to read the new snapshot. There is no web editor or automatic publication pipeline yet.
+Use `node … export`, not `npm run db:export > file`, because npm's script banner would corrupt the JSON. Every publish requires an actor and reason and creates a complete immutable revision in one transaction. Prior publications are preserved. Removed IDs disappear from the current view but remain in historical SQL rows. Reload the website to read the new snapshot. There is no web editor; the optional GitHub publisher below is implemented but requires separate activation.
 
 Production publication uses a short-lived operator Job with the same pinned application image, owner-password Secret, database environment, `projectmartian.ai/database-client: "true"` label, and no Bedrock identity. Supply the reviewed JSON through an explicitly managed input volume. Never mount the owner credential in the web application or publish through `/api/ask`. A Git push alone changes neither the live database nor the deployed image.
 
@@ -88,19 +96,42 @@ Narrative and Comparison publications additionally validate context coverage for
 
 ## Contribution worker
 
-Follow [maintainer review and publication](../CONTRIBUTING.md#maintainer-review-and-publication) to prepare, verify and approve an issue. Run migration `002_contribution_publications.sql` before starting the updated API or worker. Existing records and publication hashes do not change during migration.
+Follow [maintainer review and publication](../CONTRIBUTING.md#maintainer-review-and-publication) for manual proposals, or [research approval](../CONTRIBUTING.md#daily-research-contributions) for automated drafts. Run migrations through `006_research_contributions.sql` before starting this publisher. Migration 002 creates receipts; 006 makes a proposal comment optional for research issues and adds the review protocol, immutable research draft and unique research-payload hash. Existing records and publication hashes do not change during migration.
 
 The worker requires a separate GitHub token file, limited to Issues-read and Metadata-read on `Project-Martian/Project-Martian`. It performs only GitHub reads and never uses the browser's credentials or `gh` login automatically. Use the owner role only for the explicit publisher command:
 
 ```sh
-# This command can publish eligible, completed issues; run only against the intended database.
+# This can publish approved research issues or eligible completed manual proposals.
+# Run only against the intended database.
 PGUSER=project_martian_owner PGPASSWORD_FILE="$MARTIAN_DB_SECRETS/owner-password" \
   MARTIAN_GITHUB_TOKEN_FILE=/path/outside/repository/github-token \
   node dist/backend/contribution-manage.js sync --issue 12
-# Omit --issue to scan all completed issues. This is the configured CronJob command.
+# Omit --issue to scan research issues and completed manual proposals.
 ```
 
-`propose`, `check` and `format` use local public JSON files and need no database owner credential or GitHub token. `sync` verifies current GitHub review permissions, then atomically publishes and records the issue receipt. There is no automatic fact checking. Malformed, unapproved, stale or unsupported proposals fail closed; failed issue processing exits nonzero while independently eligible issues may succeed. Normal later scheduled scans repeat checks for issues without receipts. Owner/passwords and the GitHub token are never mounted in the web pod. The [Helm guide](../../martian-helm-charts/docs/project-martian.md#github-contribution-publication) owns deployment and operational prerequisites; this change does not enable production polling.
+`propose`, `check` and `format` use local public JSON files and need no database owner credential or GitHub token. `sync` verifies current GitHub review permissions, then atomically publishes and records the issue receipt. Research issues publish on valid approval comments alone; legacy manual proposals still require completion. There is no automatic fact checking. Malformed, unapproved, stale or unsupported proposals fail closed; failed issue processing exits nonzero while independently eligible issues may succeed. Normal later scheduled scans repeat checks for issues without receipts. Owner/passwords and the GitHub token are never mounted in the web pod. The [Helm guide](../../martian-helm-charts/docs/project-martian.md#github-contribution-publication) owns deployment and operational prerequisites; this change does not enable production polling.
+
+## Daily research worker
+
+The private researcher uses the SELECT-only `project_martian_app` database credential, its own Bedrock workload identity and two file-based credentials: `MARTIAN_RESEARCH_TAVILY_TOKEN_FILE` and `MARTIAN_RESEARCH_GITHUB_TOKEN_FILE`. The GitHub token needs **Issues: write** and **Metadata: read** only on `Project-Martian/Project-Martian`; the publisher keeps its separate read-only GitHub token and owner database credential. Neither research credential belongs in the web process. The default model is Claude Haiku 4.5 through its US inference profile from `us-east-1`, independently configurable with `MARTIAN_RESEARCH_MODEL_ID` and `MARTIAN_RESEARCH_REGION`.
+
+The [source configuration](../config/research-sources.json) contains two queries, a three-candidate limit and a two-new-issue limit. Search uses the past week on each daily run; it is not an exhaustive historical backfill. Each candidate gets one bounded follow-up search, up to four extracted pages, one drafting/correlation call and one independent review call. The default maximum per run is **five Tavily searches, three extraction requests (up to twelve URLs), six Bedrock calls and two issues**. These are request limits, not a currency budget or a persistent daily quota; additional manual runs can incur additional charges. Model requests use [Bedrock JSON-schema response output](https://docs.aws.amazon.com/bedrock/latest/userguide/structured-output.html) for a small decision envelope. A new record is JSON-encoded inside that envelope, parsed, and checked against the complete local record schema and publication rules before any issue write; each call has a three-minute deadline, including first-use schema compilation. No source/model call or issue write is retried automatically. Review Tavily and Bedrock account budgets before activation.
+
+```sh
+npm run build
+# Offline configuration and schema validation: no network or inference.
+npm run research -- check-config config/research-sources.json
+# Uses real Tavily and Bedrock APIs, but creates no issues. Output contains public draft evidence.
+MARTIAN_RESEARCH_ENABLED=true npm run research -- run config/research-sources.json --dry-run
+# Uses the same research APIs and creates eligible review issues.
+MARTIAN_RESEARCH_ENABLED=true npm run research -- run config/research-sources.json
+```
+
+Use the documented read-only database environment and credential file paths before the latter two commands. Research defaults disabled. A database advisory lock prevents overlapping research processes. The worker checks the complete archive/issue inventory, fails if it exceeds 600 items, and bounds each issue's model context to 5,000 characters with truncation labelled. Exact source matches still inspect complete issue bodies. It skips known source/title matches, holds uncertain semantic matches and unavailable sources, and re-reads the inventory before independent review. Extracted text is limited to 24,000 characters per page and labelled when partial; only supplied excerpts may support the draft. Private-address URLs, unexpected extraction URLs, unsupported quotes, unsafe draft content and invalid schemas block issue creation. Tavily performs source extraction remotely; the worker contacts only the fixed Tavily/GitHub APIs and Bedrock.
+
+Before issue creation, all citations are checked against the URLs successfully extracted for that candidate. Supporting quotations are selected by passage ID from exact excerpts of at most 240 characters, then copied by the worker. Date/URL formats and the complete passage-ID catalog are enforced locally after inference to keep the provider grammar bounded. Full local validation still checks quotation length, exact evidence text and the relationships between citations and annotations. Held and failed candidates are recorded in Job logs with their source URL and processing stage; they are not public contribution issues or a durable review queue. An unknown GitHub write outcome must be inspected before rerunning; the next run checks existing issue bodies and does not blindly repeat the write. Inference is probabilistic, and external GitHub writes cannot share a transaction with PostgreSQL. Source/semantic correlation therefore reduces duplicates without proving universal novelty. Publication again checks sources/titles inside its database transaction, and each issue/research-payload hash can publish only once.
+
+Daily scheduling and Secret mounts live in the [Helm deployment guide](../../martian-helm-charts/docs/project-martian.md#daily-research-contributions). Production runs daily at 09:00 Asia/Kolkata following the October 5 release. The credentialed pilot verified Tavily extraction and model correlation against the live archive, matching two reports to existing incidents and holding a candidate whose sources could not all be extracted. On October 5, a later held ICT&health lead was reviewed by the operator and narrowed to the previously unlisted Mayo Clinic probe report. [Issue #8](https://github.com/Project-Martian/Project-Martian/issues/8) contains that operator-assisted draft in the research protocol, with no invented human reviews. Its exact GitHub body passed schema, publication, duplicate-source/title and round-trip hash checks; the initial receipt correctly reported unpublished. This is not evidence that the automated drafting error was fixed. The scheduled publisher at 12:45 UTC detected issue #8 and returned `not-approved-for-publication`; the receipt stayed unpublished and the full archive response remained unchanged. Approval-to-publication verification is pending a real maintainer comment. Do not create synthetic public incidents for verification.
 
 ## Verification
 
@@ -116,6 +147,8 @@ Run the app against the local database and check the archive, trends, mappings, 
 The 16 existing Python tests can still be run with `.venv/bin/python -m unittest discover -s tests`; they check the historical Python implementation only. Its October 1 live-language/browser evidence is preserved in the [previous deployment checkpoint](../../martian-helm-charts/docs/project-martian.md#bedrock-ask-deployment-and-idle-connection-correction--october-1-2026), not proof of the Node port. Current runtime and restore checks belong in the October 2 deployment checkpoint.
 
 ## Responsive interface verification
+
+The October 11 source reconciliation preserves migrations 006–012 byte-for-byte because their checksums are already recorded in deployed databases. It also retains the deployed research worker, hourly discovery, saved Radar history and disabled public intake.
 
 The October 11 integration keeps the current live Radar module and applies Enter/Space selection and focus preservation to its cards and the separate sample renderer. The viewport evidence below is from the original October 2 PR; it is not a repeat verification of the integrated release.
 
@@ -158,4 +191,4 @@ The container serves on port 8080 and runs as UID/GID 101. Public assets, compil
 
 The default `MARTIAN_RADAR_MODE=sample` preserves labelled examples. Set `MARTIAN_RADAR_MODE=live` to use the new operational API; it remains empty while publication is disabled. Migration 003 creates separate collector, reviewer, intake and backup roles. Follow [Radar configuration and review](radar.md#configure-and-run) for source approval, role provisioning, separate worker startup, budgets and private intake. Do not run a worker with the owner or web credential. Existing incident publish/import/export commands do not transfer Radar operational rows.
 
-The Radar release also changes the backup credential and excludes private Radar content. Read the [deployment and restore sequence](../../martian-helm-charts/docs/project-martian.md#radar-deployment-and-activation) before upgrading an environment. Production now runs live Radar with the independent worker, a ten-call daily model allowance, Google Security RSS and private intake. X/Reddit remain disconnected until their credentials arrive. The public feed can be empty when no fetched article passes moderation; rejected posts are not replaced with examples. The [Radar acceptance runner](radar.md#requested-acceptance-checks) documents the isolated local validation command.
+Chart 0.8.4 includes Radar records, source settings and spending state in the encrypted database backup; private tip intake remains excluded. Source `save_history:true` preserves fetched candidates and moderation decisions beyond their collection window. The feed keeps a four-line saved preview with author, original link and last-check time when X checks expire; current badges/likes remain hidden until refreshed. Read the [deployment and restore sequence](../../martian-helm-charts/docs/project-martian.md#radar-deployment-and-activation) before upgrading an environment. Production runs live Radar through an hourly Tavily and verified-author X discovery CronJob; Reddit awaits provider approval. Public intake is disabled and the site has no tip/report/share controls. The worker uses source-credit and inference limits recorded in the deployment guide. The daily Timeline researcher and five-minute approval publisher keep their separate schedules. The public feed can be empty when no fetched post or article passes moderation; rejected posts are not replaced with examples. The [Radar acceptance runner](radar.md#requested-acceptance-checks) documents the isolated local validation command.

@@ -1,0 +1,2 @@
+# Preserve the exact checksum of this already deployed migration.
+db/migrations/009_radar_chatter.sql whitespace=-blank-at-eof
