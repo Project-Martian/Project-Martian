@@ -82,3 +82,5 @@ The named-model evidence used in this draft is traceable here:
 | [GitHub MCP demonstration](https://invariantlabs.ai/blog/mcp-github-vulnerability) | Claude Opus 4 |
 
 The local preview preserves the original 44 incident narratives and all Rogue Index inputs and results. Deployment approval does not approve mapping evidence. The Helm deployment guide records the verified production release. Weekly extraction and authenticated reviewer management remain future work.
+
+The model catalog includes Claude Haiku 4.5, named in Anthropic’s [October 9 disclosure](https://www.anthropic.com/news/investigating-unintended-model-actions). Adding that catalog entry does not publish an incident or approve its annotations. Existing model entries and their review hashes are unchanged.
