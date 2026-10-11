@@ -20,6 +20,7 @@ window.mountRadar=function({archive,openRecord}){
       `<button type="button" data-source="${id}" aria-pressed="${source===id}" ${id==='linkedin'?'disabled title="LinkedIn API feed is not enabled"':''}>${name}</button>`).join('');
   }
   function renderFeed(){
+    const focusedPost=document.activeElement.matches("[data-post]")?document.activeElement.dataset.post:null;
     posts=posts.filter(p=>Date.parse(p.display_until)>Date.now());
     $('#feed').innerHTML=posts.length?posts.map(p=>`<article class="post ${selected?.kind==='post'&&selected.id===p.id?'sel':''}" data-post="${p.id}" tabindex="0" aria-label="Select signal from ${esc(p.author_name)}">
       <span class="src ${p.platform==='reddit'?'r':p.platform==='wild'?'w':'x'}">${p.author_avatar?`<img class="radar-avatar" src="${esc(p.author_avatar)}" alt="" referrerpolicy="no-referrer">`:p.platform==='reddit'?'r/':p.platform==='x'?'𝕏':'●'}</span>
@@ -29,6 +30,7 @@ window.mountRadar=function({archive,openRecord}){
       <a href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">${p.platform==='x'?'View on X':'Open on '+(p.platform==='wild'?'source':names[p.platform])} ↗</a>
       ${p.engagement===null?'':`<span class="eng">${Number(p.engagement).toLocaleString()} ${p.platform==='reddit'?'score':'likes'}</span>`}</div></div></article>`).join(''):
       '<p class="radar-empty">No published signals match these filters.</p>';
+    if(focusedPost)Array.from($('#feed').children).find(p=>p.dataset.post===focusedPost)?.focus({preventScroll:true});
     $('#radar-more').hidden=!cursor;
   }
   function renderDetail(data){
@@ -82,7 +84,7 @@ window.mountRadar=function({archive,openRecord}){
   $('#radar-search').addEventListener('input',e=>{clearTimeout(queryTimer);queryTimer=setTimeout(()=>{search=e.target.value.trim();cursor=null;selected=null;void load();},250);});
   $('#radar-refresh').addEventListener('click',()=>{void load();});$('#radar-more').addEventListener('click',()=>{void load(true);});
   function select(e){if(e.target.closest('a,button'))return;const p=e.target.closest('[data-post]');if(p){history.replaceState(null,'',route('post',p.dataset.post));void loadDetail('post',p.dataset.post);}}
-  $('#feed').addEventListener('click',select);$('#feed').addEventListener('keydown',e=>{if(e.key==='Enter')select(e);});
+  $('#feed').addEventListener('click',select);$('#feed').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-post]')){e.preventDefault();select(e);}});
   $('#clusters').addEventListener('click',e=>{const c=e.target.closest('[data-cluster]');if(c){history.replaceState(null,'',route('cluster',c.dataset.cluster));void loadDetail('cluster',c.dataset.cluster);}});
   $('#sigdetail').addEventListener('click',e=>{
     const record=e.target.closest('[data-radar-record]');if(record){if(detail?.publication_id===archive.publication.id)openRecord(record.dataset.radarRecord);else location.href=location.pathname+'?publication='+encodeURIComponent(detail?.publication_id||publication)+'#timeline/'+encodeURIComponent(record.dataset.radarRecord);return;}
