@@ -18,27 +18,31 @@ export function safetyFlags(post:Content):string[] {
   const text=post.text+'\n'+post.context,flags:string[]=[];
   if(/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\b(?:AKIA|ASIA)[A-Z0-9]{16}\b|\b(?:ghp_|github_pat_|sk-live-)[A-Za-z0-9_]{16,}/.test(text))flags.push('live-credentials');
   if(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(text))flags.push('personal-data');
-  if(post.has_media)flags.push('uninspected-media');
+  // X cards display text and a permalink only; attachments are neither fetched
+  // nor republished. Their presence alone need not hold safe standalone text.
+  if(post.has_media&&post.platform!=='x')flags.push('uninspected-media');
   return flags;
 }
 export function rules(post:Content) {
   const text=post.text+'\n'+post.context,lower=text.toLowerCase();
   const components:Record<string,number>={};
-  if(!/\b(agent[s]?|llm[s]?|claude|gpt\w*|mcp|copilot|codex|chatgpt|ai|computer use)\b/i.test(text))return {version:'rules-v1',score:0,drop:'missing-agent-term',components};
-  if(/\b(we(?:'re| are) hiring|apply (?:for this job|now)|airdrop|buy (?:our|this) token|giveaway entry)\b/i.test(text))return {version:'rules-v1',score:0,drop:'promotion',components};
+  const topicTag=/#(?:aisecurity|llmsecurity|agentsecurity|mcpsecurity|promptinjection|aisafety|airedteam|agenticsecurity)\b/i.test(text);
+  if(!topicTag&&!/\b(agent[s]?|llm[s]?|claude|gpt\w*|mcp|copilot|codex|chatgpt|ai|computer use)\b/i.test(text))return {version:'rules-v3',score:0,drop:'missing-ai-topic',components};
+  if(/\b(we(?:'re| are) hiring|apply (?:for this job|now)|airdrop|buy (?:our|this) token|giveaway entry)\b/i.test(text))return {version:'rules-v3',score:0,drop:'promotion',components};
+  if(topicTag)components.topic=0.4;
   if(/\b(injection|leak\w*|delet\w*|escap\w*|credential\w*|exfil\w*|unauthori[sz]ed|rogue|poison\w*|jailbreak\w*|secur\w*|vulnerab\w*|attack\w*)\b/i.test(text))components.harm=0.4;
   const named=[...taxonomy.companies.filter(c=>!['Unknown','Open source'].includes(c)),...taxonomy.models.filter(m=>m.kind==='named'||m.kind==='harness').map(m=>m.name)];
   if(named.some(n=>lower.includes(n.toLowerCase())))components.named=0.2;
   if(post.links.length||post.has_media||/\bCVE-\d{4}-\d+\b/i.test(text))components.evidence=0.2;
   if(post.author.known_researcher)components.researcher=0.1;
   if(post.author.account_age_days!==null&&post.author.account_age_days<30&&!post.author.known_researcher)components.new_account=-0.3;
-  if(post.text.trim().split(/\s+/).length<12&&!post.links.length&&!post.has_media)components.short=-0.2;
-  return {version:'rules-v1',score:Math.round(Math.max(0,Math.min(1,Object.values(components).reduce((a,b)=>a+b,0)))*100)/100,drop:null,components};
+  if(post.text.trim().split(/\s+/).length<5&&!post.links.length)components.short=-0.2;
+  return {version:'rules-v3',score:Math.round(Math.max(0,Math.min(1,Object.values(components).reduce((a,b)=>a+b,0)))*100)/100,drop:null,components};
 }
 export function decision(value:Classification) {
   if(value.flags.length)return 'held';
-  if(!value.relevant||!value.makes_sense||value.confidence<0.5)return 'dropped';
-  return value.confidence<0.8?'held':'published';
+  if(!value.relevant||!value.makes_sense||value.confidence<0.35)return 'dropped';
+  return value.confidence<0.55?'held':'published';
 }
 export function cosine(a:number[],b:number[]) {
   if(!a.length||a.length!==b.length)throw new Error('Embedding dimension mismatch');

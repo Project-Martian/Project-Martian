@@ -1,0 +1,22 @@
+[
+  {
+    "id": "web-ai-security-chatter-v2",
+    "platform": "wild",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 720,
+    "requests_per_day": 120,
+    "publication_mode": "private",
+    "page_size": 20,
+    "refresh_limit": 10,
+    "config": {
+      "kind": "web-search",
+      "researcher_ids": [],
+      "queries": [
+        "AI security",
+        "prompt injection",
+        "LLM agent security"
+      ]
+    }
+  }
+]

@@ -32,7 +32,7 @@ try {
     const github=new ContributionGitHub((await readFile(tokenFile,'utf8')).trim());
     const pool=await createPool();
     try {
-      const numbers=values.issue?[Number(values.issue)]:(await github.closedIssues()).map(issue=>issue.number);
+      const numbers=values.issue?[Number(values.issue)]:(await github.publicationIssues()).map(issue=>issue.number);
       let failures=0;
       for(const number of numbers) {
         if(!Number.isSafeInteger(number)||number<=0)throw new Error('Invalid issue number');

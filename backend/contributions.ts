@@ -7,6 +7,7 @@ import { recordSchema, publish, validatePublication } from './publication.js';
 import { assessmentState, impactScore } from './impact.js';
 import { buildMicrotrends, mappingState } from './microtrends.js';
 import { contextState } from './context.js';
+import { validateResearchDraft, researchPublication, type ResearchDraft } from './research-contribution.js';
 
 export const CONTRIBUTION_REPO = 'Project-Martian/Project-Martian';
 export const PROPOSAL_MARKER = '<!-- project-martian:incident:v1 -->';
@@ -51,18 +52,20 @@ export function requiredApprovals(proposal: Proposal) {
   return proposal.record.impact_assessment && impactScore(proposal.record.impact_assessment).band === 'Severe' ? 2 : 1;
 }
 export interface ApprovedContribution {
-  proposal: Proposal; proposal_comment_id: number; approved_by: string[];
+  proposal: Proposal; proposal_comment_id: number|null; approved_by: string[]; research?: ResearchDraft;
 }
 // Caller holds the publication advisory lock and commits/rolls back the entire operation.
 export async function publishContribution(client: PoolClient, approved: ApprovedContribution) {
-  const p=approved.proposal, hash=contributionHash(p);
+  const p=approved.proposal, hash=contributionHash(approved.research||p);
   const receipt=await client.query('SELECT incident_id, publication_id::text, proposal_hash FROM contribution_publications WHERE repository=$1 AND issue_number=$2', [CONTRIBUTION_REPO,p.issue]);
   if (receipt.rows.length) return {status:'already-published',...receipt.rows[0]};
   const {publication: _publication,...data}=await readSnapshotClient(client);
-  const next=prepareContribution(data,p);
+  if(approved.research)validateResearchDraft(data,approved.research);
+  const next=prepareContribution(approved.research?researchPublication(data,p.record as Incident):data,p);
   if (new Set(approved.approved_by.map(name=>name.toLowerCase())).size < requiredApprovals(p)) throw new Error('Not enough distinct maintainer approvals');
   const id=await publish(client,next,`github:${approved.approved_by.join(',')}`,`Verified contribution https://github.com/${CONTRIBUTION_REPO}/issues/${p.issue}; proposal ${hash}`);
-  await client.query(`INSERT INTO contribution_publications(repository,issue_number,incident_id,operation,proposal_hash,proposal_comment_id,approved_by,publication_id)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8)`,[CONTRIBUTION_REPO,p.issue,p.record.id,p.operation,hash,approved.proposal_comment_id,JSON.stringify(approved.approved_by),id]);
+  await client.query(`INSERT INTO contribution_publications(repository,issue_number,incident_id,operation,proposal_hash,proposal_comment_id,approved_by,publication_id,review_protocol,research_draft)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,[CONTRIBUTION_REPO,p.issue,p.record.id,p.operation,hash,approved.proposal_comment_id,JSON.stringify(approved.approved_by),id,
+    approved.research?'research-v1':'comment-v1',approved.research?JSON.stringify(approved.research):null]);
   return {status:'published',incident_id:p.record.id,publication_id:id,proposal_hash:hash};
 }

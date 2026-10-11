@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { taxonomy } from '../microtrends.js';
 
 export const VERSION = 'radar-v1';
+export const SCREENING_POLICY = 'chatter-v1';
 export const platforms = ['x','reddit','wild'] as const;
 export const kinds = ['first-hand report','reshare of a report','analysis','question','primary source'] as const;
 export const flagNames = ['personal-data','live-credentials','working-exploit','harassment','uninspected-media','coordination-risk'] as const;
@@ -21,11 +22,13 @@ export const contentSchema=z.strictObject({
   text:z.string().min(1).max(20000),context:z.string().max(12000).default(''),
   context_ids:z.array(z.string().min(1).max(2048)).max(10).default([]),
   author:z.strictObject({id:z.string().min(1).max(2048),name:z.string().min(1).max(200),handle:z.string().max(200),
-    url:httpsUrl.nullable(),avatar:httpsUrl.nullable(),account_age_days:z.number().nonnegative().nullable(),known_researcher:z.boolean().default(false)}),
+    url:httpsUrl.nullable(),avatar:httpsUrl.nullable(),account_age_days:z.number().nonnegative().nullable(),known_researcher:z.boolean().default(false),verified:z.boolean().default(false)}),
   posted_at:z.iso.datetime(),via:z.enum(['search','tag','feed']),
   engagement:z.number().int().nonnegative().nullable(),has_media:z.boolean().default(false),
   links:z.array(httpsUrl).max(100).default([]),
-  entities:z.array(z.strictObject({start:z.number().int().nonnegative(),end:z.number().int().positive(),url:httpsUrl})).max(100).default([]),
+  entities:z.array(z.strictObject({start:z.number().int().nonnegative(),end:z.number().int().positive(),url:httpsUrl,
+    display:z.string().min(1).max(2048).optional()})).max(100).default([]),
+  edited:z.boolean().default(false),
   reshare:z.boolean().default(false),
   reshare_of:z.string().min(1).max(2048).nullable().default(null),
 });
@@ -34,17 +37,22 @@ const researchers=z.array(z.string().min(1).max(200)).max(200).default([]);
 export const sourceSchema=z.strictObject({
   id:z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/),platform:z.enum(platforms),enabled:z.boolean(),
   approved_by:z.string().trim().min(1).max(120),retention_hours:z.number().int().min(1).max(720),
+  save_history:z.boolean().default(false),
   requests_per_day:z.number().int().min(1).max(10000),
+  publication_mode:z.enum(['private','public']).default('private'),
+  page_size:z.number().int().min(10).max(100).default(10),
+  refresh_limit:z.number().int().min(1).max(100).default(50),
   config:z.discriminatedUnion('kind',[
-    z.strictObject({kind:z.literal('x-search'),researcher_ids:researchers,query:z.string().min(1).max(512)}),
+    z.strictObject({kind:z.literal('x-search'),researcher_ids:researchers,query:z.string().min(1).max(512),selection:z.enum(['recent','popular']).optional()}),
     z.strictObject({kind:z.literal('x-tags'),researcher_ids:researchers,user_id:z.string().regex(/^\d{1,30}$/)}),
     z.strictObject({kind:z.literal('reddit'),researcher_ids:researchers,subreddit:z.string().regex(/^[A-Za-z0-9_]{2,50}$/),listing:z.enum(['new','comments'])}),
+    z.strictObject({kind:z.literal('web-search'),researcher_ids:researchers,queries:z.array(z.string().min(5).max(512)).min(1).max(4)}),
     z.strictObject({kind:z.literal('rss'),researcher_ids:researchers,url:httpsUrl,publisher:z.string().min(1).max(200)})
   ])
 }).refine(s=>s.platform===(s.config.kind.startsWith('x-')?'x':s.config.kind==='reddit'?'reddit':'wild'),{message:'Source platform and adapter must agree'});
 export type Source=z.infer<typeof sourceSchema> & {cursor:Record<string,string>;last_attempt:Date|null};
 export const querySchema=z.strictObject({source:z.enum(['all',...platforms,'linkedin']).default('all'),
-  q:z.string().trim().max(120).default(''),cursor:z.string().max(300).optional(),limit:z.coerce.number().int().min(1).max(50).default(25)});
+  q:z.string().trim().max(120).default(''),sort:z.enum(['latest','popular']).default('latest'),cursor:z.string().max(500).optional(),limit:z.coerce.number().int().min(1).max(50).default(25)});
 export const submissionSchema=z.strictObject({url:httpsUrl.refine(s=>/^(www\.)?linkedin\.com$/.test(new URL(s).hostname)),
   text:z.string().trim().min(12).max(5000),contact:z.string().trim().max(200).optional()});
 export const reportSchema=z.strictObject({post_id:z.uuid(),reason:z.string().trim().min(5).max(1500),contact:z.string().trim().max(200).optional()});

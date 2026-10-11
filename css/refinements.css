@@ -238,7 +238,15 @@
 .radar-empty{padding:24px 18px;color:var(--muted);font-size:14px}
 .radar-more{display:block;margin:14px auto}
 .radar-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover}
+.radar-source-icon{background:var(--panel-2);color:var(--muted);overflow:hidden}
+.radar-source-icon a{display:flex}
+.radar-company-icon{width:28px;height:28px;object-fit:contain}
+.post .radar-headline{font:500 16px/1.5 var(--sans);margin:7px 0 0;color:var(--ink)}
+.radar-headline a:hover,.radar-original:hover{text-decoration:underline}
+.radar-original{font-size:12px;color:var(--ink-2)}
+.radar-x-link{display:inline-flex;align-items:center;gap:5px;color:var(--ink)}
 .post p{white-space:pre-wrap;overflow-wrap:anywhere}
+#feed .radar-preview{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;line-clamp:4;overflow:hidden;white-space:normal;overflow-wrap:anywhere}
 .radar-provenance{border-top:1px solid var(--line);margin-top:16px;padding-top:14px;font-size:12px}
 .radar-source{display:grid;grid-template-columns:85px minmax(0,1fr) auto;gap:8px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
 .radar-source b{font-weight:500;overflow-wrap:anywhere}
@@ -255,3 +263,7 @@
 .radar-dialog input,.radar-dialog textarea{display:block;width:100%;margin-top:6px;padding:10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:13px var(--sans)}
 .radar-dialog textarea{min-height:140px;resize:vertical}
 .radar-dialog p[role=status]{margin-top:14px;font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+
+/* Radar keeps verified authors distinct from unverified claims. */
+.radar-verified{color:#1688cf;margin-left:4px;font-weight:700}.radar-likes{font-size:11px;color:var(--muted)}
+.radar-tools select{font:inherit;color:var(--ink);background:var(--surface,#fff);border:1px solid var(--line);border-radius:6px;padding:8px}
