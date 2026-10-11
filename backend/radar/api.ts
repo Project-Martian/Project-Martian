@@ -10,6 +10,7 @@ const HOUR=3600000;
 type Item={id:string;cluster_id:string|null;platform:string;posted_at:Date;display_until:Date;author_key:string;is_duplicate:boolean;
   primary_reviewed:boolean;evidence:string|null;company:string|null;model:string|null;harness:string|null;record_id:string|null;[key:string]:any};
 export function stats(rows:Item[],now:number) {
+  rows=rows.filter(p=>p.display_until.getTime()>now);
   const all=rows.filter(p=>!p.is_duplicate),active=all.filter(p=>p.posted_at.getTime()>now-72*HOUR);
   const count=(start:number,end:number)=>all.filter(p=>p.posted_at.getTime()>start&&p.posted_at.getTime()<=end).length;
   const heatAt=(time:number)=>{
@@ -31,14 +32,14 @@ export function stats(rows:Item[],now:number) {
     named:[...new Set(active.flatMap(p=>[p.company,p.model,p.harness].filter(Boolean)))],
     expires_at:rows.length?new Date(Math.min(...rows.map(p=>p.display_until.getTime()))):null};
 }
-const safePost=(p:Item)=>{const {author_key,is_duplicate,...rest}=p;return {...rest,status:p.record_id?'linked':'unverified'};};
+const safePost=(p:Item)=>{const {author_key,is_duplicate,ranking_score,...rest}=p;return {...rest,status:p.record_id?'linked':'unverified'};};
 async function read<T>(pool:Pool,fn:(db:PoolClient,now:number)=>Promise<T>) {
   const db=await pool.connect();try{await db.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
     const now=(await db.query('SELECT now() AS time')).rows[0].time.getTime();const value=await fn(db,now);await db.query('COMMIT');return value;
   }catch(e){await db.query('ROLLBACK');throw e;}finally{db.release();}
 }
 async function detail(db:PoolClient,post:Item,now:number) {
-  const rows:Item[]=post.cluster_id?(await db.query('SELECT * FROM radar_public.posts WHERE cluster_id=$1 ORDER BY posted_at,id LIMIT 501',[post.cluster_id])).rows:[post];
+  const rows:Item[]=post.cluster_id?(await db.query('SELECT * FROM radar_public.posts WHERE cluster_id=$1 AND (display_until>now() OR id=$2) ORDER BY posted_at,id LIMIT 501',[post.cluster_id,post.id])).rows:[post];
   if(rows.length>500)throw new Error('source-detail-capacity');
   const cluster=post.cluster_id?(await db.query('SELECT * FROM radar_public.clusters WHERE id=$1',[post.cluster_id])).rows[0]:null;
   const originals=rows.filter(p=>!p.is_duplicate),first=originals[0]?.id;
@@ -60,25 +61,37 @@ export async function registerRadar(app:FastifyInstance,pool:Pool) {
   app.get('/api/radar',async(request,reply)=>{
     if(mode==='sample'){const snapshot=await readSnapshot(pool);return {version:VERSION,mode,publication:snapshot.publication,...snapshot.radar};}
     const query=querySchema.safeParse(request.query);if(!query.success)return reply.code(400).send({detail:'Invalid Radar filters.'});
-    let cursor:{at:string;id:string}|null=null;
-    if(query.data.cursor)try{cursor=z.strictObject({at:z.iso.datetime(),id:z.uuid()}).parse(JSON.parse(Buffer.from(query.data.cursor,'base64url').toString('utf8')));}catch{return reply.code(400).send({detail:'Invalid Radar cursor.'});}
+    let cursor:{at:string;id:string;sort?:'latest'|'popular';score?:number;asof?:string}|null=null;
+    if(query.data.cursor)try{cursor=z.strictObject({at:z.iso.datetime(),id:z.uuid(),sort:z.enum(['latest','popular']).optional(),score:z.number().finite().nonnegative().optional(),asof:z.iso.datetime().optional()}).parse(JSON.parse(Buffer.from(query.data.cursor,'base64url').toString('utf8')));}catch{return reply.code(400).send({detail:'Invalid Radar cursor.'});}
+    if(cursor&&((cursor.sort||'latest')!==query.data.sort||query.data.sort==='popular'&&(cursor.score===undefined||!cursor.asof)))return reply.code(400).send({detail:'Invalid Radar cursor.'});
     return read(pool,async(db,now)=>{
       const status=(await db.query('SELECT * FROM radar_public.status')).rows[0];
       const publication=(await db.query('SELECT id::text FROM public.publications ORDER BY id DESC LIMIT 1')).rows[0];
       const sources=(await db.query('SELECT * FROM radar_public.sources ORDER BY id')).rows;
-      const result=await db.query<Item>(`SELECT * FROM radar_public.posts WHERE NOT is_duplicate AND ($1='all' OR platform=$1)
-        AND ($2='' OR position(lower($2) in lower(text))>0) AND ($3::timestamptz IS NULL OR (posted_at,id)<($3::timestamptz,$4::uuid))
-        ORDER BY posted_at DESC,id DESC LIMIT $5`,[query.data.source,query.data.q,cursor?.at||null,cursor?.id||null,query.data.limit+1]);
+      const asof=cursor?.asof||new Date(now).toISOString();
+      if(Date.parse(asof)>now+300000)return reply.code(400).send({detail:'Invalid Radar cursor.'});
+      // Likes are provider observations, discounted by age. Web items have no
+      // comparable metric and rank by recency; never fabricate engagement.
+      const result=await db.query<Item>(`WITH ranked AS (
+        SELECT *,CASE WHEN $6='popular' THEN
+          (ln(2+COALESCE((engagement #>> '{}')::numeric,0))/power(2+greatest(extract(epoch from($7::timestamptz-posted_at))/3600,0),0.75))::double precision
+          ELSE 0::double precision END AS ranking_score
+        FROM radar_public.posts WHERE NOT is_duplicate AND ($1='all' OR platform=$1)
+          AND ($2='' OR position(lower($2) in lower(text))>0)
+      ) SELECT * FROM ranked WHERE $3::timestamptz IS NULL OR
+        (ranking_score,posted_at,id)<($8::double precision,$3::timestamptz,$4::uuid)
+        ORDER BY ranking_score DESC,posted_at DESC,id DESC LIMIT $5`,
+        [query.data.source,query.data.q,cursor?.at||null,cursor?.id||null,query.data.limit+1,query.data.sort,asof,cursor?.score||0]);
       const posts=result.rows.slice(0,query.data.limit),last=posts.at(-1);
       const metrics=(await db.query<Item>(`SELECT id,cluster_id,platform,posted_at,display_until,author_key,is_duplicate,primary_reviewed,evidence,company,model,harness,record_id
-        FROM radar_public.posts WHERE cluster_id IS NOT NULL ORDER BY posted_at DESC LIMIT 5001`)).rows;
+        FROM radar_public.posts WHERE cluster_id IS NOT NULL AND source_current ORDER BY posted_at DESC LIMIT 5001`)).rows;
       if(metrics.length>5000)throw new Error('Radar aggregation capacity exceeded');
       const titles=(await db.query('SELECT * FROM radar_public.clusters')).rows;
       const clusters=titles.map(c=>({...c,...stats(metrics.filter(p=>p.cluster_id===c.id),now)}))
-        .filter(c=>c.posts>=5&&c.authors>=3&&c.state!=='faded').sort((a,b)=>b.heat-a.heat||a.id.localeCompare(b.id)).slice(0,5);
+        .filter(c=>c.posts>=3&&c.authors>=2&&c.state!=='faded').sort((a,b)=>b.heat-a.heat||a.id.localeCompare(b.id)).slice(0,5);
       return {version:VERSION,mode,generated_at:new Date(now),publication_id:publication.id,published:status.public_enabled,
-        intake_enabled:Boolean(intake)&&status.intake_enabled,sources,linkedin:{enabled:false,reason:'Public API feed is not enabled; submitted links are private tips.'},
-        posts:posts.map(safePost),clusters,next_cursor:result.rows.length>query.data.limit&&last?Buffer.from(JSON.stringify({at:last.posted_at.toISOString(),id:last.id})).toString('base64url'):null};
+        intake_enabled:Boolean(intake)&&status.intake_enabled,sources,linkedin:{enabled:false,reason:'LinkedIn ingestion is not enabled.'},
+        sort:query.data.sort,posts:posts.map(safePost),clusters,next_cursor:result.rows.length>query.data.limit&&last?Buffer.from(JSON.stringify({at:last.posted_at.toISOString(),id:last.id,sort:query.data.sort,score:last.ranking_score,asof})).toString('base64url'):null};
     });
   });
   for(const kind of ['posts','clusters'] as const)app.get<{Params:{id:string}}>(`/api/radar/${kind}/:id`,async(request,reply)=>{

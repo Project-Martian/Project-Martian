@@ -5,17 +5,21 @@ import { createPool } from './database.js';
 import { sourceSchema, classificationSchema, flagNames, type PostRow } from './radar/schema.js';
 import { transaction, audit, removePost } from './radar/repository.js';
 import { canonicalUrl } from './radar/rules.js';
+import { budgetSchema } from './radar/budget.js';
 
 const {positionals,values}=parseArgs({allowPositionals:true,options:{actor:{type:'string'},reason:{type:'string'},revision:{type:'string'},
   decision:{type:'string'},record:{type:'string'},role:{type:'string'},'password-file':{type:'string'},'clear-flags':{type:'string'},
-  public:{type:'string'},intake:{type:'string'},'model-calls':{type:'string'},content:{type:'boolean'}}});
+  public:{type:'string'},intake:{type:'string'},'model-calls':{type:'string'},content:{type:'boolean'},source:{type:'string'}}});
 const [command,id]=positionals;
 const pool=await createPool({max:1});
 try{
   if(command==='queue'){
-    const state=z.enum(['held','dropped','pending','processing-error','published']).parse(values.decision||'held');
-    const result=await pool.query(`SELECT id,revision,platform,decision,flags,rules->>'score' AS rules_score,
-      classification->>'confidence' AS confidence,ingested_at,display_until FROM radar_private.posts WHERE decision=$1 ORDER BY ingested_at LIMIT 100`,[state]);
+    const state=z.enum(['all','held','dropped','pending','processing-error','published']).parse(values.decision||'held');
+    const result=await pool.query(`SELECT p.id,p.revision,p.platform,p.source_id,s.publication_mode,p.decision,p.flags,p.rules->>'score' AS rules_score,
+      p.classification->>'confidence' AS confidence,p.ingested_at,p.display_until
+      FROM radar_private.posts p JOIN radar_private.sources s ON s.id=p.source_id
+      WHERE ($1='all' OR p.decision=$1) AND ($2::text IS NULL OR p.source_id=$2)
+      ORDER BY p.ingested_at,p.id LIMIT 100`,[state,values.source??null]);
     process.stdout.write(JSON.stringify(result.rows,null,2)+'\n');
   }else if(command==='inspect'){
     z.uuid().parse(id);
@@ -33,15 +37,46 @@ try{
     process.stdout.write(JSON.stringify(result.rows,null,2)+'\n');
   }else if(command==='status'){
     const settings=(await pool.query('SELECT * FROM radar_private.control')).rows;
-    const sources=(await pool.query('SELECT id,platform,enabled,last_attempt,last_success,last_error FROM radar_private.sources ORDER BY id')).rows;
+    const sources=(await pool.query(`SELECT id,platform,enabled,publication_mode,save_history,page_size,refresh_limit,last_attempt,last_success,last_complete,last_error,
+      cursor?'next_token' OR cursor?'after' AS backlog FROM radar_private.sources ORDER BY id`)).rows;
     const usage=(await pool.query(`SELECT * FROM radar_private.usage WHERE day=(now() AT TIME ZONE 'UTC')::date`)).rows;
     const heartbeat=(await pool.query('SELECT * FROM radar_private.heartbeat')).rows;
-    process.stdout.write(JSON.stringify({settings,sources,usage,heartbeat},null,2)+'\n');
+    const providers=(await pool.query('SELECT * FROM radar_private.provider_state ORDER BY provider')).rows;
+    const budgets=(await pool.query(`SELECT b.id,b.provider,b.enabled,b.starts_at,b.ends_at,b.limit_microusd,
+      COALESCE(sum(COALESCE(r.estimated_microusd,r.reserved_microusd)),0)::text AS committed_microusd,
+      count(r.id) FILTER (WHERE r.settled_at IS NULL)::int AS unsettled_requests,
+      COALESCE(sum((r.usage->>'posts')::bigint),0)::text AS posts,
+      COALESCE(sum((r.usage->>'users')::bigint),0)::text AS users,
+      COALESCE(sum((r.usage->>'input_tokens')::bigint),0)::text AS input_tokens,
+      COALESCE(sum((r.usage->>'output_tokens')::bigint),0)::text AS output_tokens,
+      COALESCE(sum((r.usage->>'embedding_tokens')::bigint),0)::text AS embedding_tokens
+      FROM radar_private.spend_budgets b LEFT JOIN radar_private.spend_requests r ON r.budget_id=b.id GROUP BY b.id ORDER BY b.starts_at DESC`)).rows;
+    const queue=(await pool.query(`SELECT source_id,decision,count(*)::int AS count,count(*) FILTER (WHERE saved)::int AS saved FROM radar_private.posts GROUP BY source_id,decision ORDER BY source_id,decision`)).rows;
+    process.stdout.write(JSON.stringify({settings,sources,usage,providers,budgets,queue,heartbeat},null,2)+'\n');
   }else{
     const actor=z.string().trim().min(1).max(120).parse(values.actor),reason=z.string().trim().min(1).max(1500).parse(values.reason);
     await transaction(pool,async db=>{
       await db.query('SELECT pg_advisory_xact_lock(725111)');
-      if(command==='provision'){
+      if(command==='budgets'){
+        const budgets=z.array(budgetSchema).min(1).max(10).parse(JSON.parse(await readFile(id,'utf8')));
+        await db.query('SELECT pg_advisory_xact_lock(725113)');
+        for(const b of budgets){
+          if((await db.query(`SELECT 1 FROM radar_private.spend_budgets WHERE enabled AND provider=$1
+            AND starts_at<$3::timestamptz AND ends_at>$2::timestamptz`,[b.pricing.provider,b.starts_at,b.ends_at])).rowCount)
+            throw new Error('overlapping-budget');
+          await db.query(`INSERT INTO radar_private.spend_budgets(id,provider,starts_at,ends_at,limit_microusd,pricing,approved_by)
+            VALUES($1,$2,$3,$4,$5,$6,$7)`,[b.id,b.pricing.provider,b.starts_at,b.ends_at,b.limit_microusd,b.pricing,actor]);
+        }
+        await audit(db,null,null,actor,command,reason,{budget_ids:budgets.map(b=>b.id)});
+      }else if(command==='stop-budget'){
+        await db.query('SELECT pg_advisory_xact_lock(725113)');
+        if(!(await db.query('UPDATE radar_private.spend_budgets SET enabled=false WHERE id=$1 RETURNING id',[id])).rowCount)throw new Error('unknown-budget');
+        await audit(db,null,null,actor,command,reason,{budget_id:id});
+      }else if(command==='resume-provider'){
+        const provider=z.enum(['x','reddit']).parse(id);
+        await db.query('UPDATE radar_private.provider_state SET manual_pause=false,resume_after=NULL,updated_at=now() WHERE provider=$1',[provider]);
+        await audit(db,null,null,actor,command,reason,{provider});
+      }else if(command==='provision'){
         const role=z.enum(['worker','reviewer','intake','backup']).parse(values.role);
         const password=(await readFile(values['password-file']||'','utf8')).trim();
         if(password.length<32||password.length>200)throw new Error('password-length');
@@ -51,16 +86,29 @@ try{
         const sources=z.array(sourceSchema).max(30).parse(JSON.parse(await readFile(id,'utf8')));
         if(new Set(sources.map(s=>s.id)).size!==sources.length)throw new Error('duplicate-source-id');
         for(const s of sources){
-          const old=(await db.query('SELECT config,platform FROM radar_private.sources WHERE id=$1',[s.id])).rows[0];
+          const old=(await db.query('SELECT config,platform,publication_mode FROM radar_private.sources WHERE id=$1',[s.id])).rows[0];
           if(old&&(JSON.stringify(old.config)!==JSON.stringify(s.config)||old.platform!==s.platform)){
             // Source config is immutable under an ID. This prevents cursor/approval reuse across sources.
             const sorted=(o:Record<string,unknown>)=>JSON.stringify(Object.fromEntries(Object.entries(o).sort(([a],[b])=>a.localeCompare(b))));
             if(old.platform!==s.platform||sorted(old.config)!==sorted(s.config))throw new Error('use-new-id-for-changed-source');
           }
-          await db.query(`INSERT INTO radar_private.sources(id,platform,enabled,config,approved_by,retention_hours,requests_per_day)
-            VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(id) DO UPDATE SET enabled=EXCLUDED.enabled,approved_by=EXCLUDED.approved_by,
-            retention_hours=EXCLUDED.retention_hours,requests_per_day=EXCLUDED.requests_per_day`,[s.id,s.platform,s.enabled,s.config,s.approved_by,s.retention_hours,s.requests_per_day]);
+          await db.query(`INSERT INTO radar_private.sources(id,platform,enabled,config,approved_by,retention_hours,requests_per_day,publication_mode,page_size,refresh_limit,save_history)
+            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT(id) DO UPDATE SET enabled=EXCLUDED.enabled,approved_by=EXCLUDED.approved_by,
+            retention_hours=EXCLUDED.retention_hours,requests_per_day=EXCLUDED.requests_per_day,publication_mode=EXCLUDED.publication_mode,
+            page_size=EXCLUDED.page_size,refresh_limit=EXCLUDED.refresh_limit,save_history=EXCLUDED.save_history`,[s.id,s.platform,s.enabled,s.config,s.approved_by,s.retention_hours,s.requests_per_day,s.publication_mode,s.page_size,s.refresh_limit,s.save_history]);
+          if(s.save_history)await db.query('UPDATE radar_private.posts SET saved=true WHERE source_id=$1',[s.id]);
           await db.query(`UPDATE radar_private.posts SET retain_until=LEAST(retain_until,posted_at+$2*interval '1 hour') WHERE source_id=$1`,[s.id,s.retention_hours]);
+          // Recompute duplicate ownership on the next successful source refresh
+          // when moving across the private/public boundary. Existing approvals
+          // must not make private pilot content suppress public cluster counts.
+          if(old&&old.publication_mode!==s.publication_mode){
+            await db.query(`UPDATE radar_private.clusters SET title=NULL,title_members='{}',centroid=NULL WHERE id IN
+              (SELECT cluster_id FROM radar_private.posts WHERE source_id=$1 OR duplicate_of IN
+                (SELECT id FROM radar_private.posts WHERE source_id=$1))`,[s.id]);
+            await db.query(`UPDATE radar_private.posts SET content_hash='',display_until=now(),cluster_id=NULL,
+              duplicate_of=NULL,is_duplicate=false WHERE decision<>'removed' AND (source_id=$1 OR duplicate_of IN
+                (SELECT id FROM radar_private.posts WHERE source_id=$1))`,[s.id]);
+          }
         }
         await audit(db,null,null,actor,'sources',reason,{source_ids:sources.map(s=>s.id)});
       }else if(command==='controls'){
@@ -68,6 +116,7 @@ try{
         const limit=values['model-calls']===undefined?null:z.coerce.number().int().min(1).max(10000).parse(values['model-calls']);
         if(values.public===undefined&&values.intake===undefined&&limit===null)throw new Error('supply-a-control');
         await db.query('INSERT INTO radar_private.control DEFAULT VALUES ON CONFLICT DO NOTHING');
+        await db.query("INSERT INTO radar_private.provider_state(provider) VALUES ('x'),('reddit') ON CONFLICT DO NOTHING");
         await db.query(`UPDATE radar_private.control SET public_enabled=COALESCE($1,public_enabled),intake_enabled=COALESCE($2,intake_enabled),
           model_calls_per_day=COALESCE($3,model_calls_per_day),updated_at=now()`,[values.public===undefined?null:values.public==='on',values.intake===undefined?null:values.intake==='on',limit]);
         await audit(db,null,null,actor,'controls',reason,{public:values.public,intake:values.intake,model_calls:limit});

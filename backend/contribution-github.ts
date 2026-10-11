@@ -1,8 +1,10 @@
 import { z } from 'zod';
 import { CONTRIBUTION_REPO, PROPOSAL_MARKER, parseProposal, contributionHash, requiredApprovals, type ApprovedContribution } from './contributions.js';
+import { RESEARCH_MARKER, parseResearchIssue, reviewedResearchRecord, type AuthenticatedReview } from './research-contribution.js';
+import { impactScore } from './impact.js';
 const user = z.object({login:z.string().regex(/^[a-z\d][a-z\d-]{0,38}(?:\[bot\])?$/i),type:z.string()});
 const issueSchema = z.object({number:z.number().int().positive(),state:z.enum(['open','closed']),state_reason:z.string().nullable(),
-  updated_at:z.iso.datetime(),closed_at:z.iso.datetime().nullable(),closed_by:user.nullable().optional(),pull_request:z.unknown().optional()});
+  title:z.string(),body:z.string().nullable(),updated_at:z.iso.datetime(),closed_at:z.iso.datetime().nullable(),closed_by:user.nullable().optional(),pull_request:z.unknown().optional()});
 const commentSchema = z.object({id:z.number().int().positive(),body:z.string(),user,created_at:z.iso.datetime(),updated_at:z.iso.datetime()});
 export class ContributionGitHub {
   constructor(private token:string) {if(!token.trim())throw new Error('GitHub token is required');}
@@ -29,9 +31,27 @@ export class ContributionGitHub {
   async closedIssues() {
     return (await this.list('/issues?state=closed&sort=updated&direction=desc')).map(value=>issueSchema.parse(value)).filter(issue=>!issue.pull_request&&issue.state_reason==='completed');
   }
+  async allIssues() {
+    return (await this.list('/issues?state=all&sort=updated&direction=desc')).map(value=>issueSchema.parse(value)).filter(issue=>!issue.pull_request);
+  }
+  async publicationIssues() {
+    return (await this.allIssues()).filter(issue=>issue.body?.includes(RESEARCH_MARKER)||issue.state_reason==='completed');
+  }
+  // Only the private researcher calls this. The publisher retains a read-only token.
+  async createResearchIssue(title:string, body:string) {
+    if(body.length>60000)throw new Error('Research issue exceeds the review body limit');
+    const response=await fetch(`https://api.github.com/repos/${CONTRIBUTION_REPO}/issues`,{
+      method:'POST',headers:{Accept:'application/vnd.github+json',Authorization:`Bearer ${this.token}`,
+        'X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'},
+      body:JSON.stringify({title,body}),redirect:'error',signal:AbortSignal.timeout(15000),
+    });
+    if(!response.ok)throw new Error(`GitHub issue creation failed (${response.status}); inspect GitHub before rerunning`);
+    return z.object({number:z.number().int().positive(),html_url:z.url()}).parse(await response.json());
+  }
   async approved(number:number):Promise<ApprovedContribution|null> {
     if(!Number.isSafeInteger(number)||number<=0)throw new Error('Invalid issue number');
     const issue=issueSchema.parse(await this.get(`/issues/${number}`));
+    if(issue.body?.includes(RESEARCH_MARKER))return this.approvedResearch(issue);
     if(issue.pull_request||issue.state!=='closed'||issue.state_reason!=='completed'||!issue.closed_at||!issue.closed_by)return null;
     const comments=(await this.list(`/issues/${number}/comments`)).map(value=>commentSchema.parse(value))
       .sort((a,b)=>a.created_at.localeCompare(b.created_at)||a.id-b.id);
@@ -62,5 +82,29 @@ export class ContributionGitHub {
     if(latest.state!=='closed'||latest.state_reason!=='completed'||latest.closed_at!==issue.closed_at||latest.updated_at!==issue.updated_at)
       throw new Error('Issue completion changed during review; no publication');
     return {proposal,proposal_comment_id:candidate.id,approved_by};
+  }
+  private async approvedResearch(issue:z.infer<typeof issueSchema>):Promise<ApprovedContribution|null> {
+    if(issue.pull_request||(issue.state==='closed'&&issue.state_reason!=='completed'))return null;
+    const draft=parseResearchIssue(issue.body!), hash=contributionHash(draft);
+    const comments=(await this.list(`/issues/${issue.number}/comments`)).map(value=>commentSchema.parse(value))
+      .sort((a,b)=>a.created_at.localeCompare(b.created_at)||a.id-b.id);
+    if(comments.some(c=>c.body.includes(PROPOSAL_MARKER)))throw new Error('An issue must use one proposal protocol');
+    const decisions=new Map<string,AuthenticatedReview|null>();
+    for(const c of comments) {
+      const match=c.body.trim().match(/^\/(approve|revoke)-incident ([a-f0-9]{64})$/);
+      if(!match||match[2]!==hash||c.user.type!=='User'||!await this.maintainer(c.user.login))continue;
+      if(c.updated_at!==c.created_at)throw new Error('Approval decisions must be new, unedited comments');
+      decisions.set(c.user.login.toLowerCase(),match[1]==='approve'?{login:c.user.login,comment_id:c.id,created_at:c.created_at}:null);
+    }
+    const reviews=[...decisions.values()].filter((r):r is AuthenticatedReview=>r!==null);
+    const required=impactScore(draft.record.impact_assessment).band==='Severe'?2:1;
+    if(reviews.length<required)return null;
+    const latestComments=(await this.list(`/issues/${issue.number}/comments`)).map(value=>commentSchema.parse(value));
+    const latest=issueSchema.parse(await this.get(`/issues/${issue.number}`));
+    if(latest.body!==issue.body||latest.state!==issue.state||latest.state_reason!==issue.state_reason||latest.updated_at!==issue.updated_at
+      ||contributionHash(latestComments.sort((a,b)=>a.id-b.id))!==contributionHash([...comments].sort((a,b)=>a.id-b.id)))
+      throw new Error('Research issue or review changed during verification');
+    return {proposal:{version:'incident-contribution-v1',issue:issue.number,operation:'add',base_record_hash:null,
+      record:reviewedResearchRecord(draft,issue.number,reviews)},proposal_comment_id:null,approved_by:reviews.map(r=>r.login),research:draft};
   }
 }

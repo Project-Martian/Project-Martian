@@ -3,17 +3,18 @@ import { classificationSchema, type PostRow, type Classification } from './schem
 import { rules, decision, cosine } from './rules.js';
 import { transaction, audit } from './repository.js';
 import { classify, embed, title, MODEL, EMBEDDING_MODEL, PROMPT_VERSION } from './model.js';
+import { BudgetError } from './budget.js';
 
 export async function vet(pool:Pool,progress:()=>Promise<void>) {
   const posts=(await pool.query<PostRow>(`SELECT p.* FROM radar_private.posts p JOIN radar_private.sources s ON s.id=p.source_id
-    WHERE s.enabled AND p.decision='pending' AND p.retain_until>now() ORDER BY p.ingested_at LIMIT 20`)).rows;
+    WHERE s.enabled AND p.decision='pending' AND p.retain_until>now() ORDER BY p.ingested_at LIMIT 40`)).rows;
   for(const post of posts){
     await progress();
     const scored=rules(post.content);
     try{
       let value:Classification|null=null,state:string;
       if(post.flags.length)state='held';
-      else if(!post.rules_override&&(scored.drop||scored.score<0.3))state='dropped';
+      else if(!post.rules_override&&(scored.drop||scored.score<0.2))state='dropped';
       else {
         if(process.env.MARTIAN_RADAR_INFERENCE_ENABLED!=='true')continue;
         value=await classify(pool,post.content);value.flags=value.flags.filter(f=>!post.cleared_flags.includes(f));state=decision(value);
@@ -26,7 +27,9 @@ export async function vet(pool:Pool,progress:()=>Promise<void>) {
         if(result.rowCount)await audit(db,post.id,post.revision,'pipeline',state,value?.reason||scored.drop||'Rules below publication threshold',
           {rules:scored,model:value?MODEL:null,prompt:value?PROMPT_VERSION:null,confidence:value?.confidence});
       });
-    }catch{
+    }catch(error){
+      // Admission failures leave pending work intact for the next funded window.
+      if(error instanceof BudgetError||error instanceof Error&&error.message==='daily-budget-exhausted')throw error;
       await transaction(pool,async db=>{
         const result=await db.query(`UPDATE radar_private.posts SET decision='processing-error',rules=$3 WHERE id=$1 AND revision=$2 AND decision='pending' RETURNING id`,[post.id,post.revision,scored]);
         if(result.rowCount)await audit(db,post.id,post.revision,'pipeline','processing-error','Classification failed; explicit reprocessing required');
@@ -42,7 +45,7 @@ const average=(vectors:number[][])=>{
 export async function cluster(pool:Pool,progress:()=>Promise<void>) {
   if(process.env.MARTIAN_RADAR_INFERENCE_ENABLED!=='true')return;
   const pending=(await pool.query<PostRow>(`SELECT * FROM radar_private.displayable_posts WHERE NOT is_duplicate
-    AND cluster_id IS NULL AND classification IS NOT NULL ORDER BY posted_at,id LIMIT 20`)).rows;
+    AND cluster_id IS NULL AND classification IS NOT NULL ORDER BY posted_at,id LIMIT 40`)).rows;
   for(const post of pending){
     await progress();
     const claim=classificationSchema.parse(post.classification);
@@ -79,15 +82,18 @@ export async function cluster(pool:Pool,progress:()=>Promise<void>) {
   }
   await pool.query(`UPDATE radar_private.posts p SET duplicate_of=original.id FROM radar_private.posts original
     WHERE p.content->>'reshare_of'=original.external_id AND p.platform=original.platform AND p.duplicate_of IS NULL
-      AND p.id<>original.id AND p.is_duplicate AND original.decision<>'removed'`);
+      AND p.id<>original.id AND p.is_duplicate AND original.decision<>'removed'
+      AND (SELECT publication_mode FROM radar_private.sources WHERE id=p.source_id)=
+        (SELECT publication_mode FROM radar_private.sources WHERE id=original.source_id)`);
   await pool.query(`UPDATE radar_private.posts p SET cluster_id=original.cluster_id FROM radar_private.posts original
     WHERE p.duplicate_of=original.id AND p.cluster_id IS DISTINCT FROM original.cluster_id`);
   const needing=(await pool.query(`SELECT c.id,c.title,c.title_size,array_agg(p.id ORDER BY p.posted_at,p.id) AS members,
     array_agg(p.revision ORDER BY p.posted_at,p.id) AS revisions,
     array_agg(p.classification->>'claim' ORDER BY p.posted_at,p.id) AS claims
     FROM radar_private.clusters c JOIN radar_private.displayable_posts p ON p.cluster_id=c.id AND NOT p.is_duplicate
-    GROUP BY c.id HAVING (c.title IS NULL AND c.title_members IS DISTINCT FROM array_agg(p.id ORDER BY p.posted_at,p.id))
-      OR count(*)>=GREATEST(2,c.title_size*2) ORDER BY c.id LIMIT 10`)).rows;
+    GROUP BY c.id HAVING count(*)>=3 AND count(DISTINCT p.platform||':'||(p.content->'author'->>'id'))>=2
+      AND ((c.title IS NULL AND c.title_members IS DISTINCT FROM array_agg(p.id ORDER BY p.posted_at,p.id))
+      OR count(*)>=GREATEST(3,c.title_size*2)) ORDER BY c.id LIMIT 10`)).rows;
   for(const c of needing){
     await progress();
     const result=await title(pool,c.claims);

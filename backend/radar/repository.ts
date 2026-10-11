@@ -1,5 +1,5 @@
 import type { Pool, PoolClient } from 'pg';
-import { contentSchema, type Content, type Source, type PostRow } from './schema.js';
+import { contentSchema, SCREENING_POLICY, type Content, type Source, type PostRow } from './schema.js';
 import { hash, normalize, safetyFlags, similarity, canonicalUrl } from './rules.js';
 
 const canonicalSameLink=(a:string,b:string)=>canonicalUrl(a)===canonicalUrl(b);
@@ -9,7 +9,7 @@ export async function transaction<T>(pool:Pool,fn:(client:PoolClient)=>Promise<T
   try{await client.query('BEGIN');const value=await fn(client);await client.query('COMMIT');return value;}
   catch(error){await client.query('ROLLBACK');throw error;}finally{client.release();}
 }
-export async function reserve(pool:Pool,bucket:string,limit:number) {
+export async function reserve(pool:Pool|PoolClient,bucket:string,limit:number) {
   const result=await pool.query(`INSERT INTO radar_private.usage VALUES($1,(now() AT TIME ZONE 'UTC')::date,1)
     ON CONFLICT(bucket,day) DO UPDATE SET count=radar_private.usage.count+1 WHERE radar_private.usage.count<$2 RETURNING count`,[bucket,limit]);
   if(!result.rows.length)throw new Error('daily-budget-exhausted');
@@ -24,38 +24,42 @@ export async function ingest(pool:Pool,source:Source,input:unknown) {
   const posted=Date.parse(content.posted_at),now=Date.now();
   if(posted>now+300000||posted<now-source.retention_hours*3600000)return;
   // Engagement changes do not invalidate approval; text, context and identity do.
-  const evidence={text:content.text,context:content.context,author_id:content.author.id,known_researcher:content.author.known_researcher,has_media:content.has_media,links:content.links,entities:content.entities,reshare:content.reshare,reshare_of:content.reshare_of};
+  const evidence={policy:SCREENING_POLICY,source_id:source.id,author_verified:content.author.verified,text:content.text,context:content.context,author_id:content.author.id,known_researcher:content.author.known_researcher,has_media:content.has_media,links:content.links,entities:content.entities,reshare:content.reshare,reshare_of:content.reshare_of};
   const contentHash=hash(JSON.stringify(evidence)),normal=hash(normalize(content.text));
   await transaction(pool,async db=>{
     await db.query('SELECT pg_advisory_xact_lock(725111)');
     const old=(await db.query<PostRow>('SELECT * FROM radar_private.posts WHERE platform=$1 AND external_id=$2 FOR UPDATE',[content.platform,content.external_id])).rows[0];
     // A reviewed removal remains a tombstone until retention cleanup, never auto-restored.
     if(old?.decision==='removed')return;
+    // A freshly fetched URL may move from a retired source to its replacement.
+    if(old&&old.source_id!==source.id&&(await db.query('SELECT enabled FROM radar_private.sources WHERE id=$1',[old.source_id])).rows[0]?.enabled)return;
     if(old&&now-posted>48*3600000)content.engagement=old.content.engagement;
     if(old?.content_hash===contentHash){
-      await db.query(`UPDATE radar_private.posts SET content=$2,checked_at=now(),display_until=LEAST(now()+interval '1 hour',retain_until),
-        via=ARRAY(SELECT DISTINCT unnest(via || ARRAY[$3]::text[])) WHERE id=$1`,[old.id,content,content.via]);return;
+      await db.query(`UPDATE radar_private.posts SET content=$2,checked_at=now(),display_until=LEAST(now()+CASE WHEN platform='wild' THEN interval '2 hours' ELSE interval '1 hour' END,retain_until),
+        saved=saved OR $4,via=ARRAY(SELECT DISTINCT unnest(via || ARRAY[$3]::text[])) WHERE id=$1`,[old.id,content,content.via,source.save_history]);return;
     }
     let duplicate:string|null=null;
-    const candidates=await db.query<PostRow>(`SELECT * FROM radar_private.posts WHERE id IS DISTINCT FROM $1 AND decision<>'removed'
-      AND NOT is_duplicate AND posted_at>now()-interval '72 hours' AND retain_until>now() ORDER BY posted_at,id LIMIT 2000`,[old?.id||null]);
-    if(content.reshare&&content.reshare_of)duplicate=(await db.query('SELECT id FROM radar_private.posts WHERE platform=$1 AND external_id=$2 AND decision<>\'removed\'',[content.platform,content.reshare_of])).rows[0]?.id||null;
+    const candidates=await db.query<PostRow>(`SELECT p.* FROM radar_private.posts p JOIN radar_private.sources s ON s.id=p.source_id
+      WHERE p.id IS DISTINCT FROM $1 AND p.decision<>'removed' AND s.publication_mode=$2
+      AND NOT p.is_duplicate AND p.posted_at>now()-interval '72 hours' AND p.retain_until>now() ORDER BY p.posted_at,p.id LIMIT 2000`,[old?.id||null,source.publication_mode]);
+    if(content.reshare&&content.reshare_of)duplicate=(await db.query(`SELECT p.id FROM radar_private.posts p JOIN radar_private.sources s ON s.id=p.source_id
+      WHERE p.platform=$1 AND p.external_id=$2 AND p.decision<>'removed' AND s.publication_mode=$3`,[content.platform,content.reshare_of,source.publication_mode])).rows[0]?.id||null;
     duplicate ||= candidates.rows.find(p=>p.normalized_hash===normal||canonicalSameLink(p.content.url,content.url)||similarity(p.content.text,content.text)>0.9)?.id||null;
     const flags=safetyFlags(content),state=flags.length?'held':'pending';
     if(old){
       await db.query(`UPDATE radar_private.clusters SET title=NULL,title_members='{}' WHERE id=$1`,[old.cluster_id]);
       await db.query(`UPDATE radar_private.posts SET content=$2,content_hash=$3,normalized_hash=$4,revision=revision+1,decision=$5,
         flags=$6,cleared_flags='{}',rules_override=false,rules=NULL,classification=NULL,embedding=NULL,embedding_model=NULL,cluster_id=NULL,record_id=NULL,primary_reviewed=false,
-        duplicate_of=$7,is_duplicate=$8,checked_at=now(),display_until=LEAST(now()+interval '1 hour',retain_until),
-        published_at=NULL,via=ARRAY(SELECT DISTINCT unnest(via || ARRAY[$9]::text[])) WHERE id=$1`,
-      [old.id,content,contentHash,normal,state,flags,duplicate,Boolean(duplicate)||content.reshare,content.via]);
+        duplicate_of=$7,is_duplicate=$8,checked_at=now(),display_until=LEAST(now()+CASE WHEN platform='wild' THEN interval '2 hours' ELSE interval '1 hour' END,retain_until),
+        source_id=$10,retain_until=LEAST(retain_until,posted_at+$11*interval '1 hour'),saved=saved OR $12,published_at=NULL,via=ARRAY(SELECT DISTINCT unnest(via || ARRAY[$9]::text[])) WHERE id=$1`,
+      [old.id,content,contentHash,normal,state,flags,duplicate,Boolean(duplicate)||content.reshare,content.via,source.id,source.retention_hours,source.save_history]);
       await audit(db,old.id,old.revision+1,'collector','edited','Source content changed; approval invalidated');
     }else{
       const inserted=await db.query(`INSERT INTO radar_private.posts(source_id,platform,external_id,content,content_hash,normalized_hash,via,
-        posted_at,checked_at,display_until,retain_until,decision,flags,duplicate_of,is_duplicate)
-        VALUES($1,$2,$3,$4,$5,$6,ARRAY[$7]::text[],$8,now(),LEAST(now()+interval '1 hour',$9),$9,$10,$11,$12,$13) RETURNING id`,
+        posted_at,checked_at,display_until,retain_until,decision,flags,duplicate_of,is_duplicate,saved)
+        VALUES($1,$2,$3,$4,$5,$6,ARRAY[$7]::text[],$8,now(),LEAST(now()+CASE WHEN $2='wild' THEN interval '2 hours' ELSE interval '1 hour' END,$9),$9,$10,$11,$12,$13,$14) RETURNING id`,
       [source.id,content.platform,content.external_id,content,contentHash,normal,content.via,content.posted_at,
-        new Date(posted+source.retention_hours*3600000),state,flags,duplicate,Boolean(duplicate)||content.reshare]);
+        new Date(posted+source.retention_hours*3600000),state,flags,duplicate,Boolean(duplicate)||content.reshare,source.save_history]);
       await audit(db,inserted.rows[0].id,1,'collector',state,flags.length?'Safety screening requires review':'Received from configured source');
     }
   });
@@ -79,11 +83,11 @@ export async function removePost(db:Pool|PoolClient,post:PostRow,actor:string,re
 export async function purge(pool:Pool) {
   await transaction(pool,async db=>{
     await db.query('SELECT pg_advisory_xact_lock(725111)');
-    const expired=(await db.query<PostRow>(`SELECT id,revision FROM radar_private.posts WHERE retain_until<=now() AND decision<>'removed' LIMIT 100`)).rows;
+    const expired=(await db.query<PostRow>(`SELECT id,revision FROM radar_private.posts WHERE NOT saved AND retain_until<=now() AND decision<>'removed' LIMIT 100`)).rows;
     for(const p of expired)await removePost(db,p,'retention','Source retention expired');
     await db.query(`UPDATE radar_private.clusters c SET title=NULL,title_members='{}',centroid=NULL WHERE EXISTS
       (SELECT 1 FROM radar_private.posts p WHERE p.id=ANY(c.title_members) AND (p.retain_until<=now() OR p.display_until<=now()))`);
-    await db.query("DELETE FROM radar_private.posts WHERE retain_until<=now() AND decision='removed'");
+    await db.query("DELETE FROM radar_private.posts WHERE NOT saved AND retain_until<=now() AND decision='removed'");
     await db.query(`DELETE FROM radar_private.clusters c WHERE NOT EXISTS(SELECT 1 FROM radar_private.posts p WHERE p.cluster_id=c.id)`);
     await db.query(`DELETE FROM radar_private.intake WHERE created_at<now()-interval '7 days'`);
     await db.query(`DELETE FROM radar_private.intake_limits WHERE hour<now()-interval '2 hours'`);

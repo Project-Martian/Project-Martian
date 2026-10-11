@@ -1,0 +1,23 @@
+[
+  {
+    "id": "example-x-seven-days",
+    "starts_at": "2026-01-01T00:00:00Z",
+    "ends_at": "2026-01-08T00:00:00Z",
+    "limit_microusd": 50000000,
+    "pricing": { "provider": "x", "post_microusd": 5000, "user_microusd": 10000, "deduplicate_utc_day": false }
+  },
+  {
+    "id": "example-bedrock-seven-days",
+    "starts_at": "2026-01-01T00:00:00Z",
+    "ends_at": "2026-01-08T00:00:00Z",
+    "limit_microusd": 10000000,
+    "pricing": {
+      "provider": "bedrock",
+      "model_id": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+      "embedding_model_id": "amazon.titan-embed-text-v2:0",
+      "input_million_microusd": 1100000,
+      "output_million_microusd": 5500000,
+      "embedding_million_microusd": 20000
+    }
+  }
+]

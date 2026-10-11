@@ -1,16 +1,20 @@
 [
   {
-    "id": "x-agent-security",
+    "id": "x-ai-security-chatter-v1",
     "platform": "x",
     "enabled": false,
     "approved_by": "REVIEW_REQUIRED",
-    "retention_hours": 168,
-    "requests_per_day": 192,
+    "retention_hours": 72,
+    "requests_per_day": 72,
     "config": {
       "kind": "x-search",
-      "query": "(\"agent went rogue\" OR \"prompt injection\" OR \"indirect injection\" OR \"tool poisoning\" OR \"sandbox escape\" OR \"agent deleted\" OR \"agent leaked\" OR exfiltration OR jailbreak) (agent OR LLM OR MCP OR \"Claude Code\" OR Codex OR Operator OR \"computer use\" OR \"browser agent\")",
-      "researcher_ids": []
-    }
+      "query": "(#AISecurity OR #LLMSecurity OR #AgentSecurity OR #MCPSecurity OR #PromptInjection OR #AISafety OR #AIRedTeam OR \"AI security\" OR \"LLM security\" OR \"agent security\" OR \"AI red teaming\" OR \"prompt injection\" OR \"MCP security\" OR ((AI OR LLM OR agent OR MCP) vulnerability)) is:verified -is:retweet -is:reply lang:en",
+      "researcher_ids": [],
+      "selection": "popular"
+    },
+    "publication_mode": "private",
+    "page_size": 20,
+    "refresh_limit": 30
   },
   {
     "id": "x-mcp-credentials",
@@ -23,7 +27,10 @@
       "kind": "x-search",
       "query": "(MCP OR \"Claude Code\" OR Codex OR \"browser agent\") (credential OR security OR vulnerability OR poisoning)",
       "researcher_ids": []
-    }
+    },
+    "publication_mode": "private",
+    "page_size": 10,
+    "refresh_limit": 20
   },
   {
     "id": "x-tags-configure-user-id",
@@ -36,188 +43,162 @@
       "kind": "x-tags",
       "user_id": "0",
       "researcher_ids": []
-    }
+    },
+    "publication_mode": "private",
+    "page_size": 10,
+    "refresh_limit": 20
   },
   {
     "id": "reddit-cybersecurity-new",
     "platform": "reddit",
     "enabled": false,
     "approved_by": "REVIEW_REQUIRED",
-    "retention_hours": 168,
+    "retention_hours": 48,
     "requests_per_day": 192,
     "config": {
       "kind": "reddit",
       "subreddit": "cybersecurity",
       "listing": "new",
       "researcher_ids": []
-    }
-  },
-  {
-    "id": "reddit-cybersecurity-comments",
-    "platform": "reddit",
-    "enabled": false,
-    "approved_by": "REVIEW_REQUIRED",
-    "retention_hours": 168,
-    "requests_per_day": 192,
-    "config": {
-      "kind": "reddit",
-      "subreddit": "cybersecurity",
-      "listing": "comments",
-      "researcher_ids": []
-    }
+    },
+    "publication_mode": "private",
+    "page_size": 100,
+    "refresh_limit": 20
   },
   {
     "id": "reddit-localllama-new",
     "platform": "reddit",
     "enabled": false,
     "approved_by": "REVIEW_REQUIRED",
-    "retention_hours": 168,
+    "retention_hours": 48,
     "requests_per_day": 192,
     "config": {
       "kind": "reddit",
       "subreddit": "LocalLLaMA",
       "listing": "new",
       "researcher_ids": []
-    }
-  },
-  {
-    "id": "reddit-localllama-comments",
-    "platform": "reddit",
-    "enabled": false,
-    "approved_by": "REVIEW_REQUIRED",
-    "retention_hours": 168,
-    "requests_per_day": 192,
-    "config": {
-      "kind": "reddit",
-      "subreddit": "LocalLLaMA",
-      "listing": "comments",
-      "researcher_ids": []
-    }
+    },
+    "publication_mode": "private",
+    "page_size": 100,
+    "refresh_limit": 20
   },
   {
     "id": "reddit-netsec-new",
     "platform": "reddit",
     "enabled": false,
     "approved_by": "REVIEW_REQUIRED",
-    "retention_hours": 168,
+    "retention_hours": 48,
     "requests_per_day": 192,
     "config": {
       "kind": "reddit",
       "subreddit": "netsec",
       "listing": "new",
       "researcher_ids": []
-    }
+    },
+    "publication_mode": "private",
+    "page_size": 100,
+    "refresh_limit": 20
   },
   {
-    "id": "reddit-netsec-comments",
-    "platform": "reddit",
-    "enabled": false,
-    "approved_by": "REVIEW_REQUIRED",
-    "retention_hours": 168,
-    "requests_per_day": 192,
-    "config": {
-      "kind": "reddit",
-      "subreddit": "netsec",
-      "listing": "comments",
-      "researcher_ids": []
-    }
-  },
-  {
-    "id": "reddit-machinelearning-new",
-    "platform": "reddit",
-    "enabled": false,
-    "approved_by": "REVIEW_REQUIRED",
-    "retention_hours": 168,
-    "requests_per_day": 192,
-    "config": {
-      "kind": "reddit",
-      "subreddit": "MachineLearning",
-      "listing": "new",
-      "researcher_ids": []
-    }
-  },
-  {
-    "id": "reddit-machinelearning-comments",
-    "platform": "reddit",
-    "enabled": false,
-    "approved_by": "REVIEW_REQUIRED",
-    "retention_hours": 168,
-    "requests_per_day": 192,
-    "config": {
-      "kind": "reddit",
-      "subreddit": "MachineLearning",
-      "listing": "comments",
-      "researcher_ids": []
-    }
-  },
-  {
-    "id": "reddit-chatgpt-new",
-    "platform": "reddit",
-    "enabled": false,
-    "approved_by": "REVIEW_REQUIRED",
-    "retention_hours": 168,
-    "requests_per_day": 192,
-    "config": {
-      "kind": "reddit",
-      "subreddit": "ChatGPT",
-      "listing": "new",
-      "researcher_ids": []
-    }
-  },
-  {
-    "id": "reddit-chatgpt-comments",
-    "platform": "reddit",
-    "enabled": false,
-    "approved_by": "REVIEW_REQUIRED",
-    "retention_hours": 168,
-    "requests_per_day": 192,
-    "config": {
-      "kind": "reddit",
-      "subreddit": "ChatGPT",
-      "listing": "comments",
-      "researcher_ids": []
-    }
-  },
-  {
-    "id": "reddit-claudeai-new",
-    "platform": "reddit",
-    "enabled": false,
-    "approved_by": "REVIEW_REQUIRED",
-    "retention_hours": 168,
-    "requests_per_day": 192,
-    "config": {
-      "kind": "reddit",
-      "subreddit": "ClaudeAI",
-      "listing": "new",
-      "researcher_ids": []
-    }
-  },
-  {
-    "id": "reddit-claudeai-comments",
-    "platform": "reddit",
-    "enabled": false,
-    "approved_by": "REVIEW_REQUIRED",
-    "retention_hours": 168,
-    "requests_per_day": 192,
-    "config": {
-      "kind": "reddit",
-      "subreddit": "ClaudeAI",
-      "listing": "comments",
-      "researcher_ids": []
-    }
-  },
-  {
-    "id": "rss-configure-approved-feed",
+    "id": "google-security-pilot-v1",
     "platform": "wild",
     "enabled": false,
     "approved_by": "REVIEW_REQUIRED",
-    "retention_hours": 168,
-    "requests_per_day": 192,
+    "retention_hours": 720,
+    "requests_per_day": 96,
+    "publication_mode": "private",
+    "page_size": 10,
+    "refresh_limit": 50,
     "config": {
       "kind": "rss",
-      "url": "https://example.org/feed.xml",
-      "publisher": "Replace with an approved publisher",
-      "researcher_ids": []
+      "researcher_ids": [],
+      "url": "https://blog.google/security/rss/",
+      "publisher": "Google Security"
+    }
+  },
+  {
+    "id": "github-security-pilot-v1",
+    "platform": "wild",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 720,
+    "requests_per_day": 96,
+    "publication_mode": "private",
+    "page_size": 10,
+    "refresh_limit": 50,
+    "config": {
+      "kind": "rss",
+      "researcher_ids": [],
+      "url": "https://github.blog/security/feed/",
+      "publisher": "GitHub Security"
+    }
+  },
+  {
+    "id": "trail-of-bits-pilot-v1",
+    "platform": "wild",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 720,
+    "requests_per_day": 96,
+    "publication_mode": "private",
+    "page_size": 10,
+    "refresh_limit": 50,
+    "config": {
+      "kind": "rss",
+      "researcher_ids": [],
+      "url": "https://blog.trailofbits.com/index.xml",
+      "publisher": "Trail of Bits"
+    }
+  },
+  {
+    "id": "simon-willison-ai-security-pilot-v1",
+    "platform": "wild",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 720,
+    "requests_per_day": 96,
+    "publication_mode": "private",
+    "page_size": 10,
+    "refresh_limit": 50,
+    "config": {
+      "kind": "rss",
+      "researcher_ids": [],
+      "url": "https://simonwillison.net/tags/ai-security-research.atom",
+      "publisher": "Simon Willison \u2014 AI security research"
+    }
+  },
+  {
+    "id": "unit42-pilot-v1",
+    "platform": "wild",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 720,
+    "requests_per_day": 96,
+    "publication_mode": "private",
+    "page_size": 10,
+    "refresh_limit": 50,
+    "config": {
+      "kind": "rss",
+      "researcher_ids": [],
+      "url": "https://unit42.paloaltonetworks.com/feed/",
+      "publisher": "Unit 42"
+    }
+  },
+  {
+    "id": "embrace-the-red-pilot-v1",
+    "platform": "wild",
+    "enabled": false,
+    "approved_by": "REVIEW_REQUIRED",
+    "retention_hours": 720,
+    "requests_per_day": 96,
+    "publication_mode": "private",
+    "page_size": 10,
+    "refresh_limit": 50,
+    "config": {
+      "kind": "rss",
+      "researcher_ids": [],
+      "url": "https://embracethered.com/blog/index.xml",
+      "publisher": "Embrace The Red"
     }
   }
 ]

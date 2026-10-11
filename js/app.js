@@ -42,6 +42,7 @@ function go(v, opts){
   current = v;
   $$(".view").forEach(el=>el.hidden = el.dataset.view!==v);
   renderTabs(v);
+  if(v!=="trends") closeTrendHelp();
   if(v==="trends") renderTrendPanel();
   if(v==="timeline") loadLogos();
   if(v==="signals") radar.activate(opts?.radar); else radar.deactivate();
@@ -142,9 +143,12 @@ document.addEventListener("click",e=>{
 
 /* ---------- stats ---------- */
 const latest = AGENTS.filter(r=>r.d).sort((a,b)=>b.d.localeCompare(a.d))[0];
-const y26 = AGENTS.filter(r=>r.d.startsWith("2026")).length, y25 = AGENTS.filter(r=>r.d.startsWith("2025")).length;
-$("#strip").innerHTML = `<div><b class="mono">${REC.length}</b>Records</div><div><b class="mono">${AGENTS.length}</b>Agent incidents</div><div><b class="mono">${y26}</b>In 2026</div><div><b>${esc(latest.when.replace(/^Reported /,""))}</b>Latest dated agent record</div>`;
-const publishedAt = new Date(archive.publication.published_at).toLocaleString("en-GB", {day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"UTC"});
+const statsYear = new Date().getUTCFullYear();
+const agentsThisYear = AGENTS.filter(r=>r.d.startsWith(`${statsYear}-`)).length;
+const publicationDate = new Date(archive.publication.published_at);
+const publishedDay = publicationDate.toLocaleDateString("en-GB", {day:"numeric",month:"short",year:"numeric",timeZone:"UTC"});
+$("#strip").innerHTML = `<div><b class="mono">${REC.length}</b>Timeline records</div><div><b class="mono">${AGENTS.length}</b>Agent incidents</div><div><b class="mono">${agentsThisYear}</b>Agent records in ${statsYear}</div><div><b>${esc(publishedDay)}</b>Timeline updated (UTC)</div>`;
+const publishedAt = publicationDate.toLocaleString("en-GB", {day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit",timeZone:"UTC"});
 $("#publication-note").textContent = `Publication ${archive.publication.id} · Published ${publishedAt} UTC. Incident dates and evidence review dates are separate.`;
 
 /* ================= ASK ================= */
@@ -471,8 +475,28 @@ function smooth(pts){ if(pts.length<2) return ""; let d=`M${pts[0][0]},${pts[0][
 function band(xs,lo,hi){ const top=xs.map((x,i)=>[x,hi[i]]), bot=xs.map((x,i)=>[x,lo[i]]).reverse(); return smooth(top)+" L"+bot.map(p=>p.join(",")).join(" L")+"Z"; }
 
 const TT = [["micro","Microtrends"],["impact","Rogue Index"],["narrative","Narrative"],["compare","Comparison"]];
-$("#ttabs").innerHTML = TT.map(([k,l])=>`<button class="ttab" role="tab" data-k="${k}" aria-selected="${k===ttab}" tabindex="${k===ttab?0:-1}">${l}</button>`).join("");
-$("#ttabs").addEventListener("click",e=>{const b=e.target.closest(".ttab"); if(!b) return; ttab=b.dataset.k; $$("#ttabs .ttab").forEach(x=>{x.setAttribute("aria-selected",x===b);x.tabIndex=x===b?0:-1;}); renderTrendPanel();});
+const TREND_HELP = {
+  micro:"Explore how model makers, models and attack types connect across the incident record. Select nodes to trace a path and see the incidents and sources behind it. Connections count records, not severity; unnamed models and mappings awaiting human review stay labelled.",
+  impact:"Track the recorded impact of agent incidents over time. Each incident is scored for damage, reach and how hard its effects are to reverse, adjusted for where those effects landed. The monthly index combines three months of scores on a fixed 0–100 scale. It describes this archive, not the likelihood that an agent will fail; the dashed extension is illustrative.",
+  narrative:"See who reported the incidents and how their accounts developed. Disclosure sources groups records by the publisher of the earliest dated source checked for each record. Accounts & updates follows selected initial reports, responses and follow-ups. This is a view of checked sources, not every report or a measure of media attention; unknown dates and pending reviews remain visible.",
+  compare:"Compare incident counts by where their effects landed: a sandbox, the operating company, or external users and systems. Switch between monthly and cumulative views, and filter by operating context, evidence basis or date basis. Counts represent archive records, not victims or failure rates; records without a usable date are listed separately."
+};
+const INFO_ICON='<svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.4"/><path d="M10 9v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="6" r="1" fill="currentColor"/></svg>';
+$("#ttabs").innerHTML = TT.map(([k,l])=>`<div class="ttab-group" role="presentation"><button class="ttab" role="tab" data-k="${k}" aria-selected="${k===ttab}" tabindex="${k===ttab?0:-1}">${l}</button><button type="button" class="trend-info" aria-label="About ${l}" aria-describedby="trend-help-${k}">${INFO_ICON}</button><div class="trend-help" id="trend-help-${k}" role="tooltip"><h3>About ${l}</h3><p>${esc(TREND_HELP[k])}</p></div></div>`).join("");
+function closeTrendHelp(){
+  $$(".trend-help").forEach(panel=>panel.hidden=true);
+}
+$$(".trend-info").forEach(info=>{
+  const reveal=()=>{document.getElementById(info.getAttribute("aria-describedby")).hidden=false;};
+  info.addEventListener("pointerenter",reveal);
+  info.addEventListener("focus",reveal);
+});
+$("#ttabs").addEventListener("click",e=>{
+  const b=e.target.closest(".ttab"); if(!b) return;
+  closeTrendHelp();ttab=b.dataset.k;
+  $$("#ttabs .ttab").forEach(x=>{x.setAttribute("aria-selected",x===b);x.tabIndex=x===b?0:-1;});renderTrendPanel();
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape") closeTrendHelp();});
 $("#qupd").textContent = "Latest dated agent record " + (latest ? latest.when.replace(/^Reported /,"") : "");
 
 // Indicators use the same published revision as the chart and records.
