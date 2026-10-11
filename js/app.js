@@ -328,7 +328,8 @@ async function loadLogos(){
     if(LOGO[c.k]) $$(`.clogo[data-c="${c.k}"]`).forEach(el=>el.innerHTML=LOGO[c.k]);
   }));
 }
-let tlCo="all", tlScope="all", tlQ="", tlBasis="archive";
+let tlCo="all", tlScope="all", tlQ="", tlBasis="all";
+const TL_DATE_BASES = [["occurrence","Occurred"],["disclosure","Disclosed"],["archive","Archive date"]];
 const SCOPES = [["all","All records"],["agents","AI agents"],["other-ai","Other AI"],["automation","Automation"]];
 const tlCandidates = () => REC.filter(r => (tlScope === "all" || r.scope === tlScope) && (!tlQ || TLBYID[r.id].search_text.includes(tlQ)));
 function renderCoRow(){
@@ -343,13 +344,22 @@ $("#tlseg").innerHTML=SCOPES.map(([k,l])=>`<button type="button" data-k="${k}" a
 $("#tlseg").addEventListener("click",e=>{const b=e.target.closest("button");if(b){tlScope=b.dataset.k;$$("#tlseg button").forEach(x=>x.setAttribute("aria-pressed",x===b));renderTimeline();}});
 $("#tlq").addEventListener("input",e=>{tlQ=e.target.value.trim().toLowerCase();renderTimeline();});
 $("#tlbasis").addEventListener("change",e=>{tlBasis=e.target.value;renderTimeline();});
-function tlDateLabel(r){
-  const d=TLBYID[r.id].dates[tlBasis];
-  if(tlBasis==="archive") return d.label;
-  if(!d.start)return tlBasis==="disclosure"?"Disclosure unresolved":"Occurrence unknown";
+function tlSortDate(r){
+  const dates=TLBYID[r.id].dates;
+  return tlBasis==="all" ? TL_DATE_BASES.map(([basis])=>dates[basis].start||"").sort().at(-1) : dates[tlBasis].start||"";
+}
+function tlDateLabel(r,basis=tlBasis){
+  const d=TLBYID[r.id].dates[basis];
+  if(basis==="archive") return d.label;
+  if(!d.start)return basis==="disclosure"?"Disclosure unresolved":"Occurrence unknown";
   const fmt=value=>new Date(value+"T00:00:00Z").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric",timeZone:"UTC"});
   if(d.precision==="month")return new Date(d.start+"T00:00:00Z").toLocaleDateString("en-GB",{month:"short",year:"numeric",timeZone:"UTC"})+" · month only";
   return fmt(d.start)+(d.end!==d.start?" – "+fmt(d.end):"");
+}
+function tlDatesHTML(r){
+  const meta=TLBYID[r.id];
+  if(tlBasis!=="all")return `<time>${esc(tlDateLabel(r))}</time><small class="tl-date-kind">${esc(tlBasis)}${tlBasis!=="archive"?` · ${esc(meta.context_review||"unassessed")}`:""}</small>`;
+  return TL_DATE_BASES.map(([basis,label])=>`<div class="tl-date-item"><small class="tl-date-kind">${label}</small>${meta.dates[basis].start?`<time>${esc(tlDateLabel(r,basis))}</time>`:'<span class="tl-date-unknown">Unknown</span>'}</div>`).join("")+`<small class="tl-date-kind">Chronology · ${esc(meta.context_review||"unassessed")}</small>`;
 }
 const WHO = {};
 function whoFor(id){ if(!WHO[id]) WHO[id] = Math.random()<.5?"Joe":"Jill"; return WHO[id]; }
@@ -412,7 +422,7 @@ function impactEvidence(r){
 function entryHTML(r){
   const who = whoFor(r.id), meta=TLBYID[r.id];
   return `<article class="ent" id="r-${r.id}">
-    <div><time>${esc(tlDateLabel(r))}</time><small class="tl-date-kind">${esc(tlBasis)}${tlBasis!=="archive"?` · ${esc(meta.context_review||"unassessed")}`:""}</small><span class="org">${coOf(r).map(c=>logoTile(c.k,c.n)).join("")}${esc(r.org)}</span></div>
+    <div>${tlDatesHTML(r)}<span class="org">${coOf(r).map(c=>logoTile(c.k,c.n)).join("")}${esc(r.org)}</span></div>
     <div class="ent-main">
       <div>
         <span class="kind"><b>${esc(r.kind)}</b><i></i>${esc(r.set)}</span>
@@ -434,14 +444,14 @@ function entryHTML(r){
 function renderTimeline(){
   renderCoRow();
   const rows=tlCandidates().filter(coMatch), groups={};
-  rows.forEach(r=>{const d=TLBYID[r.id].dates[tlBasis];const y=d.start?d.start.slice(0,4):"Unknown";(groups[y]=groups[y]||[]).push(r);});
+  rows.forEach(r=>{const date=tlSortDate(r),y=date?date.slice(0,4):"Unknown";(groups[y]=groups[y]||[]).push(r);});
   const years=Object.keys(groups).sort((a,b)=>a==="Unknown"?1:b==="Unknown"?-1:b.localeCompare(a));
   const sourceCount=new Set(rows.flatMap(r=>TLBYID[r.id].sources.map(s=>s.url))).size;
   $("#tlcounts").innerHTML=`<div><b class="mono">${rows.length}</b>Matching records</div><div><b class="mono">${years.filter(y=>y!=="Unknown").length}</b>Dated years</div><div><b class="mono">${sourceCount}</b>Unique source URLs</div>`;
-  const notes={archive:"Archive order preserves the original sorting dates; these can mix event and report dates.",occurrence:"Occurrence dates retain source precision. Ranges are grouped by their start year.",disclosure:"Earliest checked disclosure is not necessarily the first public report."};
-  $("#tlstatus").textContent=`Publication ${archive.publication.id} · ${rows.length} of ${REC.length} records · ${groups.Unknown?.length||0} with unknown dates. ${notes[tlBasis]} Sources and draft assessments remain visible in each record.`;
+  const notes={all:"All date types are shown together, ordered by the latest known date; ranges use their start date.",archive:"Archive order preserves the original sorting dates; these can mix event and report dates.",occurrence:"Occurrence dates retain source precision. Ranges are grouped by their start year.",disclosure:"Earliest checked disclosure is not necessarily the first public report."};
+  $("#tlstatus").textContent=`Publication ${archive.publication.id} · ${rows.length} of ${REC.length} records · ${groups.Unknown?.length||0} without a date for this view. ${notes[tlBasis]} Undated records are included. Search, maker and scope filters apply to every date view.`;
   $("#yidx").innerHTML=years.map((y,i)=>`<a href="#y-${y}" data-y="${y}" class="${i===0?"on":""}">${y}<span>${groups[y].length}</span></a>`).join("");
-  $("#tlist").innerHTML=years.length?years.map(y=>`<div class="yr" id="y-${y}"><h3>${y}</h3><span class="sl">/</span><span class="c">${groups[y].length} record${groups[y].length===1?"":"s"}</span><hr></div>`+groups[y].sort((a,b)=>(TLBYID[b.id].dates[tlBasis].start||"").localeCompare(TLBYID[a.id].dates[tlBasis].start||"")||a.id.localeCompare(b.id)).map(entryHTML).join("")).join(""):'<div class="empty">No records match these filters. Clear the search or select another maker or scope.</div>';
+  $("#tlist").innerHTML=years.length?years.map(y=>`<div class="yr" id="y-${y}"><h3>${y}</h3><span class="sl">/</span><span class="c">${groups[y].length} record${groups[y].length===1?"":"s"}</span><hr></div>`+groups[y].sort((a,b)=>tlSortDate(b).localeCompare(tlSortDate(a))||a.id.localeCompare(b.id)).map(entryHTML).join("")).join(""):'<div class="empty">No records match these filters. Clear the search or select another maker or scope.</div>';
 }
 $("#yidx").addEventListener("click",e=>{const a=e.target.closest("a"); if(!a) return; e.preventDefault(); $$("#yidx a").forEach(x=>x.classList.toggle("on",x===a)); const t=document.getElementById("y-"+a.dataset.y); t&&t.scrollIntoView({behavior:"smooth"});});
 function openRecord(id){

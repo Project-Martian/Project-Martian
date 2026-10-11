@@ -197,6 +197,9 @@
 #v-timeline select{margin-left:8px;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--ink);font:13px var(--sans);padding:8px}
 #v-timeline .tl-cap{font-size:12px;line-height:1.7;max-width:100ch;color:var(--muted)}
 #v-timeline .tl-date-kind{display:block;color:var(--muted);font-size:10px;margin-top:6px}
+#v-timeline .tl-date-item{margin-bottom:10px}
+#v-timeline .tl-date-item .tl-date-kind{margin:0 0 3px}
+#v-timeline .tl-date-unknown{font-size:12px;color:var(--muted)}
 #v-timeline .ent h4 a{color:inherit;text-decoration:none}#v-timeline .ent h4 a:hover{color:var(--accent-ink)}
 #v-timeline .tl-assessment{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
 #v-timeline .tl-assessment span{font-size:10.5px;background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:5px 7px;color:var(--ink-2)}
