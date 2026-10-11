@@ -14,7 +14,7 @@ function feedItems(){ const all=[...SAMPLE_POSTS,...wild]; return sigSrc==="all"
 const STL={unv:"Unverified",lnk:"Linked",con:"In the record",noise:"Filtered as noise"};
 function renderFeed(){
   const items=feedItems(); if(sigSel>=items.length) sigSel=0;
-  $("#feed").innerHTML = items.map((p,i)=>`<div class="post ${i===sigSel?"sel":""}" data-i="${i}" tabindex="0">
+  $("#feed").innerHTML = items.map((p,i)=>`<div class="post ${i===sigSel?"sel":""}" data-i="${i}" role="button" aria-pressed="${i===sigSel}" tabindex="0">
     <span class="src ${p.s}">${p.s==="x"?"𝕏":p.s==="r"?"r/":"●"}</span>
     <div><div class="top"><b>${esc(p.n)}</b><span class="h">${esc(p.h)}</span><span class="t">${esc(p.t)}</span></div>
     <p>${esc(p.txt)}</p>
@@ -40,7 +40,7 @@ function renderDetail(p){
 }
 $("#sigseg").addEventListener("click",e=>{const b=e.target.closest("button"); if(!b) return; sigSrc=b.dataset.k; sigSel=0; $$("#sigseg button").forEach(x=>x.setAttribute("aria-pressed",x===b)); renderFeed();});
 $("#feed").addEventListener("click",e=>{const p=e.target.closest(".post"); if(!p) return; sigSel=+p.dataset.i; renderFeed();});
-$("#feed").addEventListener("keydown",e=>{if(e.key==="Enter"){const p=e.target.closest(".post"); if(p){sigSel=+p.dataset.i; renderFeed();}}});
+$("#feed").addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){const p=e.target.closest(".post"); if(p){e.preventDefault();sigSel=+p.dataset.i; renderFeed();$("#feed").children[sigSel].focus({preventScroll:true});}}});
 $("#sigdetail").addEventListener("click",e=>{const c=e.target.closest(".cite"); if(c){e.preventDefault(); openRecord(c.dataset.rec);}});
 $("#clusters").innerHTML = CLUSTERS.map(c=>`<div class="clu"><b>${esc(c.t)}</b>${spark(c.d)}<small>${esc(c.m)}</small></div>`).join("");
 renderFeed();
