@@ -81,6 +81,14 @@ Each Trends tab has an information (`i`) icon: Microtrends explains maker/model/
 
 On October 11, issue #13's production receipt confirmed publication 6 at `2026-10-11T09:35:40.702Z`, with 47 records. The separate preview still had 44 records and an OpenAI filter. The published Anthropic record appeared under October 9 with **Checked disclosure**. These are observed snapshots, not expected permanent counts. If there is no production receipt after a scheduled run, inspect the issue-specific publisher error before changing the draft or asking for another approval.
 
+## Substack Blog
+
+Open **Blog** in the header or footer, or visit `/#blog`. It lists the public archive of [projectmartian.substack.com](https://projectmartian.substack.com), newest first, with titles, dates, subtitles and available cover images. **Load older posts** continues through the archive in pages of 20 without a fixed total-post limit. **Read on Substack** opens the original article, where Substack applies any subscriber access requirements. **Subscribe on Substack** opens its subscription page; Project Martian does not collect subscription details.
+
+Publish and edit articles in Substack as usual; no repository or database import is required. The first visit to Blog loads posts, and **Refresh posts** reloads from the server. Each successful server page is cached for up to five minutes, so publishing or editing a post can take that long to appear on a later refresh. An already open page does not poll in the background. Refresh starts from the newest page; older pages remain live Substack pagination rather than an immutable snapshot.
+
+The Node service requires outbound HTTPS to `projectmartian.substack.com`. There is no API key or new environment variable. An empty archive shows an explicit no-posts state; failed requests show an unavailable message and leave the Substack link visible. Drafts and private posts not exposed in Substack's public archive cannot be listed. On October 12, 2026, the supplied publication's public archive and RSS feed both returned no posts, so live populated-post coverage could not be verified. Deploy the application image through the existing Helm release procedure; no new Helm settings or database migrations are required.
+
 ## Publishing data
 
 PostgreSQL owns current data. The JSON seed files are only the original import, and application deployment never overwrites later publications. Export from the application role, review the complete document, then publish using the owner role:

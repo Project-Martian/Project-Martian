@@ -1,8 +1,8 @@
 # Project Martian
 
-An independent public incident publication with Trends, Microtrends, Rogue Index, Narrative, Comparison, Radar, Timeline and Bedrock Ask. Source: [Project-Martian/Project-Martian](https://github.com/Project-Martian/Project-Martian).
+An independent public incident publication with Trends, Microtrends, Rogue Index, Narrative, Comparison, Radar, Timeline, a Substack Blog and Bedrock Ask. Source: [Project-Martian/Project-Martian](https://github.com/Project-Martian/Project-Martian).
 
-A Node.js application serves the existing HTML/CSS/JavaScript desktop UI and same-origin APIs. Its dedicated PostgreSQL database owns published records, source links, timelines, company/model relationships, Radar data and display settings. The frontend reads the API. Initial JSON files are import seeds, not live data stores.
+A Node.js application serves the existing HTML/CSS/JavaScript desktop UI and same-origin APIs. Its dedicated PostgreSQL database owns published records, source links, timelines, company/model relationships, Radar data and display settings. The frontend reads the API. Initial JSON files are import seeds, not live data stores. The [Blog](docs/usage.md#substack-blog) reads public post previews from [Project Martian on Substack](https://projectmartian.substack.com); Substack owns articles and subscriptions.
 
 Production uses one application pod and one PostgreSQL pod, with temporary hourly Radar Jobs in its own `project-martian` EKS namespace, with persistent storage and off-cluster backups. It owns its runtime, database and credentials independently; it does not use another product's API or customer data. The cluster and ingress controller are shared infrastructure.
 
