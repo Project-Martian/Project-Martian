@@ -1,5 +1,7 @@
 # Rogue Index scoring and review
 
+Owner-authorized automated reviews must follow the [delegated review contract](../CONTRIBUTING.md#owner-authorized-automated-review) and disclose their provenance. A maintainer-account approval is not, by itself, evidence of personal human review. Historical review requirements below remain the ordinary manual workflow; the delegation does not change hashes, scoring, disputes or the two-distinct-maintainer Severe rule.
+
 Rogue Index v1 implements the October 1 thesis: impact per incident, a three-month rolling sum and a fixed reference. It preserves the desktop line chart, 0–100 axis, selected range, colors, controls and six-month illustrative extension. The extension keeps the existing bounded slope calculation; it is not a forecast or confidence interval. Evidence labels do not change severity. Controlled demonstrations and human-directed agent misuse remain included, as in the thesis.
 
 ## Rubric and calculation

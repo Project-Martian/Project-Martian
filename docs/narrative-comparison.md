@@ -1,5 +1,7 @@
 # Narrative and Comparison
 
+Owner-authorized automated reviews must follow the [delegated review contract](../CONTRIBUTING.md#owner-authorized-automated-review) and disclose their provenance. A maintainer-account approval is not, by itself, evidence of personal human review. Historical review requirements below remain the ordinary manual workflow; the delegation does not change hashes, scoring, disputes or the two-distinct-maintainer Severe rule.
+
 `disclosure-comparison-v1` adds source chronology and operating context to the 23 agent records. The desktop views and read APIs are implemented; the October 2, 2026 source audit is a draft with no human approvals. The [Helm deployment guide](../../martian-helm-charts/docs/project-martian.md) records release configuration and verified production rollout separately. PostgreSQL owns the published annotations, stored in each incident revision's existing `content.context` JSON. No schema migration or additional service is needed.
 
 ## Narrative

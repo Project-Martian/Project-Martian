@@ -1,5 +1,7 @@
 # Microtrends mapping and review
 
+Owner-authorized automated reviews must follow the [delegated review contract](../CONTRIBUTING.md#owner-authorized-automated-review) and disclose their provenance. A maintainer-account approval is not, by itself, evidence of personal human review. Historical review requirements below remain the ordinary manual workflow; the delegation does not change hashes, scoring, disputes or the two-distinct-maintainer Severe rule.
+
 Microtrends follows **model maker → model → primary attack type**, with each path pointing to the existing incident and its sources. The October 1 PRD is implemented as `maker-model-attack-v1`. The rings, logo nodes, badges, curves, panels, filters, incident list and zoom/pan/Fit controls retain their existing design. Labels and incident detail text now describe the new fields. Links retain incident-count weighting; Rogue Index scores do not weight this map.
 
 ## Ownership and taxonomy
