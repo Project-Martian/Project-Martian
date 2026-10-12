@@ -63,6 +63,8 @@ Requests go through the Node service, without Substack credentials, browser cook
 
 ## Timeline and contributions
 
+Archive snapshots and Radar incident references select the highest numeric publication ID. The SQL sort qualifies the underlying bigint column (`p.id`), while the API still serializes IDs as strings. Sorting the text projection would incorrectly retain publication 9 after publication 10; the same snapshot reader is used by contribution publication and research, so numeric ordering is also required when extending the current archive.
+
 `backend/timeline.ts` derives `timeline-v1` from the same published snapshot as the rest of the archive. `/api/archive` includes this projection; `/api/timeline` returns it separately with publication metadata. Each record has canonical model makers, searchable narrative/model/operator/target/source text, unique citation URLs, per-record impact/mapping/context review status, and separate archive, occurrence and checked-disclosure dates. Missing chronology stays unknown. Source counts count distinct URLs, not independent witnesses. Archive order is historical sorting metadata, not a standardized event date. Occurrence ranges group by their start year; month precision stays visible. Source publication, update and original archive date labels remain distinct.
 
 The desktop Timeline defaults to **All dates**. It displays the three date types together and groups/sorts each record by the latest non-null start date among them. Fully undated records remain in the Unknown group. The focused date views retain their existing semantics; changing date view does not filter out records. This is a frontend presentation of `timeline-v1`, with no stored-date, annotation-review or API-schema changes.
