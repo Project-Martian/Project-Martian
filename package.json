@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "tsc && node scripts/build-standalone.mjs",
-    "check": "tsc --noEmit && node --check js/app.js && node --check js/theme-init.js && node --check js/radar.js && node --check js/radar-samples.js",
+    "check": "tsc --noEmit && node --check js/app.js && node --check js/theme-init.js && node --check js/radar.js && node --check js/radar-samples.js && node --check js/blog.js",
     "start": "node dist/backend/app.js",
     "db:migrate": "node dist/backend/manage.js migrate",
     "db:import": "node dist/backend/manage.js import",

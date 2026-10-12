@@ -188,6 +188,19 @@
     </div>
   </section>
 
+  <!-- BLOG -->
+  <section class="view wrap" id="v-blog" data-view="blog" aria-labelledby="blog-title" hidden>
+    <div class="vhead blog-head">
+      <div><span class="eyebrow">Project Martian on Substack</span><h2 id="blog-title">The blog<span class="dotp">.</span></h2><p>Writing on AI agents, security, and what happens next.</p></div>
+      <a class="blog-subscribe" href="https://projectmartian.substack.com/subscribe" target="_blank" rel="noopener noreferrer">Subscribe on Substack ↗</a>
+    </div>
+    <div class="blog-bar"><span id="blog-count">Published posts</span><button id="blog-refresh" type="button">Refresh posts</button></div>
+    <p id="blog-status" class="blog-status" role="status" aria-live="polite"></p>
+    <div id="blog-empty" class="blog-empty" hidden><span class="eyebrow">From the publication</span><h3>The next chapter starts here.</h3><p>No published posts are available yet. New posts will appear here after they go live on Substack.</p></div>
+    <div id="blog-posts" class="blog-posts"></div>
+    <div class="blog-bottom"><a href="https://projectmartian.substack.com" target="_blank" rel="noopener noreferrer">Visit Project Martian on Substack ↗</a><button id="blog-more" type="button" hidden>Load older posts</button></div>
+  </section>
+
   <!-- DOCS -->
   <section class="view wrap" id="v-docs" data-view="docs" hidden>
     <div class="docs-shell">
@@ -232,12 +245,13 @@
   <div class="wrap foot">
     <a class="brand" href="https://projectmartian.ai/" aria-label="Project Martian home"><svg><use href="#mark"/></svg><b>Project <span>Martian</span></b></a>
     <span>Open source. Built in public.</span>
-    <div class="fl"><a class="repo" href="#" target="_blank" rel="noopener">GitHub ↗</a><a class="repo-path" data-path="/blob/main/MANIFESTO.md" href="#" target="_blank" rel="noopener">Manifesto.md ↗</a></div>
+    <div class="fl"><a href="#blog" data-go="blog">Blog</a><a class="repo" href="#" target="_blank" rel="noopener">GitHub ↗</a><a class="repo-path" data-path="/blob/main/MANIFESTO.md" href="#" target="_blank" rel="noopener">Manifesto.md ↗</a></div>
   </div>
 </footer>
 
 <script src="js/radar-samples.js"></script>
 <script src="js/radar.js"></script>
+<script src="js/blog.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

@@ -21,6 +21,7 @@ Narrative and Comparison store versioned `content.context` annotations in the ex
 | Route | Data |
 | --- | --- |
 | `GET /api/archive` | One consistent publication: records, metadata, mappings, Radar and analytical series; frontend entry point |
+| `GET /api/blog?offset=0` | Public Substack post previews, newest first, in pages of 20; independent of incident publication data |
 | `GET /api/incidents` | Current publication and all records |
 | `GET /api/incidents/:id` | One current record, or 404 |
 | `GET /api/incidents/:id/impact-history` | Published changes to one assessment, including prior inputs and computed scores |
@@ -51,6 +52,14 @@ Publications explicitly select `legacy-setting-v1` or `impact-v1`. The former pr
 The Jan 2025–Sep 2026 chart range and Sep 28, 2026 Microtrends date are unchanged. Narrative uses explicit checked source metadata. Comparison uses monthly counts by landing with a cumulative option and no projection; unknown chronology is retained as an exclusion. The browser uses `analytics.narrative_v1` and `analytics.comparison_v1`, also exposed by the dedicated endpoints. Older `narrative`, `sourceTypes`, `comparison`, `cumReal` and `cumLab` analytical fields remain legacy compatibility output and do not power these two views. A Comparison filter response must match the browser's loaded publication ID; otherwise it asks for a reload.
 
 Rogue Index and Microtrends have an authorized draft production release recorded in the [Helm deployment guide](../../martian-helm-charts/docs/project-martian.md). Narrative and Comparison implement 23 draft context annotations as of October 2, 2026; their release configuration and deployment evidence are recorded in the same Helm guide. All 44 original records, Rogue Index results and Microtrends mappings remain unchanged. The immutable archive retains eight illustrative Radar posts and three sample clusters. Sample mode displays them explicitly; live mode reads independently expiring operational data. The hourly worker uses Tavily web discovery and X search with separate provider credentials and capped allowances. Public intake is disabled; Reddit awaits provider approval. Small live samples do not establish moderation accuracy. See [Radar](radar.md) for its pipeline, public/private boundary, provider prerequisites and review workflow.
+
+## Substack Blog
+
+`backend/blog.ts` reads only `https://projectmartian.substack.com/api/v1/archive?sort=new&offset=N&limit=20`. `GET /api/blog` accepts an optional non-negative integer `offset` in multiples of 20, rejects other query parameters, and returns `publication_url`, `fetched_at`, `posts` and `next_offset` (null when a page contains fewer than 20 posts). Each post contains `id`, `title`, nullable `subtitle`, `url`, `published_at` and nullable `image_url`. A full final page may be followed by an empty page. This paginated public endpoint includes older archive entries; the RSS feed is not used as a complete archive. Substack's endpoint is not a versioned integration contract under our control and changes there may require adapting the reader.
+
+Requests go through the Node service, without Substack credentials, browser cookies or arbitrary target URLs. Redirects are rejected; each fetch has a ten-second timeout and a 2 MiB response limit. The service validates response fields, HTTPS image URLs and article URLs within the publication's `/p/` paths. It returns only preview metadata, never article HTML. Successful pages have a five-minute process cache, capped at 100 pages, with concurrent requests for the same page shared and at most four distinct fetches active. Invalid queries return 400, capacity returns 429 and upstream failures return 502. Expired pages are not served after a failed fetch; there is no RSS or static-data recovery path.
+
+`js/blog.js` loads on first Blog activation, provides refresh and older-post controls, deduplicates displayed post IDs and renders text with DOM text nodes. Article and subscription links open Substack, which retains ownership of content, access rules and subscriber information. Optional cover images load directly from their HTTPS source. No database tables, provider secrets, model calls, new dependencies or scheduled workers are introduced. The Blog API does not query PostgreSQL, although the existing application shell still loads `/api/archive` before activating navigation. See [Blog usage](usage.md#substack-blog) for publishing and freshness.
 
 ## Timeline and contributions
 
