@@ -18,7 +18,7 @@ export function archiveContext(snapshot:Snapshot) {
     week_starts_on:'Monday',total_records:snapshot.records.length,agent_records:snapshot.records.filter(r=>r.scope==='agents').length,
     earliest_record_date:dates[0]||null,latest_record_date:dates.at(-1)||null,
     record_index:snapshot.records.map(r=>fields(r,['id','org','t','scope'])),live_news:false,
-    archive_last_edited:null,publication_id:snapshot.publication.id,
+    archive_last_edited:snapshot.publication.published_at,publication_id:snapshot.publication.id,
     date_meaning:'Record sorting dates; not necessarily event occurrence dates. Preserve when and limits.',
     calendar_reference:{today:[todayString,todayString],yesterday:[iso(shift(-1)),iso(shift(-1))],
       this_week:[iso(monday),todayString],last_week:[iso(new Date(monday.getTime()-7*86400000)),iso(new Date(monday.getTime()-86400000))],

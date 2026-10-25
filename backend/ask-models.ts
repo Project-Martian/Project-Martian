@@ -1,5 +1,7 @@
 import { z } from 'zod';
-export const MAX_RECORDS=64;
+// Keep archive retrieval, answers and follow-up history on the same bounded contract.
+export const MAX_RECORDS=256;
+export const ASK_BODY_LIMIT=256*1024;
 export const recordIds=z.array(z.string().min(1).max(80)).max(MAX_RECORDS);
 export const turnSchema=z.strictObject({question:z.string().min(1).max(900),answer:z.string().max(1200),record_ids:recordIds});
 export const askSchema=z.strictObject({question:z.string().trim().min(1).max(900),history:z.array(turnSchema).max(6).default([])});

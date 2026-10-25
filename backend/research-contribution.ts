@@ -29,7 +29,7 @@ export function duplicateRecord(data:Publication, record:Incident) {
   const urls=new Set(sourceKeys(record)), title=record.t.normalize('NFKC').toLowerCase().replace(/\W/g,'');
   return data.records.find(r=>sourceKeys(r).some(url=>urls.has(url)) || r.t.normalize('NFKC').toLowerCase().replace(/\W/g,'')===title);
 }
-// A new source audit advances the coverage date, but never extends the chart calendar.
+// Advance audit coverage without rewriting stored chart bounds; calendar.ts derives display bounds.
 export function researchPublication(data:Publication, record:Incident):Publication {
   const audit=record.context!;
   const dates=[data.settings.context_as_of!,audit.proposed_at.slice(0,10),...audit.sources.map(s=>s.checked_at.slice(0,10))];

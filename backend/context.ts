@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import type { Incident, Publication } from './types.js';
 import { assessmentState } from './impact.js';
+import { displayCalendar } from './calendar.js';
 
 export const CONTEXT_VERSION = 'disclosure-comparison-v1';
 const text = z.string().trim().min(1).max(2000);
@@ -123,6 +124,7 @@ export const comparisonQuery = z.strictObject({context: z.enum(['all', 'training
   evidence: z.enum(['all', 'confirmed', 'reported', 'alleged']).default('all'), basis: z.enum(['occurrence', 'disclosure']).default('occurrence')});
 export function comparisonAnalytics(data: Publication, query: unknown = {}) {
   if (data.settings.context_version !== CONTEXT_VERSION) return null;
+  const calendar = displayCalendar(data);
   const filters = comparisonQuery.parse(query);
   const records = data.records.filter(r => r.scope === 'agents').filter(r => filters.context === 'all' || r.context!.operating_context.kind === filters.context)
     .filter(r => filters.evidence === 'all' || r.impact_assessment!.evidence === filters.evidence).map(r => {
@@ -130,14 +132,14 @@ export function comparisonAnalytics(data: Publication, query: unknown = {}) {
       // A range spanning months cannot be placed in one occurrence month without inventing precision.
       const month = filters.basis === 'disclosure' ? disclosureSummary(r).date?.slice(0, 7) || null
         : o.start && o.end && o.start.slice(0, 7) === o.end.slice(0, 7) ? o.start.slice(0, 7) : null;
-      const exclusion = !month ? 'unknown-month' : month < data.settings.chart_start || month > data.settings.chart_end ? 'outside-window' : null;
+      const exclusion = !month ? 'unknown-month' : month < calendar.chart_start || month > calendar.chart_end ? 'outside-window' : null;
       return {id: r.id, title: r.t, month, occurrence: o, record_unit: r.context!.record_unit, context: r.context!.operating_context.kind,
         landed: a.estimated.includes('landed') ? 'unknown' : a.landed, evidence: a.evidence,
         context_review: contextState(r), impact_review: assessmentState(r), exclusion};
     });
   const eligible = records.filter(r => !r.exclusion);
   const months: string[] = [];
-  for (let t = new Date(data.settings.chart_start + '-01T00:00:00Z'); t.toISOString().slice(0, 7) <= data.settings.chart_end; t.setUTCMonth(t.getUTCMonth() + 1))
+  for (let t = new Date(calendar.chart_start + '-01T00:00:00Z'); t.toISOString().slice(0, 7) <= calendar.chart_end; t.setUTCMonth(t.getUTCMonth() + 1))
     months.push(t.toISOString().slice(0, 7));
   const series = Object.entries(landingLabels).map(([key, label]) => {
     const rows = eligible.filter(r => r.landed === key);
@@ -149,7 +151,7 @@ export function comparisonAnalytics(data: Publication, query: unknown = {}) {
   });
   return {version: CONTEXT_VERSION, unit: 'archive-records', filters, as_of: data.settings.context_as_of!,
     review_mode: data.settings.context_review_mode!, impact_review_mode: data.settings.impact_review_mode!,
-    start: data.settings.chart_start, end: data.settings.chart_end, context_labels: contextLabels, landing_labels: landingLabels,
+    start: calendar.chart_start, end: calendar.chart_end, context_labels: contextLabels, landing_labels: landingLabels,
     months, series, records, coverage: {total: records.length, included: eligible.length,
       unknown_month: records.filter(r => r.exclusion === 'unknown-month').length,
       outside_window: records.filter(r => r.exclusion === 'outside-window').length,

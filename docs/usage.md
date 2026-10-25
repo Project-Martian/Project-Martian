@@ -70,9 +70,13 @@ The header and footer Project Martian titles link to `https://projectmartian.ai/
 
 The homepage totals use the same published archive as Timeline: all records, agent incidents, and agent records whose archive date falls in the current UTC year. Unknown archive dates are excluded from the year count. **Timeline updated (UTC)** shows the latest successful publication date; the note below includes its exact timestamp and publication ID. It reflects successful publication of approved contributions, including records whose occurrence date is unknown. It is not an incident date or the time research last ran. Use **View Timeline** to inspect incident/disclosure dates; reload after an approved contribution publishes to see updated totals. Pending GitHub drafts and Radar chatter are not included.
 
+Trends includes the publication month and newer dated records using the shared [display calendar](architecture.md#api-and-presentation). Reloading after a publication updates Rogue Index, Comparison and Microtrends together; no manual September-to-October calendar edit is needed. Timeline continues to show the full snapshot, including unknown dates, with occurrence and disclosure evidence kept separate.
+
 Each Trends tab has an information (`i`) icon: Microtrends explains maker/model/attack connections, Rogue Index explains recorded impact scoring, Narrative explains disclosure sources and account updates, and Comparison explains counts by where effects landed. Hover over an icon or focus it with the keyboard to reveal its tooltip without clicking or changing the selected view. The tooltip stays open while the pointer is over its text; move away, move keyboard focus away, or press Escape to dismiss it. The descriptions summarize the [mapping](microtrends.md), [scoring](rogue-index.md) and [context](narrative-comparison.md) guides; they do not change the data or review status.
 
 ### Finding an approved contribution
+
+A successful receipt and the current archive must agree: check `/api/archive` publication metadata and the incident content. IDs are strings in JSON but are selected numerically in PostgreSQL. If a receipt points to a newer revision that is absent from the current archive, investigate snapshot selection before approving again or creating a duplicate.
 
 1. Open the [production contribution checker](https://www.projectmartian.ai/#contribute) and enter the issue number. Its receipt is also available at `https://www.projectmartian.ai/api/contributions/N`. A receipt records a successful database commit; a GitHub approval alone is not that receipt. The publisher polls every five minutes, and the page needs reloading after publication.
 2. Use the checker's **View incident** link. For a newly added issue, the direct route is `https://www.projectmartian.ai/#timeline/github-issue-N`. Check the hostname: a preview on `127.0.0.1` or `localhost` reads its configured database, which can have different records and publication IDs. Production approvals do not synchronize a local database.
@@ -80,6 +84,14 @@ Each Trends tab has an information (`i`) icon: Microtrends explains maker/model/
 4. In Microtrends, clear maker/attack filters and choose **All time** when looking for undated records. Date-limited views exclude records without a usable archive date; approving them does not create an occurrence date.
 
 On October 11, issue #13's production receipt confirmed publication 6 at `2026-10-11T09:35:40.702Z`, with 47 records. The separate preview still had 44 records and an OpenAI filter. The published Anthropic record appeared under October 9 with **Checked disclosure**. These are observed snapshots, not expected permanent counts. If there is no production receipt after a scheduled run, inspect the issue-specific publisher error before changing the draft or asking for another approval.
+
+## Substack Blog
+
+Open **Blog** in the header or footer, or visit `/#blog`. It lists the public archive of [projectmartian.substack.com](https://projectmartian.substack.com), newest first, with titles, dates, subtitles and available cover images. **Load older posts** continues through the archive in pages of 20 without a fixed total-post limit. **Read on Substack** opens the original article, where Substack applies any subscriber access requirements. **Subscribe on Substack** opens its subscription page; Project Martian does not collect subscription details.
+
+Publish and edit articles in Substack as usual; no repository or database import is required. The first visit to Blog loads posts, and **Refresh posts** reloads from the server. Each successful server page is cached for up to five minutes, so publishing or editing a post can take that long to appear on a later refresh. An already open page does not poll in the background. Refresh starts from the newest page; older pages remain live Substack pagination rather than an immutable snapshot.
+
+The Node service requires outbound HTTPS to `projectmartian.substack.com`. There is no API key or new environment variable. An empty archive shows an explicit no-posts state; failed requests show an unavailable message and leave the Substack link visible. Drafts and private posts not exposed in Substack's public archive cannot be listed. On October 12, 2026, the supplied publication's public archive and RSS feed both returned no posts, so live populated-post coverage could not be verified. Deploy the application image through the existing Helm release procedure; no new Helm settings or database migrations are required.
 
 ## Publishing data
 

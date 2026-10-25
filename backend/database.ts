@@ -35,7 +35,7 @@ export async function readSnapshot(pool: Pool): Promise<Snapshot> {
 
 // Caller owns the transaction, allowing publication workers to read under the publication lock.
 export async function readSnapshotClient(client: PoolClient): Promise<Snapshot> {
-  const result = await client.query('SELECT id::text, created_at, source_hash, settings, repo FROM publications ORDER BY id DESC LIMIT 1');
+  const result = await client.query('SELECT p.id::text AS id, p.created_at, p.source_hash, p.settings, p.repo FROM publications p ORDER BY p.id DESC LIMIT 1');
   if (!result.rows.length) throw new Error('No published archive; run the explicit initial import');
   const publication = result.rows[0];
   const records = await readRecords(client, publication.id);

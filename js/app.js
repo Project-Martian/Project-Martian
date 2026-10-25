@@ -17,7 +17,7 @@ const isReal = r => /real-world|third-party|reported/i.test(r.set);
 const isLab = r => !isReal(r);
 
 /* ---------- tabs / routing ---------- */
-const VIEWS = [["ask","Ask"],["trends","Trends"],["timeline","Timeline"],["signals","Radar"],["mission","About"],["docs","Docs"],["contribute","Contribute"]];
+const VIEWS = [["ask","Ask"],["trends","Trends"],["timeline","Timeline"],["signals","Radar"],["blog","Blog"],["mission","About"],["docs","Docs"],["contribute","Contribute"]];
 VIEWS.forEach(([key,label])=>{const view=$("#v-"+key);view.setAttribute("role","tabpanel");view.setAttribute("aria-label",label);});
 function renderTabs(cur){
   const focusedNav=document.activeElement.closest("#tabs,#tabs-m")?.id;
@@ -46,6 +46,7 @@ function go(v, opts){
   if(v==="trends") renderTrendPanel();
   if(v==="timeline") loadLogos();
   if(v==="signals") radar.activate(opts?.radar); else radar.deactivate();
+  if(v==="blog") window.ProjectMartianBlog.activate();
   if(!(opts&&opts.keepScroll)) window.scrollTo({top:0});
   try{ history.replaceState(null,"",opts?.record ? "#timeline/"+encodeURIComponent(opts.record) : opts?.radar ? "#signals/"+opts.radar.kind+"/"+encodeURIComponent(opts.radar.id) : "#"+v); }catch(e){ location.hash = v; }
 }

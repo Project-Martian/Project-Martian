@@ -66,7 +66,7 @@ export async function registerRadar(app:FastifyInstance,pool:Pool) {
     if(cursor&&((cursor.sort||'latest')!==query.data.sort||query.data.sort==='popular'&&(cursor.score===undefined||!cursor.asof)))return reply.code(400).send({detail:'Invalid Radar cursor.'});
     return read(pool,async(db,now)=>{
       const status=(await db.query('SELECT * FROM radar_public.status')).rows[0];
-      const publication=(await db.query('SELECT id::text FROM public.publications ORDER BY id DESC LIMIT 1')).rows[0];
+      const publication=(await db.query('SELECT p.id::text AS id FROM public.publications p ORDER BY p.id DESC LIMIT 1')).rows[0];
       const sources=(await db.query('SELECT * FROM radar_public.sources ORDER BY id')).rows;
       const asof=cursor?.asof||new Date(now).toISOString();
       if(Date.parse(asof)>now+300000)return reply.code(400).send({detail:'Invalid Radar cursor.'});
@@ -98,7 +98,7 @@ export async function registerRadar(app:FastifyInstance,pool:Pool) {
     if(mode!=='live'||!z.uuid().safeParse(request.params.id).success)return reply.code(404).send({detail:'Signal unavailable.'});
     const result=await read(pool,async(db,now)=>{
       const post=(await db.query<Item>(`SELECT * FROM radar_public.posts WHERE ${kind==='posts'?'id':'cluster_id'}=$1 AND NOT is_duplicate ORDER BY posted_at,id LIMIT 1`,[request.params.id])).rows[0];
-      if(!post)return null;const publication=(await db.query('SELECT id::text FROM public.publications ORDER BY id DESC LIMIT 1')).rows[0];
+      if(!post)return null;const publication=(await db.query('SELECT p.id::text AS id FROM public.publications p ORDER BY p.id DESC LIMIT 1')).rows[0];
       return {version:VERSION,publication_id:publication.id,generated_at:new Date(now),...await detail(db,post,now)};
     });
     return result||reply.code(404).send({detail:'Signal unavailable.'});

@@ -7,9 +7,11 @@ import { analytics } from './analytics.js';
 import { narrativeAnalytics, comparisonAnalytics, comparisonQuery } from './context.js';
 import { timelineData } from './timeline.js';
 import { CONTRIBUTION_REPO } from './contributions.js';
-import { askSchema, MAX_RECORDS } from './ask-models.js';
+import { askSchema, MAX_RECORDS, ASK_BODY_LIMIT } from './ask-models.js';
+import { displayCalendar } from './calendar.js';
 import { answerQuestion, MODEL_ID, ModelUnavailable, InvalidAnswer } from './assistant.js';
 import { registerRadar } from './radar/api.js';
+import { registerBlog } from './blog.js';
 
 const pool=await createPool();
 const app=Fastify({bodyLimit:65536,trustProxy:process.env.MARTIAN_TRUSTED_PROXIES?.split(',').map(s=>s.trim())||false,logger:false});
@@ -108,10 +110,11 @@ app.get('/data/impact_index.json',async(_request,reply)=>{
   return impact?impact.series.map(row=>({...row,methodology_version:impact.version,review_mode:impact.review_mode,
     publication_id:snapshot.publication.id})):reply.code(409).send({detail:'This publication uses the legacy methodology.'});
 });
-app.get('/api/microtrends',async()=>{const snapshot=await readSnapshot(pool);return {publication:snapshot.publication,map:snapshot.microtrends,as_of:snapshot.settings.microtrends_as_of,...microtrendsMetadata(snapshot)};});
+app.get('/api/microtrends',async()=>{const snapshot=await readSnapshot(pool);return {publication:snapshot.publication,map:snapshot.microtrends,as_of:displayCalendar(snapshot).microtrends_as_of,...microtrendsMetadata(snapshot)};});
 await registerRadar(app,pool);
+registerBlog(app);
 app.get('/data/records.json',async()=> (await readSnapshot(pool)).records);
-app.post('/api/ask',async(request,reply)=>{
+app.post('/api/ask',{bodyLimit:ASK_BODY_LIMIT},async(request,reply)=>{
   const body=askSchema.safeParse(request.body);
   if(!body.success)return reply.code(400).send({detail:'Send a question of 1–900 characters and at most six valid history turns.'});
   if(active>=capacity)return reply.code(429).send({detail:'Ask is busy. Please try again shortly.'});
