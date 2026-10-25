@@ -2,6 +2,7 @@ import type { Incident, Publication } from './types.js';
 import { microtrendsMetadata } from './microtrends.js';
 import { impactIndex } from './impact.js';
 import { narrativeAnalytics, comparisonAnalytics } from './context.js';
+import { displayCalendar } from './calendar.js';
 
 // Retained for legacy analytical outputs and unchanged views; context.ts owns the new views.
 export const isReal = (r: Incident) => /real-world|third-party|reported/i.test(r.set);
@@ -14,12 +15,13 @@ export function sourceType(url: string) {
   return 'News';
 }
 export function analytics(data: Publication) {
+  const calendar=displayCalendar(data);
   const agents=data.records.filter(r=>r.scope==='agents'),dated=agents.filter(r=>r.d);
   const months: [number,number][]=[];
   const [startYear,startMonth]=data.settings.chart_start.split('-').map(Number);
   for(let year=startYear,month=startMonth-1;;) {
     const key=`${year}-${String(month+1).padStart(2,'0')}`;
-    if(key>data.settings.chart_end) break;
+    if(key>calendar.chart_end) break;
     if(months.length>=600) throw new Error('Display interval exceeds 600 months');
     months.push([year,month]); month++;if(month>11){month=0;year++;}
   }
@@ -49,14 +51,15 @@ export function analytics(data: Publication) {
   const training=agents.filter(r=>/training|deployment|research|evaluation|experiment/i.test(r.set)).length;
   const rca:Record<string,number>={Full:0,Partial:0,None:0};
   agents.forEach(r=>{if(/causal/i.test(r.rca))rca.Full++;else if(/partial/i.test(r.rca))rca.Partial++;else rca.None++;});
-  const y26=agents.filter(r=>r.d.startsWith('2026')).length,y25=agents.filter(r=>r.d.startsWith('2025')).length;
+  const year=Number(calendar.chart_end.slice(0,4));
+  const thisYear=agents.filter(r=>r.d.startsWith(`${year}-`)).length,previousYear=agents.filter(r=>r.d.startsWith(`${year-1}-`)).length;
   return {methodology_version:data.settings.methodology_version,impact,months,raw,roll,idx,fut,futMonths,cumReal,cumLab,realOnly,
     lastV,narrative,sourceTypes:Object.fromEntries(data.records.map(r=>[r.id,sourceType(r.u)])),
-    microtrends_as_of:data.settings.microtrends_as_of, microtrends:microtrendsMetadata(data),
-    indicators:{growth:y26>y25?'Growing':y26<y25?'Declining':'Steady',speed:h1>h0*2?'Surging':h1>h0?'Rising':'Steady',
+    microtrends_as_of:calendar.microtrends_as_of, microtrends:microtrendsMetadata(data),
+    indicators:{growth:thisYear>previousYear?'Growing':thisYear<previousYear?'Declining':'Steady',speed:h1>h0*2?'Surging':h1>h0?'Rising':'Steady',
       volatility:cv<.6?'Low':cv<1.2?'Medium':'High',setting:agents.filter(isReal).length>training?'Real':'Training',
       disclosure:Object.entries(rca).sort((a,b)=>b[1]-a[1])[0][0],forecast:fut[5].c>lastV?'Growing':fut[5].c<lastV?'Declining':'Steady',
-      stage:y26>10?'Established':'Emerging'},
+      stage:thisYear>10?'Established':'Emerging'},
     comparison: {real:project(cumReal),lab:project(cumLab)},
     narrative_v1: narrativeAnalytics(data), comparison_v1: comparisonAnalytics(data),
   };
