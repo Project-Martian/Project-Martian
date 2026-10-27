@@ -16,7 +16,8 @@
     "db:export": "node dist/backend/manage.js export",
     "radar:worker": "node dist/backend/radar-worker.js",
     "radar:manage": "node dist/backend/radar-manage.js",
-    "research": "node dist/backend/research-worker.js"
+    "research": "node dist/backend/research-worker.js",
+    "test:ask": "npm run build && node --test tests/ask-node.test.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "3.1145.0",

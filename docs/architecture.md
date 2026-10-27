@@ -95,6 +95,8 @@ Ask uses the AWS SDK for JavaScript with the dedicated Bedrock-only IRSA role, o
 
 `backend/` is the active TypeScript backend; `package-lock.json` pins dependencies. The earlier `server/`, `requirements.txt` and existing Python tests are retained as historical implementation/reference files. They are excluded from the Node container, and their passing tests do not validate the new Node runtime.
 
+`backend/application.ts` exports `buildApp()` without opening a listener or installing process signal handlers. `backend/app.ts` owns those process lifecycle operations. Tests can explicitly supply a snapshot reader, pool and model dependency; normal startup uses the existing PostgreSQL and Bedrock implementations. `npm run test:ask` builds and checks the native Node route, schema/host/origin/body limits, admission bounds, publication refresh, grounded evidence selection and read-only MCP catalog. Its synthetic provider does not establish live Bedrock availability or model quality.
+
 ## Radar runtime
 
 `backend/radar-worker.ts` runs bounded collection, rules/model classification, clustering and retention cleanup under one database advisory lock. `backend/radar-manage.ts` owns private review, source configuration and global controls. Migration 003 creates private tables and gated public views without extending the public-schema default grants. `backend/radar/api.ts` exposes the live read contract and optional insertion-only intake. `js/radar.js` maintains an independently refreshed desktop feed; `js/radar-samples.js` preserves labelled archive examples. No Radar operation automatically publishes or edits an incident.
