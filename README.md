@@ -10,6 +10,8 @@ See [architecture and data ownership](docs/architecture.md), [local setup and pu
 
 Use Node.js 24 and PostgreSQL 18. After [database setup](docs/usage.md#local-database), run `npm ci`, `npm run build` and `npm start` with the documented database variables; open `http://127.0.0.1:8766`. Static-file previews cannot load the database-backed publication. Ask additionally requires the existing AWS login.
 
+Run `npm run check` and `npm run test:ask` for the active Node runtime. Ask tests exercise the real Fastify route, native Ask orchestration and private MCP tools, including a loopback HTTP request, with synthetic records and a deterministic model dependency. They require no database, AWS credentials or paid inference; live database/provider qualification remains separate.
+
 Automatic database failover, cluster NetworkPolicy enforcement and backup alert delivery are outside the approved current scope.
 
 Rogue Index v1 implements incident impact scoring and a fixed-reference monthly index with the existing desktop chart. Microtrends derives maker/model/attack paths from source-linked record mappings, controlled catalogs and review history. The initial 44 assessments and 44 mappings are unreviewed drafts. An explicitly authorized draft release keeps that status visible; deployment approval does not count as human evidence review. See the Helm deployment guide for the verified live release.
