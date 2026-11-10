@@ -1,0 +1,59 @@
+name: Node runtime CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: node-runtime-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: project_martian_test
+          POSTGRES_USER: project_martian_owner
+          POSTGRES_PASSWORD: disposable-test-owner
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U project_martian_owner -d project_martian_test"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: "5432"
+      PGDATABASE: project_martian_test
+      PGUSER: project_martian_owner
+      PGPASSWORD: disposable-test-owner
+      TEST_APP_PGPASSWORD: disposable-test-reader
+      AWS_EC2_METADATA_DISABLED: "true"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - name: Create the read-only application identity
+        run: |
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          \getenv app_password TEST_APP_PGPASSWORD
+          SELECT format('CREATE ROLE project_martian_app LOGIN PASSWORD %L', :'app_password') \gexec
+          SQL
+      - name: Exercise migrations, publication atomicity, database privileges and real HTTP
+        run: npm run test:integration
+      - run: npm audit --omit=dev --audit-level=high

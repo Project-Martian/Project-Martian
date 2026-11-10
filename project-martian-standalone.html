@@ -1726,7 +1726,8 @@ const COMPANIES = [
   {k:"github", n:"GitHub", re:/GitHub/, ic:["github-icon","github"]},
   {k:"tesla", n:"Tesla", re:/Tesla/, ic:["tesla-icon","tesla"]},
   {k:"uber", n:"Uber", re:/Uber/, ic:["uber-icon","uber"]},
-  {k:"ibm", n:"IBM", re:/\bIBM\b/, ic:["ibm"]}
+  // This icon is absent from the pinned logo package; use the local monogram.
+  {k:"ibm", n:"IBM", re:/\bIBM\b/}
 ];
 const coOf = r => COMPANIES.filter(c=>c.re.test(r.org));
 const UPLOADED_BRAND_IMG = {
