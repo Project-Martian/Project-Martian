@@ -158,12 +158,14 @@ Daily scheduling and Secret mounts live in the [Helm deployment guide](../../mar
 
 ```sh
 npm run check
-npm run build
+npm test
 npm audit --omit=dev
 git diff --check
 ```
 
-Run the app against the local database and check the archive, trends, mappings, Radar, Timeline and Ask flows. Compare record content and calculations before a data migration. Exercise migration/import idempotency and read-only application permissions. No new test infrastructure is introduced by this migration.
+`npm test` builds the current TypeScript runtime and runs Node's native test runner against publication validation/hashing, Ask bounds and the request-scoped MCP evidence catalog. The CI workflow also provisions PostgreSQL 18 and an actual read-only web role, then runs `npm run test:integration`. That command requires a disposable loopback database whose name ends in `_test`, owner `PG*` credentials, and `TEST_APP_PGPASSWORD` for a pre-created `project_martian_app` role. It migrates and imports the seed twice, checks failed-publication rollback and atomic visibility, denies private Radar reads and web-role writes, and starts the real HTTP service to check persisted archive content, host/origin/input limits and static-file boundaries. Missing database prerequisites fail the command; they do not skip coverage. No provider credentials or model calls are needed. Use a fresh database for each CI run; the tests intentionally retain local publication fixtures until its container is removed.
+
+Run the app against the local database and check the archive, trends, mappings, Radar, Timeline and Ask flows for changes to those features. Compare record content and calculations before a data migration. The automated suite does not qualify Bedrock responses, external research workers or a deployed Kubernetes environment.
 
 The 16 existing Python tests can still be run with `.venv/bin/python -m unittest discover -s tests`; they check the historical Python implementation only. Its October 1 live-language/browser evidence is preserved in the [previous deployment checkpoint](../../martian-helm-charts/docs/project-martian.md#bedrock-ask-deployment-and-idle-connection-correction--october-1-2026), not proof of the Node port. Current runtime and restore checks belong in the October 2 deployment checkpoint.
 
